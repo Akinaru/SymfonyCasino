@@ -3,39 +3,279 @@
 {% block title %}Symfsino - Accueil{% endblock %}
 
 {% block page_content %}
-    <main>
-        <h1>Bienvenue</h1>
-        <p>Ceci est la page d’accueil. (Contenu à venir.)</p>
+    <main class="py-4">
 
-        {% if app.user %}
-            <div class="card my-4">
-                <div class="card-header">
-                    Informations du compte
+        {# ——— HERO ——— #}
+        <section class="py-5 mb-4 text-white rounded-3">
+            <div class="container-fluid py-4">
+                <h1 class="display-5 fw-bold">🎰 Symfsino</h1>
+                <p class="col-lg-8 fs-5">
+                    Bienvenue dans la salle de jeux. Slots, tirages & jackpots — simple, rapide, 100% fun.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <a href="#" class="btn btn-success btn-lg">Lancer une partie</a>
+                    {% if app.user %}
+                        <a href="{{ path('app_profile') }}" class="btn btn-outline-light btn-lg">Mon profil</a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}" class="btn btn-warning btn-lg">Créer un compte</a>
+                        <a href="{{ path('app_login') }}" class="btn btn-outline-light btn-lg">Se connecter</a>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-3">Identifiant</dt>
-                        <dd class="col-sm-9">{{ app.user.id }}</dd>
-
-                        <dt class="col-sm-3">Email</dt>
-                        <dd class="col-sm-9">{{ app.user.email }}</dd>
-
-                        <dt class="col-sm-3">Pseudo</dt>
-                        <dd class="col-sm-9">{{ app.user.pseudo ?? '—' }}</dd>
-
-                        <dt class="col-sm-3">Rôles</dt>
-                        <dd class="col-sm-9">
-                            {% set roles = app.user.roles|default([]) %}
-                            {{ roles is iterable ? roles|join(', ') : roles }}
-                        </dd>
-
-                        <dt class="col-sm-3">Balance</dt>
-                        <dd class="col-sm-9">{{ app.user.balance ?? '0' }}</dd>
-                    </dl>
-                </div>
-
             </div>
+        </section>
+
+        {# ——— 3 FEATURES ——— #}
+        <section class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">💎 Jackpot quotidien</h5>
+                        <p class="card-text">Un gros lot remis à zéro chaque jour. Plus vous jouez, plus il grimpe.</p>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 63%"></div>
+                        </div>
+                        <span class="badge bg-success">63% atteint</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">⚡ Modes rapides</h5>
+                        <p class="card-text">Parties de 30s, pas d’attente. Parfait pour une pause.</p>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-1"><span class="badge bg-primary me-2">Nouveau</span> Blitz Slots</li>
+                            <li class="mb-1"><span class="badge bg-info me-2">Populaire</span> Tirage Express</li>
+                            <li><span class="badge bg-secondary me-2">Classique</span> Mine & Win</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">🛡️ Fair-play & sécurité</h5>
+                        <p class="card-text">Chiffrement, tirages auditables et historique transparent.</p>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-dark">Audité</span>
+                            <span class="badge bg-dark">Hashé</span>
+                            <span class="badge bg-dark">Vérifié</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ——— COMPTE ——— #}
+        {% if app.user %}
+            <section class="mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <strong>Mon compte</strong>
+                            <a class="btn btn-light btn-sm" href="{{ path('app_profile') }}">Gérer</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Identifiant</dt>
+                                    <dd class="col-sm-8">{{ app.user.id }}</dd>
+
+                                    <dt class="col-sm-4">Email</dt>
+                                    <dd class="col-sm-8">{{ app.user.email }}</dd>
+
+                                    <dt class="col-sm-4">Pseudo</dt>
+                                    <dd class="col-sm-8">{{ app.user.pseudo ?? '—' }}</dd>
+
+                                    <dt class="col-sm-4">Rôles</dt>
+                                    <dd class="col-sm-8">
+                                        {% set roles = app.user.roles|default([]) %}
+                                        {{ roles is iterable ? roles|join(', ') : roles }}
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="p-3 bg-light rounded">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div><strong>Balance</strong></div>
+                                        <span class="badge bg-warning text-dark">🪙 {{ app.user.balance ?? '0' }}</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="#" class="btn btn-success w-100">Déposer</a>
+                                        <a href="#" class="btn btn-outline-danger w-100">Retirer</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
         {% endif %}
+
+        {# ——— JEUX (cards) ——— #}
+        <section class="mb-4">
+            <style>
+                /* Uniformise la hauteur des cartes et des visuels */
+                .game-card { display: flex; flex-direction: column; height: 100%; }
+                .game-card-img { height: 180px; object-fit: cover; }
+                .game-card-body { display: flex; flex-direction: column; }
+                .game-card-actions { margin-top: auto; display: flex; gap: .5rem; align-items: center; }
+            </style>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h4 mb-0">Jeux disponibles</h2>
+                <a href="#" class="btn btn-outline-secondary btn-sm">Tout voir</a>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm game-card">
+                        <img
+                            src="https://i.redd.it/1wsjdtem9jef1.jpeg"
+                            class="card-img-top game-card-img"
+                            alt="Visuel Slots Cubiques"
+                            loading="lazy"
+                        >
+                        <div class="card-body game-card-body">
+                            <h5 class="card-title">🎰 Slots Cubiques</h5>
+                            <p class="card-text">Aligne les blocs et déclenche les bonus. Volatilité moyenne.</p>
+                            <div class="game-card-actions">
+                                <a href="#" class="btn btn-primary">Jouer</a>
+                                <span class="badge bg-info">RTP 96.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm game-card">
+                        <img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLsaQz5w1Khic0WjssnFgky3g169NFAUb61g&s"
+                            class="card-img-top game-card-img"
+                            alt="Visuel Tirage Express"
+                            loading="lazy"
+                        >
+                        <div class="card-body game-card-body">
+                            <h5 class="card-title">🎟️ Tirage Express</h5>
+                            <p class="card-text">Une grille, un tirage, un gagnant. Sessions de 30 secondes.</p>
+                            <div class="game-card-actions">
+                                <a href="#" class="btn btn-primary">Jouer</a>
+                                <span class="badge bg-success">+5% bonus</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card shadow-sm game-card">
+                        <img
+                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxyX8H5Exo0JAay8mBrFVn7eA9plr_CDmeAQ&s"
+                            class="card-img-top game-card-img"
+                            alt="Visuel Mine &amp; Win"
+                            loading="lazy"
+                        >
+                        <div class="card-body game-card-body">
+                            <h5 class="card-title">⛏️ Mine &amp; Win</h5>
+                            <p class="card-text">Creuse pour trouver l’or, évite la lave et sécurise tes gains.</p>
+                            <div class="game-card-actions">
+                                <a href="#" class="btn btn-primary">Jouer</a>
+                                <span class="badge bg-secondary">Classique</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ——— TABLEAU + LISTE ——— #}
+        <section class="row g-3 mb-4">
+            <div class="col-12 col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <strong>🏆 Top joueurs</strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="text-nowrap">#</th>
+                                <th scope="col">Pseudo</th>
+                                <th scope="col">Gains</th>
+                                <th scope="col">Parties</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <th scope="row">1</th>
+                                <td>Bl0ckMaster</td>
+                                <td>🪙 12 450</td>
+                                <td>342</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">2</th>
+                                <td>RedStone</td>
+                                <td>🪙 9 980</td>
+                                <td>287</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">3</th>
+                                <td>PickaxePro</td>
+                                <td>🪙 8 210</td>
+                                <td>198</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">4</th>
+                                <td>Cubik</td>
+                                <td>🪙 6 540</td>
+                                <td>154</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">5</th>
+                                <td>NethR</td>
+                                <td>🪙 5 320</td>
+                                <td>129</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <strong>🎉 Derniers gains</strong>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            PickaxePro
+                            <span class="badge bg-success rounded-pill">+ 🪙 420</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            RedStone
+                            <span class="badge bg-success rounded-pill">+ 🪙 310</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Bl0ckMaster
+                            <span class="badge bg-warning text-dark rounded-pill">Jackpot 🪙 2 000</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Cubik
+                            <span class="badge bg-success rounded-pill">+ 🪙 150</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            NethR
+                            <span class="badge bg-danger rounded-pill">— 🪙 90</span>
+                        </li>
+                    </ul>
+                    <div class="card-body">
+                        <a href="#" class="btn btn-outline-primary w-100">Voir l’historique</a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
     </main>
 {% endblock %}
