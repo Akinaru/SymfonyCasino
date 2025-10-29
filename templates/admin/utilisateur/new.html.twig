@@ -1,0 +1,11 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Symfsino - Ajouter un Utilisateur{% endblock %}
+
+{% block admin_content %}
+    <h1>Create new Utilisateur</h1>
+
+    {{ include('admin/utilisateur/_form.html.twig') }}
+
+    <a href="{{ path('app_admin_utilisateur_index') }}">back to list</a>
+{% endblock %}

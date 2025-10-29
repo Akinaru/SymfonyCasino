@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <header class="py-3 border-bottom bg-white">
+        <div class="d-flex align-items-center justify-content-between container">
+
+            {# Logo #}
+            <a href="{{ path('app_home') }}" class="d-flex align-items-center text-dark text-decoration-none fs-5 fw-bold">
+                Casino
+            </a>
+
+            {# Balance (centre, visible ≥ lg) #}
+            {% if app.user %}
+                <div class="d-none d-lg-flex align-items-center justify-content-center flex-grow-1">
+                    <span class="badge text-bg-light border fs-6 px-3 py-2">
+                      Solde :
+                      {{ app.user.balance }} argent la monnaie
+                    </span>
+                </div>
+            {% else %}
+                <div class="d-none d-lg-flex flex-grow-1"></div>
+            {% endif %}
+
+            {# Zone compte + burger (à droite) #}
+            <div class="d-flex align-items-center gap-2">
+                {% if app.user %}
+                    <div class="dropdown text-end">
+                        <a href="#" class="d-inline-flex align-items-center link-dark text-decoration-none dropdown-toggle"
+                           id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://i.pinimg.com/1200x/54/f4/b5/54f4b55a59ff9ddf2a2655c7f35e4356.jpg" alt="avatar" width="32" height="32" class="rounded-circle me-2">
+                            <span class="me-2">{{ app.user.pseudo ?? app.user.email }}</span>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <span class="badge bg-danger">Admin</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end text-small" aria-labelledby="dropdownUser1">
+                            <li><span class="dropdown-item-text"><strong>{{ app.user.email }}</strong></span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <li><a class="dropdown-item-text" href="{{ path('app_dashboard') }}">Backoffice</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item-text">Profil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ path('app_logout') }}">Se déconnecter</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-primary" href="{{ path('app_login') }}">Se connecter</a>
+                        <a class="btn btn-primary" href="{{ path('app_register') }}">Créer un compte</a>
+                    </div>
+                {% endif %}
+
+                {# Burger mobile #}
+                <button class="navbar-toggler d-lg-none border-0 ms-1" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+
+            {# Menu mobile (collapse) #}
+            <div class="collapse w-100 mt-2 d-lg-none" id="mainNav">
+                <ul class="nav flex-column">
+                    <li class="nav-item"><span class="nav-link px-2 link-dark">Bientôt</span></li>
+                    <li class="nav-item"><span class="nav-link px-2 link-dark">Bientôt</span></li>
+                    {% if app.user %}
+                        <li class="nav-item mt-2">
+            <span class="badge text-bg-light border fs-6 px-3 py-2">
+              Solde :
+              {{ app.user.balance }} €
+            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+
+        </div>
+    </header>
+
+
+    <div class="container">
+        {# Flashs centralisés (success/error) #}
+        {% for msg in app.flashes('success') %}
+            <div class="alert alert-success">{{ msg }}</div>
+        {% endfor %}
+        {% for msg in app.flashes('error') %}
+            <div class="alert alert-danger">{{ msg }}</div>
+        {% endfor %}
+
+        {% block page_content %}{% endblock %}
+    </div>
+{% endblock %}

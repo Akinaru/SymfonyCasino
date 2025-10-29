@@ -1,0 +1,41 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Symfsino - Accueil{% endblock %}
+
+{% block page_content %}
+    <main>
+        <h1>Bienvenue</h1>
+        <p>Ceci est la page d’accueil. (Contenu à venir.)</p>
+
+        {% if app.user %}
+            <div class="card my-4">
+                <div class="card-header">
+                    Informations du compte
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Identifiant</dt>
+                        <dd class="col-sm-9">{{ app.user.id }}</dd>
+
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">{{ app.user.email }}</dd>
+
+                        <dt class="col-sm-3">Pseudo</dt>
+                        <dd class="col-sm-9">{{ app.user.pseudo ?? '—' }}</dd>
+
+                        <dt class="col-sm-3">Rôles</dt>
+                        <dd class="col-sm-9">
+                            {% set roles = app.user.roles|default([]) %}
+                            {{ roles is iterable ? roles|join(', ') : roles }}
+                        </dd>
+
+                        <dt class="col-sm-3">Balance</dt>
+                        <dd class="col-sm-9">{{ app.user.balance ?? '0' }}</dd>
+                    </dl>
+                </div>
+
+            </div>
+        {% endif %}
+
+    </main>
+{% endblock %}

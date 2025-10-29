@@ -1,0 +1,16 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Backoffice · Dashboard{% endblock %}
+
+{% block page_content %}
+
+    {# Nav admin simple avec uniquement les liens #}
+    <nav class="nav nav-underline mb-3 border-bottom pb-2">
+        <a class="nav-link active" aria-current="page" href="{{ path('app_dashboard') }}">Dashboard</a>
+        <a class="nav-link" href="{{ path('app_admin_utilisateur_index') }}">Utilisateurs</a>
+    </nav>
+
+    {# Contenu propre à chaque page admin #}
+    {% block admin_content %}{% endblock %}
+
+{% endblock %}
