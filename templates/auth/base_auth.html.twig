@@ -8,6 +8,13 @@
 
         <div class="col-12 col-lg-6 bg-secondary d-flex align-items-center justify-content-center position-relative">
             <div class="w-100 p-md-4 p-3 my-3 mb-5" style="max-width: 720px;">
+                    {% for msg in app.flashes('success') %}
+                        <div class="alert alert-success">{{ msg }}</div>
+                    {% endfor %}
+                    {% for msg in app.flashes('error') %}
+                        <div class="alert alert-danger">{{ msg }}</div>
+                    {% endfor %}
+
                     {% block content %}{% endblock %}
                 </div>
             </div>

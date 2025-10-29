@@ -1,0 +1,47 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Symfsino - Profil{% endblock %}
+
+{% block page_content %}
+    <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <h1 class="mb-4 text-center">Mon profil</h1>
+
+                {{ form_start(form) }}
+
+                <div class="mb-3">
+                    {{ form_label(form.pseudo) }}
+                    {{ form_widget(form.pseudo) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.email) }}
+                    {{ form_widget(form.email) }}
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3">Changer le mot de passe</h5>
+                <p class="text-muted small mb-3">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe.</p>
+
+                <div class="mb-3">
+                    {{ form_label(form.currentPassword) }}
+                    {{ form_widget(form.currentPassword) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.newPassword) }}
+                    {{ form_widget(form.newPassword) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.confirmPassword) }}
+                    {{ form_widget(form.confirmPassword) }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Mettre à jour</button>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+{% endblock %}

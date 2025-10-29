@@ -39,7 +39,7 @@
                             {% if is_granted('ROLE_ADMIN') %}
                                 <li><a class="dropdown-item-text" href="{{ path('app_dashboard') }}">Backoffice</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item-text">Profil</a></li>
+                            <li><a class="dropdown-item-text" href="{{ path("app_profile") }}">Profil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ path('app_logout') }}">Se déconnecter</a></li>
                         </ul>
@@ -80,14 +80,6 @@
 
 
     <div class="container">
-        {# Flashs centralisés (success/error) #}
-        {% for msg in app.flashes('success') %}
-            <div class="alert alert-success">{{ msg }}</div>
-        {% endfor %}
-        {% for msg in app.flashes('error') %}
-            <div class="alert alert-danger">{{ msg }}</div>
-        {% endfor %}
-
         {% block page_content %}{% endblock %}
     </div>
 {% endblock %}

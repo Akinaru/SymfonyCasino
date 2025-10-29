@@ -14,7 +14,76 @@
         {% endblock %}
 
     </head>
-    <body>
+    <body class="position-relative">
+
+        <div class="position-absolute top-0 end-0 p-3 z-3" style="width:clamp(260px, 90vw, 420px); pointer-events:none;">
+        <div class="d-flex flex-column gap-2">
+
+            {% for type, messages in app.flashes %}
+                {% for msg in messages %}
+                    {# Normalise "error" -> "danger" #}
+                    {% set t = (type == 'error') ? 'danger' : type %}
+
+                    {% if t == 'primary' %}
+                        <div class="alert alert-primary alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'secondary' %}
+                        <div class="alert alert-secondary alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'success' %}
+                        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'danger' %}
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'warning' %}
+                        <div class="alert alert-warning alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'info' %}
+                        <div class="alert alert-info alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'light' %}
+                        <div class="alert alert-light alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% elseif t == 'dark' %}
+                        <div class="alert alert-dark alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+
+                    {% else %}
+                        {# Fallback pour tout autre type (inclut custom) #}
+                        <div class="alert alert-{{ t }} alert-dismissible fade show shadow-sm mb-0" role="alert" style="pointer-events:auto;">
+                            <div>{{ msg }}</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+
+        </div>
+    </div>
 
         {% block body %}{% endblock %}
 
