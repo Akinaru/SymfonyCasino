@@ -4,17 +4,18 @@ namespace App\Game;
 
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final class DiceGame implements GameInterface
+final class MineGame implements GameInterface
 {
     public function __construct(private UrlGeneratorInterface $router) {}
-    public function getKey(): string { return 'dice'; }
-    public function getName(): string { return '🎲 Dice'; }
+    public function getKey(): string { return 'mine'; }
+    public function getName(): string { return '💣 Mine'; }
     public function getUrl(): string
     {
         return $this->router->generate('app_game_dice_index');
     }
-    public function getDescription(): ?string { return 'Tire les dés et fait obtiens un nombre au dessus de 3 pour gagner.'; }
-    public function getImageUrl() : ?string { return 'https://i.redd.it/1wsjdtem9jef1.jpeg'; }
+    public function getDescription(): ?string { return 'Choisit les bonnes cases sans exploser.'; }
+
+    public function getImageUrl() : ?string { return 'https://i.ytimg.com/vi/sxmGEDFiRAQ/maxresdefault.jpg'; }
     public function getMinBet(): ?int { return 1; }
     public function getMaxBet(): ?int { return 1000; }
 }

@@ -24,45 +24,40 @@
             </div>
         </section>
 
-        {# ——— 3 FEATURES ——— #}
-        <section class="row g-3 mb-4">
-            <div class="col-12 col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">💎 Jackpot quotidien</h5>
-                        <p class="card-text">Un gros lot remis à zéro chaque jour. Plus vous jouez, plus il grimpe.</p>
-                        <div class="progress mb-2" style="height: 8px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 63%"></div>
-                        </div>
-                        <span class="badge bg-success">63% atteint</span>
-                    </div>
-                </div>
+        {# ——— JEUX (cards) ——— #}
+        <section class="mb-4">
+            <style>
+                /* Uniformise la hauteur des cartes et des visuels */
+                .game-card { display: flex; flex-direction: column; height: 100%; }
+                .game-card-img { height: 180px; object-fit: cover; }
+                .game-card-body { display: flex; flex-direction: column; }
+                .game-card-actions { margin-top: auto; display: flex; gap: .5rem; align-items: center; }
+            </style>
+
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h4 mb-0">Jeux disponibles</h2>
+                <a href="#" class="btn btn-outline-secondary btn-sm">Tout voir</a>
             </div>
-            <div class="col-12 col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">⚡ Modes rapides</h5>
-                        <p class="card-text">Parties de 30s, pas d’attente. Parfait pour une pause.</p>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-1"><span class="badge bg-primary me-2">Nouveau</span> Blitz Slots</li>
-                            <li class="mb-1"><span class="badge bg-info me-2">Populaire</span> Tirage Express</li>
-                            <li><span class="badge bg-secondary me-2">Classique</span> Mine & Win</li>
-                        </ul>
+
+            <div class="row g-3">
+                {% for game in games %}
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <a href="{{ game.url }}" class="text-decoration-none text-reset d-block h-100">
+                            <div class="card shadow-sm game-card h-100">
+                                <img
+                                    src="{{ game.imageUrl }}"
+                                    class="card-img-top game-card-img"
+                                    alt="{{ game.name }}"
+                                    loading="lazy"
+                                >
+                                <div class="card-body game-card-body">
+                                    <h5 class="card-title mb-1">{{ game.name }}</h5>
+                                    <p class="card-text mb-0">{{ game.description }}</p>
+                                </div>
+                            </div>
+                        </a>
                     </div>
-                </div>
-            </div>
-            <div class="col-12 col-md-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">🛡️ Fair-play & sécurité</h5>
-                        <p class="card-text">Chiffrement, tirages auditables et historique transparent.</p>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-dark">Audité</span>
-                            <span class="badge bg-dark">Hashé</span>
-                            <span class="badge bg-dark">Vérifié</span>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </section>
 
@@ -114,80 +109,8 @@
             </section>
         {% endif %}
 
-        {# ——— JEUX (cards) ——— #}
-        <section class="mb-4">
-            <style>
-                /* Uniformise la hauteur des cartes et des visuels */
-                .game-card { display: flex; flex-direction: column; height: 100%; }
-                .game-card-img { height: 180px; object-fit: cover; }
-                .game-card-body { display: flex; flex-direction: column; }
-                .game-card-actions { margin-top: auto; display: flex; gap: .5rem; align-items: center; }
-            </style>
 
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h2 class="h4 mb-0">Jeux disponibles</h2>
-                <a href="#" class="btn btn-outline-secondary btn-sm">Tout voir</a>
-            </div>
 
-            <div class="row g-3">
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card shadow-sm game-card">
-                        <img
-                            src="https://i.redd.it/1wsjdtem9jef1.jpeg"
-                            class="card-img-top game-card-img"
-                            alt="Visuel Slots Cubiques"
-                            loading="lazy"
-                        >
-                        <div class="card-body game-card-body">
-                            <h5 class="card-title">🎰 Slots Cubiques</h5>
-                            <p class="card-text">Aligne les blocs et déclenche les bonus. Volatilité moyenne.</p>
-                            <div class="game-card-actions">
-                                <a href="#" class="btn btn-primary">Jouer</a>
-                                <span class="badge bg-info">RTP 96.2%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card shadow-sm game-card">
-                        <img
-                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTLsaQz5w1Khic0WjssnFgky3g169NFAUb61g&s"
-                            class="card-img-top game-card-img"
-                            alt="Visuel Tirage Express"
-                            loading="lazy"
-                        >
-                        <div class="card-body game-card-body">
-                            <h5 class="card-title">🎟️ Tirage Express</h5>
-                            <p class="card-text">Une grille, un tirage, un gagnant. Sessions de 30 secondes.</p>
-                            <div class="game-card-actions">
-                                <a href="#" class="btn btn-primary">Jouer</a>
-                                <span class="badge bg-success">+5% bonus</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card shadow-sm game-card">
-                        <img
-                            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxyX8H5Exo0JAay8mBrFVn7eA9plr_CDmeAQ&s"
-                            class="card-img-top game-card-img"
-                            alt="Visuel Mine &amp; Win"
-                            loading="lazy"
-                        >
-                        <div class="card-body game-card-body">
-                            <h5 class="card-title">⛏️ Mine &amp; Win</h5>
-                            <p class="card-text">Creuse pour trouver l’or, évite la lave et sécurise tes gains.</p>
-                            <div class="game-card-actions">
-                                <a href="#" class="btn btn-primary">Jouer</a>
-                                <span class="badge bg-secondary">Classique</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         {# ——— TABLEAU + LISTE ——— #}
         <section class="row g-3 mb-4">
@@ -273,6 +196,19 @@
                     <div class="card-body">
                         <a href="#" class="btn btn-outline-primary w-100">Voir l’historique</a>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        {# ——— CTA ——— #}
+        <section class="mb-5">
+            <div class="p-4 p-md-5 bg-light rounded-3 border">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                    <div>
+                        <h3 class="mb-1">Prêt à tenter ta chance ?</h3>
+                        <p class="mb-0 text-muted">Rejoins les parties en cours et vise le jackpot du jour.</p>
+                    </div>
+                    <a href="#" class="btn btn-success btn-lg">Jouer maintenant</a>
                 </div>
             </div>
         </section>
