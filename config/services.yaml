@@ -16,5 +16,15 @@ services:
     App\:
         resource: '../src/'
 
+    # Tous les services qui implémentent GameInterface reçoivent le tag "app.game"
+    _instanceof:
+        App\Game\GameInterface:
+            tags: ['app.game']
+
+    # Le registre reçoit la liste des jeux via le tag
+    App\Game\GameRegistry:
+        arguments:
+            $games: !tagged_iterator 'app.game'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

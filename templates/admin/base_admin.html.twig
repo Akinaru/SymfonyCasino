@@ -24,6 +24,14 @@
         >
             Utilisateurs
         </a>
+
+        <a
+            class="nav-link {{ current starts with 'app_admin_games' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+            aria-current="{{ current starts with 'app_admin_games' ? 'page' : null }}"
+            href="{{ path('app_admin_games_index') }}"
+        >
+            Jeux
+        </a>
     </nav>
 
     {% block admin_content %}{% endblock %}
