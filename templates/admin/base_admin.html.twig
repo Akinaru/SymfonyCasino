@@ -4,13 +4,28 @@
 
 {% block page_content %}
 
-    {# Nav admin simple avec uniquement les liens #}
-    <nav class="nav nav-underline mb-3 border-bottom pb-2">
-        <a class="nav-link active" aria-current="page" href="{{ path('app_dashboard') }}">Dashboard</a>
-        <a class="nav-link" href="{{ path('app_admin_utilisateur_index') }}">Utilisateurs</a>
+    {# Route courante #}
+    {% set current = app.request.attributes.get('_route') %}
+
+    {# Nav admin (fond noir) #}
+    <nav class="nav nav-underline mb-3 pb-2 border-bottom border-secondary" role="navigation">
+        <a
+            class="nav-link {{ current == 'app_dashboard' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+            aria-current="{{ current == 'app_dashboard' ? 'page' : null }}"
+            href="{{ path('app_dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+        <a
+            class="nav-link {{ current starts with 'app_admin_utilisateur' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+            aria-current="{{ current starts with 'app_admin_utilisateur' ? 'page' : null }}"
+            href="{{ path('app_admin_utilisateur_index') }}"
+        >
+            Utilisateurs
+        </a>
     </nav>
 
-    {# Contenu propre à chaque page admin #}
     {% block admin_content %}{% endblock %}
 
 {% endblock %}
