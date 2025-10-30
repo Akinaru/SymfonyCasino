@@ -1,22 +1,27 @@
 {% extends 'game/base_game.html.twig' %}
 
-{% block game_title %}🎰 Symfsino - Dice{% endblock %}
+{% block game_title %}🎰 Symfsino - Coin Flip (Pile ou Face){% endblock %}
 
 {% block game_styles %}
     <style>
-        .dice {
-            width: 90px; height: 90px;
+        .coin {
+            width: 96px; height: 96px;
             display: grid; place-items: center;
-            font-size: 56px; border-radius: 12px;
+            border-radius: 12px;
             background: #1f1f1f; border: 1px solid #444;
             transition: transform .15s ease;
         }
-        .dice.spin { animation: spin .8s cubic-bezier(.2,.8,.2,1) 1; }
+        .coin img {
+            width: 90px; height: 90px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            display: block;
+        }
+        .coin.spin { animation: spin .8s cubic-bezier(.2,.8,.2,1) 1; }
         @keyframes spin {
-            0% { transform: rotate(0deg)   scale(1.0); }
-            30%{ transform: rotate(120deg) scale(1.08); }
-            60%{ transform: rotate(240deg) scale(1.08); }
-            100%{ transform: rotate(360deg) scale(1.0); }
+            0%   { transform: rotateY(0deg)    scale(1.0); }
+            50%  { transform: rotateY(540deg)  scale(1.06); }
+            100% { transform: rotateY(1080deg) scale(1.0); }
         }
     </style>
 {% endblock %}
@@ -24,8 +29,8 @@
 {% block game_sidebar %}
     <div class="card bg-dark border-secondary text-light">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <span class="h5 mb-0">Dice</span>
-            <small class="">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000) }}</small>
+            <span class="h5 mb-0">Pile ou Face</span>
+            <small>Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000) }}</small>
         </div>
         <div class="card-body">
             <div class="mb-3">
@@ -34,7 +39,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Description</label>
-                <div class="">{{ descriptionInGame }}</div>
+                <div>{{ descriptionInGame }}</div>
             </div>
 
             <div class="mb-3">
@@ -60,8 +65,10 @@
                     <div id="status" class="small">En attente...</div>
                     <div id="result" class="fs-4 fw-bold"></div>
                 </div>
-                <div id="dice" class="dice">🎲</div>
 
+                <div id="coin" class="coin">
+                    <img id="coinImg" src="{{ asset('img/dice/pile.png') }}" alt="Pile">
+                </div>
             </div>
         </div>
     </div>
@@ -72,22 +79,25 @@
         (function () {
             let wired = false;
 
-            function initDice() {
+            function initCoinFlip() {
                 if (wired) return;
 
                 const playBtn   = document.getElementById('playBtn');
                 const betInput  = document.getElementById('betInput');
-                const diceEl    = document.getElementById('dice');
+                const coinEl    = document.getElementById('coin');
+                const coinImg   = document.getElementById('coinImg');
                 const statusEl  = document.getElementById('status');
                 const resultEl  = document.getElementById('result');
                 const balanceEl = document.getElementById('balanceDisplay');
 
-                if (!playBtn || !betInput || !diceEl || !statusEl || !resultEl || !balanceEl) return;
+                if (!playBtn || !betInput || !coinEl || !coinImg || !statusEl || !resultEl || !balanceEl) return;
                 wired = true;
 
                 const endpoint = "{{ path('app_game_dice_play') }}";
                 const csrf     = "{{ csrf_token('dice_play') }}";
-                const face     = n => n;
+
+                const pileSrc  = "{{ asset('img/dice/pile.png') }}";
+                const faceSrc  = "{{ asset('img/dice/face.png') }}";
 
                 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -107,15 +117,45 @@
                     }
                 }
 
+                // Détermination du résultat côté front :
+                // - Si win => toujours "face"
+                // - Si lose => toujours "pile"
+                function applyResultFromData(data, amount) {
+                    // data.win peut exister, sinon on tombe sur payout>0
+                    const isWin = (typeof data.win === 'boolean') ? data.win : (Number(data.payout) > 0);
+
+                    // Animation déjà lancée : on attend un peu pour l'effet
+                    return sleep(450).then(() => {
+                        const side = isWin ? 'face' : 'pile';
+                        if (side === 'face') {
+                            coinImg.src = faceSrc;
+                            coinImg.alt = 'Face';
+                        } else {
+                            coinImg.src = pileSrc;
+                            coinImg.alt = 'Pile';
+                        }
+
+                        statusEl.textContent = 'Résultat : ' + (side === 'face' ? 'Face' : 'Pile');
+                        resultEl.textContent = isWin
+                            ? `Tu as gagné ${data.payout}`
+                            : `Tu as perdu ${amount}`;
+
+                        if (typeof data.balance !== 'undefined') {
+                            balanceEl.textContent = data.balance;
+                        }
+                    });
+                }
+
                 async function play(ev) {
                     if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
 
                     const amount = parseInt(betInput.value, 10) || 0;
                     resultEl.textContent = '';
-                    statusEl.textContent = 'Tirage en cours...';
+                    statusEl.textContent = 'Lancement...';
                     setBtnDisabled(true);
 
-                    diceEl.classList.remove('spin'); void diceEl.offsetWidth; diceEl.classList.add('spin');
+                    // (Re)lancer l'animation de flip
+                    coinEl.classList.remove('spin'); void coinEl.offsetWidth; coinEl.classList.add('spin');
 
                     try {
                         const res  = await fetch(endpoint, {
@@ -127,22 +167,14 @@
                         const data = await res.json();
 
                         if (!data.ok) {
-                            statusEl.textContent = data.error || 'Error';
+                            statusEl.textContent = data.error || 'Erreur';
                             return;
                         }
 
-                        await sleep(450);
-
-                        diceEl.textContent = face(data.roll);
-                        statusEl.textContent = 'Resultat: ' + data.roll;
-                        resultEl.textContent = data.payout > 0
-                            ? `Tu as gagné ${data.payout}`
-                            : `Tu as perdu ${amount}`;
-
-                        balanceEl.textContent = data.balance;
+                        await applyResultFromData(data, amount);
 
                     } catch (e) {
-                        console.warn('[dice] play error:', e);
+                        console.warn('[coin] play error:', e);
                         statusEl.textContent = 'Network error.';
                     } finally {
                         setBtnDisabled(false);
@@ -152,9 +184,8 @@
                 playBtn.addEventListener('click', play);
             }
 
-            document.addEventListener('DOMContentLoaded', initDice);
-            document.addEventListener('turbo:load', initDice);
+            document.addEventListener('DOMContentLoaded', initCoinFlip);
+            document.addEventListener('turbo:load', initCoinFlip);
         })();
     </script>
 {% endblock %}
-

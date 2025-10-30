@@ -1,0 +1,93 @@
+@font-face {
+    font-family: 'Minecraft';
+    src: url('../fonts/Minecraft.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+.sign {
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: auto;
+    padding-top: 6px;
+    margin: auto;
+    cursor: pointer;
+    background-image: url("https://puu.sh/g2wwB/8c3331482b.png");
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    height: 100px;
+    width: 200px;
+}
+.sign p {
+    line-height: 22px;
+    font-size: 16px; /* 18 is better but looks blurred */
+    font-weight: 550;
+    margin: auto;
+    text-align: center;
+    -webkit-font-smoothing: antialiased;
+}
+.color0 {
+    color: #000000;
+}
+.color1 {
+    color: #0000AA;
+}
+.color2 {
+    color: #00AA00;
+}
+.color3 {
+    color: #00AAAA;
+}
+.color4 {
+    color: #AA0000;
+}
+.color5 {
+    color: #AA00AA;
+}
+.color6 {
+    color: #FFAA00;
+}
+.color7 {
+    color: #AAAAAA;
+}
+.color8 {
+    color: #555555;
+}
+.color9 {
+    color: #5555FF;
+}
+.colora {
+    color: #55FF55;
+}
+.colorb {
+    color: #55FFFF;
+}
+.colorc {
+    color: #FF5555;
+}
+.colord {
+    color: #FF55FF;
+}
+.colore {
+    color: #FFFF55;
+}
+.colorf {
+    color: #FFFFFF;
+}
+.colorl {
+    font-weight: 800;
+}
+.colorm {
+    text-decoration: line-through;
+}
+.colorm {
+    text-decoration: line-through;
+}
+.colorn {
+    text-decoration: underline;
+}
+.colorr {
+    font-style: italic;
+}
