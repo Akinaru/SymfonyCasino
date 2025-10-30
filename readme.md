@@ -17,8 +17,8 @@ Il couvrira : installation locale, configuration `.env`, création BDD, lancemen
 ## Roadmap (grandes étapes)
 - [x] Setup projet Symfony propre : arborescence, env (`.env`/`.env.local`), base de données.
 - [x] Authentification/inscription : création de compte, login, vérif e-mail, reset password, protections CSRF/rate-limit.
-- [ ] Panneau Admin minimal : gestions des utilisateurs (monnaie, statistiques).
-- [ ] Module Profil : vue/édition du profil (pseudo, avatar, préférences), page profil public minimal.
+- [x] Panneau Admin minimal : gestions des utilisateurs (monnaie, statistiques).
+- [x] Module Profil : vue/édition du profil (pseudo, avatar, préférences), page profil public minimal.
 - [ ] Noyau “moteur de jeu” : entités génériques (Session, Player, Round, Event, Score) + interface `GameTemplate` pour plugger des jeux.
 - [ ] Implémentation du Jeu #1.
 - [ ] Implémentation du Jeu #2.
