@@ -14,7 +14,7 @@ final class MineGame implements GameInterface
         return $this->router->generate('app_game_dice_index');
     }
     public function getDescription(): ?string { return 'Choisit les bonnes cases sans exploser.'; }
-
+    public static function getDescriptionInGame(): ?string { return ''; }
     public function getImageUrl() : ?string { return 'https://i.ytimg.com/vi/sxmGEDFiRAQ/maxresdefault.jpg'; }
     public function getMinBet(): ?int { return 1; }
     public function getMaxBet(): ?int { return 1000; }

@@ -2,6 +2,10 @@ body {
     background-image: url('../img/stone.gif');
 }
 
+.stone-wall{
+    background-image: url('../img/stone.gif');
+}
+
 @font-face {
     font-family: 'Minecraft';
     src: url('../fonts/Minecraft.ttf') format('truetype');
@@ -11,7 +15,7 @@ body {
 }
 
 html, body {
-    font-family: 'Minecraft', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Minecraft', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif !important;
     font-weight: 300;
 }
 

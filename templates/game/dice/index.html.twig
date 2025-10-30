@@ -1,6 +1,6 @@
 {% extends 'game/base_game.html.twig' %}
 
-{% block game_title %}Dice — d{% endblock %}
+{% block game_title %}🎰 Symfsino - Dice{% endblock %}
 
 {% block game_styles %}
     <style>
@@ -32,6 +32,10 @@
                 <label class="form-label">Balance</label>
                 <div class="fs-4 balance justify-content-start" id="balanceDisplay">{{ app.user.balance }}</div>
             </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <div class="">{{ descriptionInGame }}</div>
+            </div>
 
             <div class="mb-3">
                 <label for="betInput" class="form-label">Montant du pari</label>
@@ -40,7 +44,7 @@
                        value="{{ minBet|default(1) }}">
             </div>
 
-            <button id="playBtn" class="btn btn-primary w-100">Roll</button>
+            <button id="playBtn" class="btn btn-primary w-100">Jouer</button>
         </div>
     </div>
 {% endblock %}
@@ -53,7 +57,7 @@
         <div class="card-body">
             <div class="d-flex flex-column align-items-center gap-4 my-2">
                 <div>
-                    <div id="status" class="small">Ready.</div>
+                    <div id="status" class="small">En attente...</div>
                     <div id="result" class="fs-4 fw-bold"></div>
                 </div>
                 <div id="dice" class="dice">🎲</div>
@@ -64,64 +68,93 @@
 {% endblock %}
 
 {% block game_scripts %}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const playBtn   = document.getElementById('playBtn');
-            const betInput  = document.getElementById('betInput');
-            const diceEl    = document.getElementById('dice');
-            const statusEl  = document.getElementById('status');
-            const resultEl  = document.getElementById('result');
-            const balanceEl = document.getElementById('balanceDisplay');
+    <script type="module">
+        (function () {
+            let wired = false;
 
-            if (!playBtn || !betInput || !diceEl || !statusEl || !resultEl || !balanceEl) {
-                console.warn('[dice] Missing DOM elements, script aborted.');
-                return;
-            }
+            function initDice() {
+                if (wired) return;
 
-            const endpoint  = "{{ path('app_game_dice_play') }}";
-            const csrf      = "{{ csrf_token('dice_play') }}";
+                const playBtn   = document.getElementById('playBtn');
+                const betInput  = document.getElementById('betInput');
+                const diceEl    = document.getElementById('dice');
+                const statusEl  = document.getElementById('status');
+                const resultEl  = document.getElementById('result');
+                const balanceEl = document.getElementById('balanceDisplay');
 
-            const face = (n) => n;
+                if (!playBtn || !betInput || !diceEl || !statusEl || !resultEl || !balanceEl) return;
+                wired = true;
 
-            async function play() {
-                const amount = parseInt(betInput.value, 10) || 0;
-                resultEl.textContent = '';
-                statusEl.textContent = 'Rolling...';
-                playBtn.disabled = true;
-                diceEl.classList.remove('spin'); void diceEl.offsetWidth; diceEl.classList.add('spin');
+                const endpoint = "{{ path('app_game_dice_play') }}";
+                const csrf     = "{{ csrf_token('dice_play') }}";
+                const face     = n => n;
 
-                try {
-                    const res  = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ amount, _token: csrf })
-                    });
-                    const data = await res.json();
+                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-                    if (!data.ok) {
-                        statusEl.textContent = data.error || 'Error';
-                        playBtn.disabled = false;
-                        return;
+                function setBtnDisabled(disabled) {
+                    const btn = document.getElementById('playBtn');
+                    if (!btn) return;
+                    if (disabled) {
+                        btn.disabled = true;
+                        btn.setAttribute('disabled', 'disabled');
+                        btn.classList.add('disabled');
+                        btn.setAttribute('aria-disabled', 'true');
+                    } else {
+                        btn.disabled = false;
+                        btn.removeAttribute('disabled');
+                        btn.classList.remove('disabled');
+                        btn.setAttribute('aria-disabled', 'false');
                     }
-
-                    setTimeout(() => {
-                        diceEl.textContent = face(data.roll);
-                        statusEl.textContent = 'Result: ' + data.roll;
-                        resultEl.textContent = data.payout > 0
-                            ? `You won +${data.payout}!`
-                            : `You lost -${amount}.`;
-                        balanceEl.textContent = data.balance;
-                        playBtn.disabled = false;
-                    }, 450);
-
-                } catch(e) {
-                    statusEl.textContent = 'Network error.';
-                    playBtn.disabled = false;
                 }
+
+                async function play(ev) {
+                    if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    resultEl.textContent = '';
+                    statusEl.textContent = 'Tirage en cours...';
+                    setBtnDisabled(true);
+
+                    diceEl.classList.remove('spin'); void diceEl.offsetWidth; diceEl.classList.add('spin');
+
+                    try {
+                        const res  = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ amount, _token: csrf })
+                        });
+
+                        const data = await res.json();
+
+                        if (!data.ok) {
+                            statusEl.textContent = data.error || 'Error';
+                            return;
+                        }
+
+                        await sleep(450);
+
+                        diceEl.textContent = face(data.roll);
+                        statusEl.textContent = 'Resultat: ' + data.roll;
+                        resultEl.textContent = data.payout > 0
+                            ? `Tu as gagné ${data.payout}`
+                            : `Tu as perdu ${amount}`;
+
+                        balanceEl.textContent = data.balance;
+
+                    } catch (e) {
+                        console.warn('[dice] play error:', e);
+                        statusEl.textContent = 'Network error.';
+                    } finally {
+                        setBtnDisabled(false);
+                    }
+                }
+
+                playBtn.addEventListener('click', play);
             }
 
-            playBtn.addEventListener('click', play);
-        });
+            document.addEventListener('DOMContentLoaded', initDice);
+            document.addEventListener('turbo:load', initDice);
+        })();
     </script>
 {% endblock %}
 
