@@ -3,37 +3,108 @@
 {% block title %}Symfsino - Utilisateur{% endblock %}
 
 {% block admin_content %}
-    <h1>Utilisateur index</h1>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Email</th>
-                <th>Pseudo</th>
-                <th>Roles</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for utilisateur in utilisateurs %}
-            <tr>
-                <td>{{ utilisateur.id }}</td>
-                <td>{{ utilisateur.email }}</td>
-                <td>{{ utilisateur.pseudo }}</td>
-                <td>{{ utilisateur.roles ? utilisateur.roles|json_encode : '' }}</td>
-                <td>
-                    <a href="{{ path('app_admin_utilisateur_show', {'id': utilisateur.id}) }}">show</a>
-                    <a href="{{ path('app_admin_utilisateur_edit', {'id': utilisateur.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="6">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="card bg-dark border-secondary">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h1 class="h5 mb-0 text-light">Utilisateurs</h1>
+        </div>
 
-    <a href="{{ path('app_admin_utilisateur_new') }}">Create new</a>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-striped align-middle mb-0">
+                    <thead class="table-secondary text-dark">
+                    <tr>
+                        <th style="width:56px;">Avatar</th>
+                        <th>Id</th>
+                        <th>Email</th>
+                        <th>Pseudo</th>
+                        <th>Balance</th>
+                        <th>Rôles</th>
+                        <th class="text-end" style="width:200px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for utilisateur in utilisateurs %}
+                        <tr>
+                            <td>
+                                <img
+                                    src="https://i.pinimg.com/1200x/54/f4/b5/54f4b55a59ff9ddf2a2655c7f35e4356.jpg"
+                                    alt="Avatar"
+                                    class="rounded-circle"
+                                    style="width:40px;height:40px;object-fit:cover;"
+                                >
+                            </td>
+                            <td class="text-secondary">#{{ utilisateur.id }}</td>
+                            <td class="text-light">{{ utilisateur.email }}</td>
+                            <td class="text-light">{{ utilisateur.pseudo ?? '—' }}</td>
+
+                            {# Balance avec icône émeraude via CSS ::after #}
+                            <td class="text-light">
+                                <span class="balance">{{ utilisateur.balance ?? 0 }}</span>
+                            </td>
+
+                            <td>
+                                <code class="text-secondary small">
+                                    {{ utilisateur.roles ? utilisateur.roles|json_encode : '[]' }}
+                                </code>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('app_admin_utilisateur_show', {'id': utilisateur.id}) }}"
+                                   class="btn btn-sm btn-outline-light me-1">Voir</a>
+
+                                {# Bouton qui ouvre la modale d'édition #}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-warning"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editUserModal-{{ utilisateur.id }}"
+                                >
+                                    Éditer
+                                </button>
+                            </td>
+                        </tr>
+
+                        {# Modal d’édition (une par utilisateur) #}
+                        {% set formId = 'edit-user-' ~ utilisateur.id %}
+                        <div class="modal fade" id="editUserModal-{{ utilisateur.id }}" tabindex="-1"
+                             aria-labelledby="editUserModalLabel-{{ utilisateur.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content bg-dark text-light border-secondary">
+                                    <div class="modal-header border-secondary">
+                                        <h1 class="modal-title fs-5" id="editUserModalLabel-{{ utilisateur.id }}">
+                                            Éditer l’utilisateur #{{ utilisateur.id }}
+                                        </h1>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                                aria-label="Fermer"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        {{ include('admin/utilisateur/_form.html.twig', {
+                                            form: forms[utilisateur.id],
+                                            form_id: formId
+                                        }) }}
+                                    </div>
+
+                                    <div class="modal-footer border-secondary">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Annuler
+                                        </button>
+                                        {# Bouton submit placé dans le footer, lié au <form> via l’attribut form #}
+                                        <button type="submit" class="btn btn-primary" form="{{ formId }}">
+                                            Enregistrer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary py-4">Aucun enregistrement.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endblock %}

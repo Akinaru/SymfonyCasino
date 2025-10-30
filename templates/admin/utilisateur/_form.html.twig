@@ -1,4 +1,17 @@
-{{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
-{{ form_end(form) }}
+{# templates/admin/utilisateur/_form.html.twig #}
+{# Variables attendues :
+   - form     : FormView (obligatoire)
+   - form_id  : string (optionnel) — id HTML du <form> si tu soumets depuis le footer de la modal
+#}
+
+{% set baseAttr = { 'data-turbo': 'false' } %}
+{% set formOptions = (form_id is defined)
+    ? { attr: baseAttr|merge({ id: form_id }) }
+    : { attr: baseAttr }
+%}
+
+{{ form_start(form, formOptions) }}
+    {{ form_row(form.email) }}
+    {{ form_row(form.pseudo) }}
+    {{ form_rest(form) }}
+{{ form_end(form, { render_rest: false }) }}

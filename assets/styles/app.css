@@ -18,3 +18,16 @@ html, body {
 :root {
     --bs-body-font-family: 'Minecraft', var(--bs-font-sans-serif);
 }
+
+.balance{
+
+}
+.balance::after {
+    content: "";
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    margin-left: .375rem;
+    vertical-align: middle;
+    background: url("../img/emerald.png") center / contain no-repeat;
+}

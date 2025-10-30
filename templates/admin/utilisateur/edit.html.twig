@@ -1,0 +1,13 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Symfsino - Modifier un Utilisateur{% endblock %}
+
+{% block admin_content %}
+    <h1>Edit Utilisateur</h1>
+
+    {{ include('admin/utilisateur/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a href="{{ path('app_admin_utilisateur_index') }}">back to list</a>
+
+    {{ include('admin/utilisateur/_delete_form.html.twig') }}
+{% endblock %}

@@ -17,28 +17,25 @@ final class AdminUtilisateurController extends AbstractController
     #[Route(name: 'app_admin_utilisateur_index', methods: ['GET'])]
     public function index(UtilisateurRepository $utilisateurRepository): Response
     {
-        return $this->render('admin/utilisateur/index.html.twig', [
-            'utilisateurs' => $utilisateurRepository->findAll(),
-        ]);
-    }
+        $utilisateurs = $utilisateurRepository->findAll();
 
-    #[Route('/new', name: 'app_admin_utilisateur_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $utilisateur = new Utilisateur();
-        $form = $this->createForm(UtilisateurType::class, $utilisateur);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($utilisateur);
-            $entityManager->flush();
-
-            return $this->redirectToRoute('app_admin_utilisateur_index', [], Response::HTTP_SEE_OTHER);
+        // ➜ Construire un formulaire (FormView) par utilisateur pour la modale d'édition
+        $forms = [];
+        foreach ($utilisateurs as $u) {
+            $forms[$u->getId()] = $this->createForm(
+                UtilisateurType::class,
+                $u,
+                [
+                    // Le submit de la modale renverra sur ta route d'édition
+                    'action' => $this->generateUrl('app_admin_utilisateur_edit', ['id' => $u->getId()]),
+                    'method' => 'POST',
+                ]
+            )->createView();
         }
 
-        return $this->render('admin/utilisateur/new.html.twig', [
-            'utilisateur' => $utilisateur,
-            'form' => $form,
+        return $this->render('admin/utilisateur/index.html.twig', [
+            'utilisateurs' => $utilisateurs,
+            'forms' => $forms, // <-- indispensable pour le Twig
         ]);
     }
 
@@ -56,17 +53,31 @@ final class AdminUtilisateurController extends AbstractController
         $form = $this->createForm(UtilisateurType::class, $utilisateur);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+        if ($request->isMethod('POST')) {
+            if ($form->isSubmitted() && $form->isValid()) {
+                $entityManager->flush();
+                $this->addFlash('success', 'Utilisateur mis à jour.');
+            } else {
+                // ==> Collecte des erreurs pour comprendre la cause
+                $messages = [];
+                foreach ($form->getErrors(true, true) as $error) {
+                    $origin = $error->getOrigin();
+                    $name = $origin ? $origin->getName() : 'form';
+                    $messages[] = sprintf('%s: %s', $name, $error->getMessage());
+                }
+                $this->addFlash('danger', 'Échec de la mise à jour (formulaire invalide). ' . implode(' | ', $messages));
+            }
 
-            return $this->redirectToRoute('app_admin_utilisateur_index', [], Response::HTTP_SEE_OTHER);
+            return $this->redirectToRoute('app_admin_utilisateur_index');
         }
 
+        // GET classique
         return $this->render('admin/utilisateur/edit.html.twig', [
             'utilisateur' => $utilisateur,
             'form' => $form,
         ]);
     }
+
 
     #[Route('/{id}', name: 'app_admin_utilisateur_delete', methods: ['POST'])]
     public function delete(Request $request, Utilisateur $utilisateur, EntityManagerInterface $entityManager): Response
