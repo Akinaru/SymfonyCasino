@@ -3,62 +3,102 @@
 {% block title %}Symfsino - Profil{% endblock %}
 
 {% block page_content %}
-    <div class="py-4">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h1 class="h4 mb-0">Mon profil</h1>
+    <div class="py-4 text-white text-white-scope">
+        <h1 class="h4 mb-3">Mon profil</h1>
+
+        {# IDs uniques pour l’aperçu live #}
+        {% set ns = form.vars.id %}
+        {% set avatarInputId = ns ~ '-avatar-input' %}
+        {% set avatarPreviewId = ns ~ '-avatar-preview' %}
+        {% set currentAvatar = form.avatar is defined and form.avatar.vars.value ? form.avatar.vars.value : '' %}
+
+        {{ form_start(form, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
+
+        {{ form_errors(form) }}
+
+        <div class="row g-4">
+            {# Colonne gauche : identité + avatar #}
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.pseudo, null, { label_attr: { class: 'form-label' } }) }}
+                    {{ form_widget(form.pseudo, { attr: { class: 'form-control' } }) }}
+                    {{ form_errors(form.pseudo) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.email, null, { label_attr: { class: 'form-label' } }) }}
+                    {{ form_widget(form.email, { attr: { class: 'form-control' } }) }}
+                    {{ form_errors(form.email) }}
+                </div>
+
+                {% if form.avatar is defined %}
+                    <div class="mb-3">
+                        {{ form_label(form.avatar, null, { label_attr: { class: 'form-label' } }) }}
+                        {{ form_widget(form.avatar, { id: avatarInputId, attr: { class: 'form-control' } }) }}
+                        {{ form_errors(form.avatar) }}
+
+                        <div class="mt-3">
+                            <div class="form-text text-white mb-2">Aperçu de l’avatar</div>
+                            <img
+                                id="{{ avatarPreviewId }}"
+                                src="https://mc-heads.net/avatar/{{ currentAvatar is not empty ? currentAvatar|url_encode ~ '/128' : 'Steve/128' }}"
+                                alt="Aperçu avatar"
+                                width="128" height="128"
+                                class="img-thumbnail"
+                                style="object-fit: cover;"
+                            >
+                        </div>
                     </div>
+                {% endif %}
+            </div>
 
-                    <div class="card-body">
-                        {# Désactive la validation HTML5 et Turbo pour bien voir les erreurs Symfony #}
-                        {{ form_start(form, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
+            {# Colonne droite : changement de mot de passe #}
+            <div class="col-md-6">
+                <h5 class="mb-2">Changer le mot de passe</h5>
+                <p class="mb-3">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe.</p>
 
-                        {# Erreurs globales #}
-                        {{ form_errors(form) }}
+                <div class="mb-3">
+                    {{ form_label(form.currentPassword, null, { label_attr: { class: 'form-label' } }) }}
+                    {{ form_widget(form.currentPassword, { attr: { class: 'form-control' } }) }}
+                    {{ form_errors(form.currentPassword) }}
+                </div>
 
-                        <div class="mb-3">
-                            {{ form_label(form.pseudo, null, { label_attr: { class: 'form-label' } }) }}
-                            {{ form_widget(form.pseudo, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(form.pseudo) }}
-                        </div>
+                <div class="mb-3">
+                    {{ form_label(form.newPassword, null, { label_attr: { class: 'form-label' } }) }}
+                    {{ form_widget(form.newPassword, { attr: { class: 'form-control' } }) }}
+                    {{ form_errors(form.newPassword) }}
+                </div>
 
-                        <div class="mb-3">
-                            {{ form_label(form.email, null, { label_attr: { class: 'form-label' } }) }}
-                            {{ form_widget(form.email, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(form.email) }}
-                        </div>
-
-                        <hr class="my-4">
-
-                        <h5 class="mb-2">Changer le mot de passe</h5>
-                        <p class="text-muted small mb-3">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe.</p>
-
-                        <div class="mb-3">
-                            {{ form_label(form.currentPassword, null, { label_attr: { class: 'form-label' } }) }}
-                            {{ form_widget(form.currentPassword, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(form.currentPassword) }}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ form_label(form.newPassword, null, { label_attr: { class: 'form-label' } }) }}
-                            {{ form_widget(form.newPassword, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(form.newPassword) }}
-                        </div>
-
-                        <div class="mb-4">
-                            {{ form_label(form.confirmPassword, null, { label_attr: { class: 'form-label' } }) }}
-                            {{ form_widget(form.confirmPassword, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(form.confirmPassword) }}
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100">Mettre à jour</button>
-
-                        {{ form_end(form) }}
-                    </div>
+                <div class="mb-0">
+                    {{ form_label(form.confirmPassword, null, { label_attr: { class: 'form-label' } }) }}
+                    {{ form_widget(form.confirmPassword, { attr: { class: 'form-control' } }) }}
+                    {{ form_errors(form.confirmPassword) }}
                 </div>
             </div>
         </div>
+
+        {{ form_rest(form) }}
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+        </div>
+
+        {{ form_end(form) }}
     </div>
+
+    <script>
+        (function () {
+            const input = document.getElementById('{{ avatarInputId }}');
+            const preview = document.getElementById('{{ avatarPreviewId }}');
+            if (!input || !preview) return;
+
+            const update = () => {
+                const v = (input.value || '').trim();
+                const name = v !== '' ? encodeURIComponent(v) : 'Steve';
+                preview.src = `https://mc-heads.net/avatar/${name}/128`;
+            };
+
+            input.addEventListener('input', update);
+        })();
+    </script>
 {% endblock %}

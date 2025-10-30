@@ -24,6 +24,14 @@ class ProfileType extends AbstractType
                 'label' => 'Adresse email',
                 'attr' => ['class' => 'form-control'],
             ])
+            ->add('avatar', TextType::class, [
+                'label' => 'Avatar (pseudo Minecraft)',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'ex: Steve',
+                ],
+            ])
             ->add('currentPassword', PasswordType::class, [
                 'label' => 'Mot de passe actuel',
                 'mapped' => false,
