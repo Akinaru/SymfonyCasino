@@ -23,6 +23,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $pseudo = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $avatar = null;
+
     #[ORM\Column(type: 'integer', options: ['default' => 0])]
     private int $balance = 0;
 
@@ -64,6 +67,29 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->pseudo = $pseudo;
         return $this;
+    }
+
+    public function getAvatar(): ?string
+    {
+        return $this->avatar;
+    }
+
+    public function setAvatar(?string $avatar): self
+    {
+        $this->avatar = $avatar;
+        return $this;
+    }
+
+    public function getAvatarUrl(): string
+    {
+        $base = 'https://mc-heads.net/avatar';
+        $avatar = $this->avatar ?? null;
+
+        if (is_string($avatar) && $avatar !== '') {
+            return $base . '/' . rawurlencode($avatar);
+        }
+
+        return $base;
     }
 
     public function getBalance(): float

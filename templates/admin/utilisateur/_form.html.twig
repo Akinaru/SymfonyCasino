@@ -1,7 +1,8 @@
 {# templates/admin/utilisateur/_form.html.twig #}
 {# Variables attendues :
-   - form     : FormView (obligatoire)
-   - form_id  : string (optionnel) — id HTML du <form> si tu soumets depuis le footer de la modal
+   - form      : FormView (obligatoire)
+   - form_id   : string (optionnel) — id HTML du <form> si tu soumets depuis le footer de la modal
+   - field_ns  : string (optionnel) — préfixe unique pour les id HTML des champs (ex: formId)
 #}
 
 {% set baseAttr = { 'data-turbo': 'false' } %}
@@ -10,8 +11,55 @@
     : { attr: baseAttr }
 %}
 
+{# espace de noms unique pour éviter les collisions d’IDs si plusieurs formulaires sont sur la page #}
+{% set ns = field_ns is defined ? field_ns : form.vars.id %}
+{% set avatarInputId = ns ~ '-avatar-input' %}
+{% set avatarPreviewId = ns ~ '-avatar-preview' %}
+
 {{ form_start(form, formOptions) }}
     {{ form_row(form.email) }}
     {{ form_row(form.pseudo) }}
+
+    {# Balance (entier) #}
+    {{ form_row(form.balance) }}
+
+    {# Avatar + aperçu carré #}
+<div class="mb-3">
+    {{ form_label(form.avatar) }}
+    {{ form_widget(form.avatar, { id: avatarInputId }) }}
+    {% set currentAvatar = form.avatar.vars.value ?? '' %}
+    <div class="mt-2">
+        <img
+            id="{{ avatarPreviewId }}"
+            src="https://mc-heads.net/avatar/{{ currentAvatar is not empty ? currentAvatar|url_encode ~ '/128' : 'Steve/128' }}"
+            alt="Aperçu avatar"
+            width="96" height="96"
+            class="img-thumbnail border-secondary"
+            style="object-fit: cover;"
+        >
+    </div>
+    {{ form_help(form.avatar) }}
+    {{ form_errors(form.avatar) }}
+</div>
+
+{# Champs restants (CSRF, etc.) #}
     {{ form_rest(form) }}
 {{ form_end(form, { render_rest: false }) }}
+
+{# Live preview : met à jour l’URL de l’img en temps réel #}
+<script>
+    (function () {
+        const input = document.getElementById('{{ avatarInputId }}');
+        const preview = document.getElementById('{{ avatarPreviewId }}');
+        if (!input || !preview) return;
+
+        const update = () => {
+            const v = (input.value || '').trim();
+            const name = v !== '' ? encodeURIComponent(v) : 'Steve';
+            // taille 128px (source), affichée à 96px
+            preview.src = `https://mc-heads.net/avatar/${name}/128`;
+        };
+
+        input.addEventListener('input', update);
+    })();
+</script>

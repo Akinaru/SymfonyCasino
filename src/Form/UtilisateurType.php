@@ -10,12 +10,13 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 // types de champs
 use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 
 class UtilisateurType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        // Édition : seulement email + pseudo
+        // Édition : email, pseudo, balance (entier), avatar (string)
         $builder
             ->add('email', EmailType::class, [
                 'label' => 'Email',
@@ -23,6 +24,22 @@ class UtilisateurType extends AbstractType
             ->add('pseudo', TextType::class, [
                 'label' => 'Pseudo',
                 'required' => false,
+            ])
+            ->add('balance', IntegerType::class, [
+                'label' => 'Balance (€) — entier',
+                'required' => false,
+                'empty_data' => '0',
+                'attr' => [
+                    'min' => 0,
+                    'step' => 1,
+                ],
+            ])
+            ->add('avatar', TextType::class, [
+                'label' => 'Avatar (pseudo Minecraft)',
+                'required' => false,
+                'attr' => [
+                    'placeholder' => 'ex: Steve',
+                ],
             ]);
     }
 

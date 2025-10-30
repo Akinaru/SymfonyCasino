@@ -5,9 +5,33 @@
 {% block content %}
     <h1>Créer un compte</h1>
 
+    {% set ns = registrationForm.vars.id %}
+    {% set avatarInputId = ns ~ '-avatar-input' %}
+    {% set avatarPreviewId = ns ~ '-avatar-preview' %}
+    {% set currentAvatar = registrationForm.avatar.vars.value ?? '' %}
+
     {{ form_start(registrationForm, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
     {{ form_row(registrationForm.pseudo) }}
     {{ form_row(registrationForm.email) }}
+
+    {# Champ avatar + aperçu live #}
+    <div class="mb-3">
+        {{ form_label(registrationForm.avatar) }}
+        {{ form_widget(registrationForm.avatar, { id: avatarInputId }) }}
+        <div class="mt-2">
+            <img
+                id="{{ avatarPreviewId }}"
+                src="https://mc-heads.net/avatar/{{ currentAvatar is not empty ? currentAvatar|url_encode ~ '/128' : 'Steve/128' }}"
+                alt="Aperçu avatar"
+                width="96" height="96"
+                class="img-thumbnail border-secondary"
+                style="object-fit: cover;"
+            >
+        </div>
+        {{ form_help(registrationForm.avatar) }}
+        {{ form_errors(registrationForm.avatar) }}
+    </div>
+
     {{ form_row(registrationForm.plainPassword) }}
 
     <button class="btn btn-primary">S'inscrire</button>
@@ -17,4 +41,20 @@
         Déjà un compte ?
         <a href="{{ path('app_login') }}">Se connecter</a>
     </p>
+
+    <script>
+        (function () {
+            const input = document.getElementById('{{ avatarInputId }}');
+            const preview = document.getElementById('{{ avatarPreviewId }}');
+            if (!input || !preview) return;
+
+            const update = () => {
+                const v = (input.value || '').trim();
+                const name = v !== '' ? encodeURIComponent(v) : 'Steve';
+                preview.src = `https://mc-heads.net/avatar/${name}/128`;
+            };
+
+            input.addEventListener('input', update);
+        })();
+    </script>
 {% endblock %}

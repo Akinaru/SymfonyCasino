@@ -36,6 +36,15 @@ class RegistrationFormType extends AbstractType
                 ],
                 'attr' => ['class' => 'form-control'],
             ])
+            // --- Nouveau : champ avatar (pseudo Minecraft) ---
+            ->add('avatar', TextType::class, [
+                'label' => 'Avatar (pseudo Minecraft)',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'ex: Steve',
+                ],
+            ])
             ->add('plainPassword', PasswordType::class, [
                 'label' => 'Mot de passe',
                 'mapped' => false,

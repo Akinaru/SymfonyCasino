@@ -20,8 +20,11 @@ html, body {
 }
 
 .balance{
-
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
+
 .balance::after {
     content: "";
     display: inline-block;

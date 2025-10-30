@@ -14,7 +14,7 @@
             {% if app.user %}
                 <div class="d-none d-lg-flex align-items-center justify-content-center flex-grow-1">
                     <div class="badge text-bg-light border fs-6 px-2 d-flex justify-content-between align-items-center">
-                        <span class="balance" style="margin-top: 5px">{{ app.user.balance }}</span>
+                        <div class="balance" >{{ app.user.balance }}</div>
                     </div>
                 </div>
             {% else %}
@@ -27,7 +27,7 @@
                     <div class="dropdown text-end">
                         <a href="#" class="d-inline-flex align-items-center link-dark text-decoration-none dropdown-toggle"
                            id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://i.pinimg.com/1200x/54/f4/b5/54f4b55a59ff9ddf2a2655c7f35e4356.jpg" alt="avatar" width="32" height="32" class="rounded-circle me-2">
+                            <img src="{{ app.user.avatarUrl }}" alt="avatar" width="32" height="32" class="rounded-circle me-2">
                             <span class="me-2">{{ app.user.pseudo ?? app.user.email }}</span>
                             {% if is_granted('ROLE_ADMIN') %}
                                 <span class="badge bg-danger">Admin</span>

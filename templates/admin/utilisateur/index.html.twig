@@ -28,7 +28,7 @@
                         <tr>
                             <td>
                                 <img
-                                    src="https://i.pinimg.com/1200x/54/f4/b5/54f4b55a59ff9ddf2a2655c7f35e4356.jpg"
+                                    src="{{ utilisateur.avatarUrl }}"
                                     alt="Avatar"
                                     class="rounded-circle"
                                     style="width:40px;height:40px;object-fit:cover;"
@@ -38,7 +38,6 @@
                             <td class="text-light">{{ utilisateur.email }}</td>
                             <td class="text-light">{{ utilisateur.pseudo ?? '—' }}</td>
 
-                            {# Balance avec icône émeraude via CSS ::after #}
                             <td class="text-light">
                                 <span class="balance">{{ utilisateur.balance ?? 0 }}</span>
                             </td>
@@ -81,7 +80,8 @@
                                     <div class="modal-body">
                                         {{ include('admin/utilisateur/_form.html.twig', {
                                             form: forms[utilisateur.id],
-                                            form_id: formId
+                                            form_id: formId,
+                                            field_ns: formId
                                         }) }}
                                     </div>
 
