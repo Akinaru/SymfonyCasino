@@ -1,0 +1,98 @@
+:root {
+    --card-bg: #121212;
+    --card-bd: #2a2a2a;
+    --muted: #9ea3a8;
+    --accent: #4caf50; /* vert "win" */
+    --danger: #e53935; /* rouge "lose" */
+}
+
+/* Conteneur principal du jeu : centré, largeur contrôlée, responsive */
+.game-wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Carte de jeu : min-height pour stabiliser la mise en page */
+.game-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
+    min-height: 360px; /* stabilité visuelle */
+}
+
+/* Zone de playground : centre les éléments verticalement/horizontalement */
+.playfield-area {
+    min-height: 600px;
+    display: grid;
+    place-items: center;
+    padding: 1rem 0;
+}
+
+/* Typographies cohérentes */
+.typo-eyebrow {
+    font-size: .8rem;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+.typo-title {
+    font-weight: 700;
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+}
+.typo-kpi {
+    font-weight: 700;
+    font-size: clamp(1.125rem, 1rem + 1vw, 1.75rem);
+}
+.typo-helper {
+    font-size: .95rem;
+    color: var(--muted);
+}
+
+
+/* Statut résultat */
+.status-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .25rem;
+    justify-items: center;
+    text-align: center;
+}
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border: 1px solid var(--card-bd);
+    background: #171717;
+    border-radius: 999px;
+    padding: .25rem .75rem;
+    font-size: .9rem;
+    color: var(--muted);
+}
+.status-chip.win { color: #b7f5c2; border-color: rgba(76, 175, 80, .35); background: rgba(76, 175, 80, .08); }
+.status-chip.lose { color: #ffc3c0; border-color: rgba(229, 57, 53, .35); background: rgba(229, 57, 53, .08); }
+
+/* Formulaire/paris dans la sidebar : espacements harmonisés */
+.form-compact .form-label { margin-bottom: .25rem; }
+.form-compact .form-control { height: 42px; }
+
+/* Cartes infos sous le jeu */
+.info-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-bd);
+}
+.info-card + .info-card { margin-top: .75rem; }
+
+.payout-table th, .payout-table td { font-size: .95rem; }
+.payout-table th { color: #d1d5db; }
+.payout-table td { color: #c7cdd3; }
+
+/* Petites puces */
+.dot {
+    width: .5rem; height: .5rem; border-radius: 999px; display: inline-block;
+    margin-right: .5rem; translate: 0 1px;
+}
+.dot-green { background: var(--accent); }
+.dot-red { background: var(--danger); }
+.dot-blue { background: #4aa3ff; }
+.dot-gold { background: #f5c452; }
+.dot-gold { background: #f5c452; }

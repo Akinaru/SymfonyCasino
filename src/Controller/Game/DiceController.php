@@ -46,6 +46,7 @@ class DiceController extends AbstractController
         $user = $this->getUser();
 
         $data   = json_decode($request->getContent(), true) ?? [];
+        $rawAmount = $data['amount'] ?? null;
         $amount = (int)($data['amount'] ?? 0);
         $token  = (string)($data['_token'] ?? '');
 
@@ -56,8 +57,33 @@ class DiceController extends AbstractController
         $minBet = 1;
         $maxBet = 1000;
 
-        if ($amount < $minBet || $amount > $maxBet) {
-            return $this->json(['ok' => false, 'error' => 'Montant du pari invalide.'], 400);
+        /** Validations détaillées du montant **/
+        if ($rawAmount === null || $rawAmount === '') {
+            return $this->json(['ok' => false, 'error' => 'Veuillez saisir un montant.'], 400);
+        }
+
+        if (!is_numeric($rawAmount)) {
+            return $this->json(['ok' => false, 'error' => 'Montant invalide : saisissez un nombre.'], 400);
+        }
+
+        if ((string)(int)$rawAmount !== (string)$rawAmount) {
+            return $this->json(['ok' => false, 'error' => 'Le montant doit être un entier, sans décimales.'], 400);
+        }
+
+        $amount = (int)$rawAmount;
+
+        if ($amount < $minBet) {
+            return $this->json([
+                'ok'    => false,
+                'error' => sprintf('Montant trop faible : le minimum est de %d.', $minBet),
+            ], 400);
+        }
+
+        if ($amount > $maxBet) {
+            return $this->json([
+                'ok'    => false,
+                'error' => sprintf('Montant trop élevé : le maximum est de %d.', $maxBet),
+            ], 400);
         }
 
         if ($user->getBalance() < $amount) {

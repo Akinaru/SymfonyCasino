@@ -26,3 +26,7 @@ Il couvrira : installation locale, configuration `.env`, création BDD, lancemen
 - [ ] Système d'objet de marché noir (ajout objet sur le marché, achat, inventaire)
 - [ ] Temps réel avec Mercure : chat en direct, action en direct (envoie de monnaie).
 - [ ] Statistiques & profil enrichi : historique de parties, meilleurs scores, badges/récompenses simples.
+
+## Liens utiles
+
+- https://github.com/nebulimity/MoreLikeMinecraft/blob/main/default/default_glass.png

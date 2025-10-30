@@ -1,14 +1,20 @@
 {# templates/game/base_game.html.twig #}
 {% extends 'base_front.html.twig' %}
 
+
 {% block title %}{% block game_title %}{% endblock %}{% endblock %}
 
-{% block stylesheets %}{{ parent() }}{% block game_styles %}{% endblock %}{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/game/base.css') }}">
+    {% block game_styles %}{% endblock %}
+{% endblock %}
 
 {% block page_content %}
     <div class="row g-4 my-4">
         <div class="col-lg-4">{% block game_sidebar %}{% endblock %}</div>
         <div class="col-lg-8">{% block game_playfield %}{% endblock %}</div>
+        <div class="col-12">{% block more_content %}{% endblock %}</div>
     </div>
 {% endblock %}
 
