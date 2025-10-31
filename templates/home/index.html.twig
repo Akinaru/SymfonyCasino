@@ -22,7 +22,7 @@
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     <a href="#" class="btn btn-success btn-lg">Lancer une partie</a>
                     {% if app.user %}
-                        <a href="{{ path('app_profile') }}" class="btn btn-outline-light btn-lg">Mon profil</a>
+                        <a href="{{ path('app_profile_index') }}" class="btn btn-outline-light btn-lg">Mon profil</a>
                     {% else %}
                         <a href="{{ path('app_register') }}" class="btn btn-warning btn-lg">Créer un compte</a>
                         <a href="{{ path('app_login') }}" class="btn btn-outline-light btn-lg">Se connecter</a>

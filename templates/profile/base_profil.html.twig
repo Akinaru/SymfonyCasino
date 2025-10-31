@@ -1,12 +1,29 @@
+{# templates/profile/base_profil.html.twig #}
 {% extends 'base_front.html.twig' %}
 
 {% block title %}Espace profil{% endblock %}
 
 {% block page_content %}
+    {# Route courante #}
+    {% set current = app.request.attributes.get('_route') %}
+
     <section class="mb-4">
-        <nav class="nav nav-underline border-bottom pb-2">
-            <a class="nav-link text-white" href="{{ path('app_profile') }}">Mon profil</a>
-            <a class="nav-link text-white" href="{{ path('app_profile_transactions') }}">Transactions</a>
+        <nav class="nav nav-underline mb-3 pb-2 border-bottom border-secondary" role="navigation">
+            <a
+                class="nav-link {{ current == 'app_profile_index' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+                aria-current="{{ current == 'app_profile_index' ? 'page' : null }}"
+                href="{{ path('app_profile_index') }}"
+            >
+                Mon profil
+            </a>
+
+            <a
+                class="nav-link {{ current == 'app_profile_transactions' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+                aria-current="{{ current == 'app_profile_transactions' ? 'page' : null }}"
+                href="{{ path('app_profile_transactions') }}"
+            >
+                Transactions
+            </a>
         </nav>
     </section>
 

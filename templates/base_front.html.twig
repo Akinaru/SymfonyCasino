@@ -39,7 +39,7 @@
                             {% if is_granted('ROLE_ADMIN') %}
                                 <li><a class="dropdown-item-text" href="{{ path('app_dashboard') }}">Backoffice</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item-text" href="{{ path("app_profile") }}">Profil</a></li>
+                            <li><a class="dropdown-item-text" href="{{ path("app_profile_index") }}">Profil</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ path('app_logout') }}">Se déconnecter</a></li>
                         </ul>
