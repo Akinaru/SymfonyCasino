@@ -21,19 +21,34 @@ class ProfilTransactionController extends AbstractController
             throw new AccessDeniedException('Vous devez être connecté pour voir vos transactions.');
         }
 
-        $form = $this->createForm(TransactionFilterType::class, null, [
-        ]);
+        // Formulaire de filtres (GET)
+        $form = $this->createForm(TransactionFilterType::class, null);
         $form->handleRequest($request);
-
-        $data = $form->getData() ?? [];
+        $data   = $form->getData() ?? [];
         $gameKey = $data['gameKey'] ?? null;
         $types   = $data['types'] ?? [];
 
-        $items = $transactions->searchUserTransactions($user, $gameKey, $types);
+        // Pagination (25/pp)
+        $perPage = 25;
+        $page = max(1, (int) $request->query->get('page', 1));
+        $offset = ($page - 1) * $perPage;
+
+        // Données + total
+        $items = $transactions->searchUserTransactionsPaginated($user, $gameKey, $types, $perPage, $offset);
+        $total = $transactions->countUserTransactions($user, $gameKey, $types);
+        $lastPage = max(1, (int) ceil($total / $perPage));
 
         return $this->render('profile/transactions.html.twig', [
             'transactions' => $items,
             'filterForm'   => $form->createView(),
+            'pagination'   => [
+                'page'      => $page,
+                'perPage'   => $perPage,
+                'total'     => $total,
+                'lastPage'  => $lastPage,
+                'from'      => $total ? $offset + 1 : 0,
+                'to'        => $total ? min($offset + $perPage, $total) : 0,
+            ],
         ]);
     }
 }

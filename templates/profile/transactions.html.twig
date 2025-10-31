@@ -21,7 +21,6 @@
             <div class="col-md-6">
                 <div class="mb-1 text-white">Types</div>
                 <div class="d-flex flex-wrap gap-3">
-                    {# Rendu propre des checkboxes Bootstrap #}
                     {% for child in filterForm.types %}
                         <div class="form-check">
                             {{ form_widget(child, { attr: { class: 'form-check-input' } }) }}
@@ -46,6 +45,17 @@
             Aucune transaction pour le moment.
         </div>
     {% else %}
+
+        {# Info plage + total #}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-white-50">
+                {{ pagination.from }}–{{ pagination.to }} sur {{ pagination.total }}
+            </small>
+
+            {# Pagination top droite #}
+            {% include 'profile/_pagination.html.twig' with { route: 'app_profile_transactions', pagination: pagination } %}
+        </div>
+
         <div class="table-responsive">
             <table class="table table-dark table-striped table-hover align-middle mb-0">
                 <thead class="table-secondary text-dark">
@@ -93,5 +103,11 @@
                 </tbody>
             </table>
         </div>
+
+        {# Pagination bas #}
+        <div class="d-flex justify-content-end mt-3">
+            {% include 'profile/_pagination.html.twig' with { route: 'app_profile_transactions', pagination: pagination } %}
+        </div>
+
     {% endif %}
 {% endblock %}

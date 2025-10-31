@@ -1,0 +1,63 @@
+{# templates/profile/_pagination.html.twig #}
+{% set page = pagination.page %}
+{% set last = pagination.lastPage %}
+{% set baseQuery = app.request.query.all %}
+
+{% if last > 1 %}
+    <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm mb-0">
+            {# Prev #}
+            {% set prevPage = page - 1 %}
+            <li class="page-item {{ page <= 1 ? 'disabled' : '' }}">
+                <a class="page-link"
+                   href="{{ path(route, baseQuery|merge({'page': prevPage > 0 ? prevPage : 1})) }}"
+                   tabindex="{{ page <= 1 ? '-1' : '0' }}"
+                   aria-disabled="{{ page <= 1 ? 'true' : 'false' }}"
+                >&laquo;</a>
+            </li>
+
+            {# Fenêtre de pages #}
+            {% set start = page - 2 %}
+            {% set end   = page + 2 %}
+            {% set start = start < 1 ? 1 : start %}
+            {% set end   = end > last ? last : end %}
+
+            {# Ellipse tête #}
+            {% if start > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ path(route, baseQuery|merge({'page': 1})) }}">1</a>
+                </li>
+                {% if start > 2 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+            {% endif %}
+
+            {# Noyau #}
+            {% for p in start..end %}
+                <li class="page-item {{ p == page ? 'active' : '' }}">
+                    <a class="page-link" href="{{ path(route, baseQuery|merge({'page': p})) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+
+            {# Ellipse queue #}
+            {% if end < last %}
+                {% if end < last - 1 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ path(route, baseQuery|merge({'page': last})) }}">{{ last }}</a>
+                </li>
+            {% endif %}
+
+            {# Next #}
+            {% set nextPage = page + 1 %}
+            <li class="page-item {{ page >= last ? 'disabled' : '' }}">
+                <a class="page-link"
+                   href="{{ path(route, baseQuery|merge({'page': nextPage <= last ? nextPage : last})) }}"
+                   tabindex="{{ page >= last ? '-1' : '0' }}"
+                   aria-disabled="{{ page >= last ? 'true' : 'false' }}"
+                >&raquo;</a>
+            </li>
+        </ul>
+    </nav>
+{% endif %}
