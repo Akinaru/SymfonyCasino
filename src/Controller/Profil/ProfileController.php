@@ -2,6 +2,7 @@
 
 namespace App\Controller\Profil;
 
+use App\Entity\Partie;
 use App\Entity\Utilisateur;
 use App\Enum\TransactionType;
 use App\Form\ProfileType;
@@ -134,6 +135,42 @@ class ProfileController extends AbstractController
             'form' => $form->createView(),
             'stats' => $stats,
             'namesByKey' => $namesByKey,
+        ]);
+    }
+
+    #[Route('/records', name: 'app_profile_records', methods: ['GET'])]
+    public function records(EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        /** @var Utilisateur $user */
+        $user = $this->getUser();
+
+        $qb = $em->createQueryBuilder()
+            ->select('p')
+            ->from(Partie::class, 'p')
+            ->where('p.utilisateur = :user')
+            ->andWhere('p.game_key = :g')
+            ->andWhere('p.gain > 0')
+            ->orderBy('p.gain', 'DESC')
+            ->addOrderBy('p.fin_le', 'DESC')
+            ->setMaxResults(1)
+            ->setParameter('user', $user)
+            ->setParameter('g', 'slots');
+
+        $bestSlots = $qb->getQuery()->getOneOrNullResult();
+
+        $record = null;
+        if ($bestSlots instanceof Partie) {
+            $meta = json_decode($bestSlots->getMetaJson() ?? '[]', true) ?: [];
+            $record = [
+                'partie' => $bestSlots,
+                'grid'   => $meta['grid'] ?? null,
+                'wins'   => $meta['wins'] ?? [],
+            ];
+        }
+
+        return $this->render('profile/records.html.twig', [
+            'recordSlots' => $record,
         ]);
     }
 }

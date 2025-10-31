@@ -49,14 +49,23 @@ class SlotsController extends AbstractController
         $maxBet = 1000;
         $descriptionInGame = "Slots 3×3, 8 lignes payantes (3 horizontales, 3 verticales, 2 diagonales). Symboles pondérés du plus rare au plus commun : Émeraude, Diamant, Redstone, Or, Lapis, Fer, Charbon, Bâton. Le résultat s’affiche à la fin de l’animation.";
 
+        // Items triés par index (1..8)
         $items = array_values(self::SLOT_META);
         usort($items, fn($a,$b) => $a['index'] <=> $b['index']);
 
+        // Pourcentages estimés par symbole (normalisation des weights)
+        $sum = array_sum(self::WEIGHTS);
+        $percents = [];
+        foreach (self::WEIGHTS as $k => $w) {
+            $percents[$k] = round(($w * 100) / $sum, 2); // ex: 12.34
+        }
+
         return $this->render('game/slots/index.html.twig', [
-            'minBet' => $minBet,
-            'maxBet' => $maxBet,
+            'minBet'      => $minBet,
+            'maxBet'      => $maxBet,
             'descriptionInGame' => $descriptionInGame,
-            'items' => $items,
+            'items'       => $items,
+            'percents'    => $percents, // <—
         ]);
     }
 
@@ -165,7 +174,6 @@ class SlotsController extends AbstractController
 
             $weights = self::WEIGHTS;
 
-            // ✅ FIX: construire un paytable indexé par 'slotX'
             $paytable = [];
             foreach (self::SLOT_META as $k => $m) {
                 $paytable[$k] = (int)$m['mult'];

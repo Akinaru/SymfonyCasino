@@ -1,0 +1,83 @@
+{% extends 'profile/base_profil.html.twig' %}
+
+{% block title %}🎰 Symfsino · Records{% endblock %}
+
+{% block profile_content %}
+    <div class="py-4 text-white text-white-scope">
+        <h1 class="h4 mb-3">Mes meilleurs gains</h1>
+
+        <div class="card bg-dark border-secondary mb-4">
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Slots · Meilleur gain</span>
+                {% if recordSlots %}
+                    <small class="text-white-50">#{{ recordSlots.partie.id }} · {{ recordSlots.partie.finLe ? recordSlots.partie.finLe|date('d/m/Y H:i') : '' }}</small>
+                {% else %}
+                    <small class="text-white-50">Aucun gain pour le moment</small>
+                {% endif %}
+            </div>
+
+            {% if recordSlots %}
+                {% set itemImgs = {
+                    'slot1': asset('img/slots/slot1.png'),
+                    'slot2': asset('img/slots/slot2.png'),
+                    'slot3': asset('img/slots/slot3.png'),
+                    'slot4': asset('img/slots/slot4.png'),
+                    'slot5': asset('img/slots/slot5.png'),
+                    'slot6': asset('img/slots/slot6.png'),
+                    'slot7': asset('img/slots/slot7.png'),
+                    'slot8': asset('img/slots/slot8.png')
+                } %}
+
+                {% set winMap = {} %}
+                {% for w in recordSlots.wins %}
+                    {% for pos in w.positions|default([]) %}
+                        {% set k = pos[0] ~ '-' ~ pos[1] %}
+                        {% set winMap = winMap|merge({ (k): true }) %}
+                    {% endfor %}
+                {% endfor %}
+
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <span class="badge text-bg-success">+{{ recordSlots.partie.gain|number_format(0, ',', ' ') }}</span>
+                        <span class="text-white-50 small">Mise {{ recordSlots.partie.mise|number_format(0, ',', ' ') }}</span>
+                    </div>
+
+                    {% if recordSlots.grid is iterable %}
+                        <div class="p-2 rounded" style="background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08);">
+                            <div class="d-grid" style="grid-template-columns: repeat(3, 1fr); gap:10px;">
+                                {% for r in 0..2 %}
+                                    {% for c in 0..2 %}
+                                        {% set sym = recordSlots.grid[r][c] %}
+                                        {% set img = itemImgs[sym]|default(asset('img/slots/slot8.png')) %}
+                                        {% set key = r ~ '-' ~ c %}
+                                        {% set isWin = key in winMap|keys %}
+                                        <div class="d-flex align-items-center justify-content-center rounded position-relative"
+                                             style="
+                                            height:72px;
+                                            background:#0f0f12;
+                                            border:1px solid rgba(255,255,255,.06);
+                                            box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+                                         ">
+                                            <img src="{{ img }}" alt="{{ sym }}" width="44" height="44"
+                                                 style="object-fit:contain; image-rendering:-webkit-optimize-contrast;">
+                                            {% if isWin %}
+                                                <span class="position-absolute top-0 start-0 w-100 h-100"
+                                                      style="border:2px solid rgba(39,174,96,.75); border-radius:8px; box-shadow:0 0 12px rgba(39,174,96,.35) inset;"></span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-white-50">Grille indisponible.</div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="card-body">
+                    <div class="text-white-50">Joue quelques parties pour voir apparaître ton meilleur gain ici.</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

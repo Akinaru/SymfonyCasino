@@ -92,32 +92,81 @@
                     <thead>
                     <tr>
                         <th style="width:56px;">Symbole</th>
-                        <th>Clé</th>
-                        <th style="width:190px;">Multiplicateur (×)</th>
+                        <th>Item</th>
+                        <th style="width:160px;">Multiplicateur (×)</th>
+                        <th style="width:160px;">Probabilité (~%)</th>
                         <th style="width:220px;">Rareté</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr><td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt=""></td><td><code>slot1</code></td><td class="fw-semibold">×20</td><td><span class="badge text-bg-danger">Très rare</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot2.png') }}" width="36" height="36" alt=""></td><td><code>slot2</code></td><td class="fw-semibold">×12</td><td><span class="badge text-bg-warning">Rare</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot3.png') }}" width="36" height="36" alt=""></td><td><code>slot3</code></td><td class="fw-semibold">×9</td><td><span class="badge text-bg-warning">Peu fréquent</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot4.png') }}" width="36" height="36" alt=""></td><td><code>slot4</code></td><td class="fw-semibold">×6</td><td><span class="badge text-bg-info">Intermédiaire</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt=""></td><td><code>slot5</code></td><td class="fw-semibold">×4</td><td><span class="badge text-bg-info">Intermédiaire</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt=""></td><td><code>slot6</code></td><td class="fw-semibold">×3</td><td><span class="badge text-bg-secondary">Commun</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt=""></td><td><code>slot7</code></td><td class="fw-semibold">×2</td><td><span class="badge text-bg-secondary">Commun</span></td></tr>
-                    <tr><td><img src="{{ asset('img/slots/slot8.png') }}" width="36" height="36" alt=""></td><td><code>slot8</code></td><td class="fw-semibold">×1</td><td><span class="badge text-bg-success">Très commun</span></td></tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt="Émeraude"></td>
+                        <td>Émeraude</td>
+                        <td class="fw-semibold">×20</td>
+                        <td>{{ percents['slot1']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-danger">Très rare</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot2.png') }}" width="36" height="36" alt="Diamant"></td>
+                        <td>Diamant</td>
+                        <td class="fw-semibold">×12</td>
+                        <td>{{ percents['slot2']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-warning">Rare</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot3.png') }}" width="36" height="36" alt="Redstone"></td>
+                        <td>Redstone</td>
+                        <td class="fw-semibold">×9</td>
+                        <td>{{ percents['slot3']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-warning">Peu fréquent</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot4.png') }}" width="36" height="36" alt="Or"></td>
+                        <td>Or</td>
+                        <td class="fw-semibold">×6</td>
+                        <td>{{ percents['slot4']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-info">Intermédiaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt="Lapis"></td>
+                        <td>Lapis</td>
+                        <td class="fw-semibold">×4</td>
+                        <td>{{ percents['slot5']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-info">Intermédiaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt="Fer"></td>
+                        <td>Fer</td>
+                        <td class="fw-semibold">×3</td>
+                        <td>{{ percents['slot6']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-secondary">Commun</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt="Charbon"></td>
+                        <td>Charbon</td>
+                        <td class="fw-semibold">×2</td>
+                        <td>{{ percents['slot7']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-secondary">Commun</span></td>
+                    </tr>
+                    <tr>
+                        <td><img src="{{ asset('img/slots/slot8.png') }}" width="36" height="36" alt="Bâton"></td>
+                        <td>Bâton</td>
+                        <td class="fw-semibold">×1</td>
+                        <td>{{ percents['slot8']|number_format(2, ',', ' ') }}%</td>
+                        <td><span class="badge text-bg-success">Très commun</span></td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
             <ul class="mb-0 small text-white-50">
-                <li>Pondérations côté serveur : slot1 le plus rare → slot8 le plus commun.</li>
+                <li>Pondérations côté serveur : Émeraude (plus rare) → Bâton (plus commun). Les pourcentages sont approximatifs (tirage pondéré).</li>
                 <li>Lignes payantes : 3 horizontales, 3 verticales, 2 diagonales (3 identiques = gain).</li>
                 <li>Le résultat s’affiche quand l’animation est finie (main propre).</li>
             </ul>
         </div>
     </div>
-    {{ render(path('app_widgets_slots_last_wins')) }}
 
+    {{ render(path('app_widgets_slots_last_wins')) }}
 {% endblock %}
 
 {% block game_scripts %}

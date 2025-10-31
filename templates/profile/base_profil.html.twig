@@ -24,6 +24,14 @@
             >
                 Transactions
             </a>
+
+            <a
+                class="nav-link {{ current == 'app_profile_records' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+                aria-current="{{ current == 'app_profile_records' ? 'page' : null }}"
+                href="{{ path('app_profile_records') }}"
+            >
+                Records
+            </a>
         </nav>
     </section>
 
