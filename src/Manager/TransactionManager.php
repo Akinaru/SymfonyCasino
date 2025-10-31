@@ -31,7 +31,7 @@ final class TransactionManager
             ->setPartie($partie)
             ->setGameKey($gameKey)
             ->setType(TransactionType::MISE)
-            ->setMontant($amount)
+            ->setMontant(-$amount)
             ->setSoldeAvant($before)
             ->setSoldeApres($user->getBalance())
             ->setCreeLe($at);

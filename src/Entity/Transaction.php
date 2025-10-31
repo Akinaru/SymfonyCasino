@@ -3,9 +3,10 @@
 namespace App\Entity;
 
 use App\Enum\TransactionType;
+use App\Repository\TransactionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: TransactionRepository::class)]
 #[ORM\Table(name: "transaction")]
 class Transaction
 {

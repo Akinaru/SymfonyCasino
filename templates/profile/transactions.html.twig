@@ -1,0 +1,97 @@
+{# templates/profile/transactions.html.twig #}
+{% extends 'profile/base_profil.html.twig' %}
+
+{% block title %}🎰 Symfsino - Transactions{% endblock %}
+
+{% block profile_content %}
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h5 mb-0 text-white">Mes transactions</h1>
+    </div>
+
+    {# —— Filtres —— #}
+    <div class="card bg-dark border-secondary mb-3">
+        <div class="card-body py-3">
+            {{ form_start(filterForm, { method: 'get', attr: { class: 'row g-3 align-items-end text-white-scope' } }) }}
+
+            <div class="col-md-4">
+                {{ form_label(filterForm.gameKey, null, { label_attr: { class: 'form-label text-white' } }) }}
+                {{ form_widget(filterForm.gameKey, { attr: { class: 'form-select' } }) }}
+            </div>
+
+            <div class="col-md-6">
+                <div class="mb-1 text-white">Types</div>
+                <div class="d-flex flex-wrap gap-3">
+                    {# Rendu propre des checkboxes Bootstrap #}
+                    {% for child in filterForm.types %}
+                        <div class="form-check">
+                            {{ form_widget(child, { attr: { class: 'form-check-input' } }) }}
+                            {{ form_label(child, null, { label_attr: { class: 'form-check-label text-white' } }) }}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-2 text-end">
+                <button class="btn btn-primary w-100">Filtrer</button>
+                <a href="{{ path('app_profile_transactions') }}" class="btn btn-outline-secondary w-100 mt-2">Réinitialiser</a>
+            </div>
+
+            {{ form_end(filterForm) }}
+        </div>
+    </div>
+
+    {# —— Résultats —— #}
+    {% if transactions is empty %}
+        <div class="alert alert-secondary border text-white">
+            Aucune transaction pour le moment.
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-hover align-middle mb-0">
+                <thead class="table-secondary text-dark">
+                <tr>
+                    <th style="width:90px;">N°</th>
+                    <th style="width:170px;">Date</th>
+                    <th>Jeu</th>
+                    <th style="width:150px;">Type</th>
+                    <th style="width:140px;" class="text-end">Montant</th>
+                    <th style="width:160px;" class="text-end">Solde avant</th>
+                    <th style="width:160px;" class="text-end">Solde après</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for t in transactions %}
+                    {% set isCredit = t.montant > 0 %}
+                    <tr>
+                        <td>#{{ t.id }}</td>
+                        <td><span class="text-white-50">{{ t.creeLe|date('d/m/Y H:i') }}</span></td>
+                        <td>
+                            {% if t.gameKey %}
+                                <span class="badge text-bg-info text-dark">{{ t.gameKey }}</span>
+                            {% elseif t.partie %}
+                                <span class="badge text-bg-secondary">Partie #{{ t.partie.id }}</span>
+                            {% else %}
+                                <span class="text-white-50">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {{ isCredit ? 'text-bg-success' : 'text-bg-danger' }}">
+                                {{ t.type.value ?? t.type }}
+                            </span>
+                        </td>
+                        <td class="text-end {{ isCredit ? 'text-success' : 'text-danger' }}">
+                            {{ (isCredit ? '+' : '') ~ t.montant|number_format(0, ',', ' ') }}
+                        </td>
+                        <td class="text-end">
+                            {{ t.soldeAvant|number_format(0, ',', ' ') }}
+                        </td>
+                        <td class="text-end">
+                            {{ t.soldeApres|number_format(0, ',', ' ') }}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

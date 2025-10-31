@@ -1,0 +1,15 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Espace profil{% endblock %}
+
+{% block page_content %}
+    <section class="mb-4">
+        <nav class="nav nav-underline border-bottom pb-2">
+            <a class="nav-link text-white" href="{{ path('app_profile') }}">Mon profil</a>
+            <a class="nav-link text-white" href="{{ path('app_profile_transactions') }}">Transactions</a>
+        </nav>
+    </section>
+
+    {# Contenu spécifique à chaque page du profil #}
+    {% block profile_content %}{% endblock %}
+{% endblock %}

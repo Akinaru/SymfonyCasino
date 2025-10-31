@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Profil;
 
 use App\Entity\Utilisateur;
 use App\Form\ProfileType;
