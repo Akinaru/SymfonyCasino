@@ -1,15 +1,11 @@
-
 {% extends 'game/base_game.html.twig' %}
 
 {% block game_title %}🎰 Symfsino - Dice{% endblock %}
 
-
-{# —— STYLES (visuel uniquement) —— #}
 {% block game_styles %}
     <link rel="stylesheet" href="{{ asset('styles/game/dice.css') }}">
 {% endblock %}
 
-{# ————— SIDEBAR ————— #}
 {% block game_sidebar %}
     <div class="card info-card text-light h-100">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
@@ -35,12 +31,34 @@
                 <div class="form-text text-secondary">Jouez de manière responsable.</div>
             </div>
 
-            <button id="playBtn" class="btn btn-primary w-100">Jouer</button>
+            <div class="d-grid gap-2 mb-3">
+                <button id="playBtn" class="btn btn-primary">Jouer</button>
+            </div>
+
+            <hr class="border-secondary">
+
+            <div class="mb-2">
+                <div class="typo-eyebrow">Auto-roll</div>
+            </div>
+            <div class="row g-2 align-items-end mb-2">
+                <div class="col-6">
+                    <label for="autoCount" class="form-label mb-1">Nombre de lancers</label>
+                    <input id="autoCount" type="number" class="form-control" min="1" value="10">
+                </div>
+                <div class="col-6 d-grid">
+                    <button id="autoStartBtn" class="btn btn-outline-light">Lancer l’auto-roll</button>
+                </div>
+            </div>
+            <div class="d-grid">
+                <button id="autoStopBtn" class="btn btn-outline-danger" disabled>Stop</button>
+            </div>
+            <div class="mt-2">
+                <small id="autoStatus" class="text-white-50">Auto : inactif</small>
+            </div>
         </div>
     </div>
 {% endblock %}
 
-{# ————— PLAYFIELD ————— #}
 {% block game_playfield %}
     <div class="card game-card text-light h-100">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
@@ -55,7 +73,6 @@
                     </div>
 
                     <div id="coin" class="coin">
-                        {# 👉 Image d’attente au chargement #}
                         <img id="coinImg" src="{{ asset('img/dice/wait.png') }}" alt="Attente">
                     </div>
                 </div>
@@ -63,7 +80,6 @@
         </div>
     </div>
 {% endblock %}
-
 
 {% block more_content %}
     <div class="info-card card text-light mb-3">
@@ -161,23 +177,28 @@
     </div>
 {% endblock %}
 
-{# ————— SCRIPTS ————— #}
 {% block game_scripts %}
     <script type="module">
         (function () {
             let wired = false;
+            let autoState = { active: false, total: 0, remaining: 0, stopFlag: false };
 
             function initCoinFlip() {
                 if (wired) return;
 
-                const playBtn   = document.getElementById('playBtn');
-                const betInput  = document.getElementById('betInput');
-                const coinEl    = document.getElementById('coin');
-                const coinImg   = document.getElementById('coinImg');
-                const resultEl  = document.getElementById('result');
-                const balanceEl = document.getElementById('balanceDisplay');
+                const playBtn    = document.getElementById('playBtn');
+                const betInput   = document.getElementById('betInput');
+                const coinEl     = document.getElementById('coin');
+                const coinImg    = document.getElementById('coinImg');
+                const resultEl   = document.getElementById('result');
+                const balanceEl  = document.getElementById('balanceDisplay');
 
-                if (!playBtn || !betInput || !coinEl || !coinImg || !resultEl || !balanceEl) return;
+                const autoCount  = document.getElementById('autoCount');
+                const autoStart  = document.getElementById('autoStartBtn');
+                const autoStop   = document.getElementById('autoStopBtn');
+                const autoStatus = document.getElementById('autoStatus');
+
+                if (!playBtn || !betInput || !coinEl || !coinImg || !resultEl || !balanceEl || !autoCount || !autoStart || !autoStop || !autoStatus) return;
                 wired = true;
 
                 const endpoint = "{{ path('app_game_dice_play') }}";
@@ -187,7 +208,6 @@
                 const pileSrc  = "{{ asset('img/dice/pile.png') }}";
                 const faceSrc  = "{{ asset('img/dice/face.png') }}";
 
-                // 👉 Forcer l’état visuel “En attente” au premier chargement
                 coinImg.src = waitSrc;
                 coinImg.alt = 'Attente';
                 resultEl.textContent = resultEl.textContent?.trim() || 'En attente…';
@@ -195,90 +215,121 @@
                 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
                 function setBtnDisabled(disabled) {
-                    if (disabled) {
-                        playBtn.disabled = true;
-                        playBtn.classList.add('disabled');
-                        playBtn.setAttribute('aria-disabled', 'true');
-                    } else {
-                        playBtn.disabled = false;
-                        playBtn.classList.remove('disabled');
-                        playBtn.setAttribute('aria-disabled', 'false');
-                    }
+                    playBtn.disabled = !!disabled;
+                    playBtn.classList.toggle('disabled', !!disabled);
+                    playBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
                 }
 
-                function setResult(text) {
-                    if (typeof text === 'string' && text.trim() !== '') {
-                        resultEl.textContent = text;
-                    }
+                function setAutoControls(active) {
+                    autoState.active = active;
+                    autoStop.disabled = !active;
+                    autoStart.disabled = !!active;
+                    betInput.disabled = !!active;
+                    setBtnDisabled(active);
                 }
 
-                function showError(msg) {
+                function setStatus(text) { autoStatus.textContent = text; }
+                function setResult(text) { if (text && text.trim() !== '') resultEl.textContent = text; }
+                function resetVisual() {
                     coinEl.classList.remove('spin');
-                    setResult(msg || 'Erreur inconnue');
+                    coinImg.src = waitSrc; coinImg.alt = 'Attente';
                 }
 
-                function applyResultFromData(data, amount) {
-                    const isWin = (typeof data.win === 'boolean') ? data.win : (Number(data.payout) > 0);
-
-                    return sleep(450).then(() => {
-                        const side = isWin ? 'face' : 'pile';
-                        if (side === 'face') {
-                            coinImg.src = faceSrc;
-                            coinImg.alt = 'Face';
-                        } else {
-                            coinImg.src = pileSrc;
-                            coinImg.alt = 'Pile';
-                        }
-
-                        setResult(isWin ? `Tu as gagné ${data.payout}` : `Tu as perdu ${amount}`);
-
-                        if (typeof data.balance !== 'undefined') {
-                            balanceEl.textContent = data.balance;
-                        }
+                async function apiPlay(amount) {
+                    const res  = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ amount, _token: csrf })
                     });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && typeof data.error === 'string' && data.error.trim() !== '') ? data.error : `Erreur (${res.status})`;
+                        throw new Error(msg);
+                    }
+                    return data;
                 }
 
-                async function play(ev) {
-                    if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
-
-                    const amount = parseInt(betInput.value, 10) || 0;
-
-                    setResult('Lancement…');
-                    setBtnDisabled(true);
-
+                function animateSpin() {
                     coinEl.classList.remove('spin'); void coinEl.offsetWidth; coinEl.classList.add('spin');
+                }
 
+                async function applyResultFromData(data, amount) {
+                    const isWin = (typeof data.win === 'boolean') ? data.win : (Number(data.payout) > 0);
+                    await sleep(450);
+                    const side = isWin ? 'face' : 'pile';
+                    coinImg.src = side === 'face' ? faceSrc : pileSrc;
+                    coinImg.alt = side === 'face' ? 'Face' : 'Pile';
+                    setResult(isWin ? `Tu as gagné ${data.payout}` : `Tu as perdu ${amount}`);
+                    if (typeof data.balance !== 'undefined') {
+                        balanceEl.textContent = data.balance;
+                    }
+                }
+
+                async function playOnce(amount) {
+                    setResult('Lancement…');
+                    animateSpin();
+                    const data = await apiPlay(amount);
+                    await applyResultFromData(data, amount);
+                }
+
+                async function handleManualPlay(ev) {
+                    if (ev) ev.preventDefault();
+                    if (autoState.active) return;
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    setBtnDisabled(true);
                     try {
-                        const res  = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ amount, _token: csrf })
-                        });
-
-                        const text = await res.text();
-                        let data = null;
-                        try { data = JSON.parse(text); } catch (_) {}
-
-                        if (!res.ok || !data || data.ok === false) {
-                            const msg =
-                                (data && typeof data.error === 'string' && data.error.trim() !== '')
-                                    ? data.error
-                                    : `Erreur (${res.status})`;
-                            showError(msg);
-                            return;
-                        }
-
-                        await applyResultFromData(data, amount);
-
+                        await playOnce(amount);
                     } catch (e) {
-                        console.warn('[coin] play error:', e);
-                        showError('Erreur réseau.');
+                        resetVisual();
+                        setResult(e.message || 'Erreur inconnue');
                     } finally {
                         setBtnDisabled(false);
                     }
                 }
 
-                playBtn.addEventListener('click', play);
+                async function runAuto() {
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    autoState.stopFlag = false;
+                    setAutoControls(true);
+                    while (autoState.remaining > 0 && !autoState.stopFlag) {
+                        const idx = autoState.total - autoState.remaining + 1;
+                        setStatus(`Auto : lancer ${idx} / ${autoState.total}`);
+                        try {
+                            await playOnce(amount);
+                        } catch (e) {
+                            resetVisual();
+                            setResult(e.message || 'Erreur');
+                            break;
+                        }
+                        autoState.remaining--;
+                        if (autoState.remaining > 0 && !autoState.stopFlag) {
+                            await sleep(500);
+                        }
+                    }
+                    setStatus('Auto : terminé');
+                    setAutoControls(false);
+                }
+
+                function onAutoStart(ev) {
+                    if (ev) ev.preventDefault();
+                    if (autoState.active) return;
+                    const n = Math.max(1, parseInt(autoCount.value, 10) || 0);
+                    autoState.total = n;
+                    autoState.remaining = n;
+                    setStatus(`Auto : prêt (${n} lancers)`);
+                    runAuto();
+                }
+
+                function onAutoStop(ev) {
+                    if (ev) ev.preventDefault();
+                    if (!autoState.active) return;
+                    autoState.stopFlag = true;
+                    setStatus('Auto : arrêt demandé…');
+                }
+
+                playBtn.addEventListener('click', handleManualPlay);
+                autoStart.addEventListener('click', onAutoStart);
+                autoStop.addEventListener('click', onAutoStop);
             }
 
             document.addEventListener('DOMContentLoaded', initCoinFlip);
@@ -286,4 +337,3 @@
         })();
     </script>
 {% endblock %}
-
