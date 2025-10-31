@@ -1,0 +1,52 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Admin — Marché noir{% endblock %}
+
+{% block admin_content %}
+    <div class="card bg-dark border-secondary">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h1 class="h5 mb-0 text-light">Marché noir — Items</h1>
+            <a class="btn btn-sm btn-primary" href="{{ path('app_admin_market_new') }}">Ajouter</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle mb-0">
+                    <thead class="table-secondary text-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Image</th>
+                        <th>Nom</th>
+                        <th>Type</th>
+                        <th>Prix</th>
+                        <th>Propriétaire</th>
+                        <th class="text-end" style="width:120px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for it in items %}
+                        <tr>
+                            <td>{{ it.id }}</td>
+                            <td><img src="{{ asset(it.imagePath) }}" alt="" style="width:28px;height:28px;"></td>
+                            <td class="text-white">{{ it.name }}</td>
+                            <td>{{ it.typeLabel }}</td>
+                            <td>{{ it.price }}</td>
+                            <td>
+                                {% if it.owner %}
+                                    <span class="badge text-bg-info">{{ it.owner.pseudo ?? it.owner.email }}</span>
+                                {% else %}
+                                    <span class="badge text-bg-success">En vente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('app_admin_market_edit', {id: it.id}) }}" class="btn btn-sm btn-outline-light">Éditer</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" class="text-center text-white-50 py-4">Aucun objet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

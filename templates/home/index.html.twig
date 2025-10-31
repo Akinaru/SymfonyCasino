@@ -21,7 +21,11 @@
                 </p>
                 <div class="d-flex flex-wrap gap-2 mt-3">
                     <a href="{{ path("app_leaderboard_index") }}" class="btn btn-success btn-lg">Leaderboard</a>
+                    <a href="{{ path("app_market_index") }}" class="btn btn-danger btn-lg">Marché</a>
+
+
                     {% if app.user %}
+                        <a href="{{ path("app_inventory_index") }}" class="btn btn-info btn-lg">Inventaire</a>
                         <a href="{{ path('app_profile_index') }}" class="btn btn-outline-light btn-lg">Mon profil</a>
                     {% else %}
                         <a href="{{ path('app_register') }}" class="btn btn-warning btn-lg">Créer un compte</a>

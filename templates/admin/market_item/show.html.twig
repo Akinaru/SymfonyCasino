@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MarketItem{% endblock %}
+
+{% block body %}
+    <h1>MarketItem</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ market_item.id }}</td>
+            </tr>
+            <tr>
+                <th>Type</th>
+                <td>{{ market_item.type }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ market_item.name }}</td>
+            </tr>
+            <tr>
+                <th>Price</th>
+                <td>{{ market_item.price }}</td>
+            </tr>
+            <tr>
+                <th>CreatedAt</th>
+                <td>{{ market_item.createdAt ? market_item.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_market_item_index') }}">back to list</a>
+
+    <a href="{{ path('app_market_item_edit', {'id': market_item.id}) }}">edit</a>
+
+    {{ include('market_item/_delete_form.html.twig') }}
+{% endblock %}

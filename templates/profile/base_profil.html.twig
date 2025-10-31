@@ -32,6 +32,14 @@
             >
                 Records
             </a>
+
+            <a
+                class="nav-link {{ current == 'app_inventory' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+                aria-current="{{ current == 'app_inventory' ? 'page' : null }}"
+                href="{{ path('app_inventory_index') }}"
+            >
+                Inventaire
+            </a>
         </nav>
     </section>
 

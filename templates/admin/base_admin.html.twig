@@ -32,6 +32,14 @@
         >
             Jeux
         </a>
+
+        <a
+            class="nav-link {{ current starts with 'app_admin_market' ? 'active fw-semibold link-light' : 'link-secondary' }}"
+            aria-current="{{ current starts with 'app_admin_market' ? 'page' : null }}"
+            href="{{ path('app_admin_market_index') }}"
+        >
+            Items
+        </a>
     </nav>
 
     {% block admin_content %}{% endblock %}
