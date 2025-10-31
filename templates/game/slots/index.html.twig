@@ -1,0 +1,398 @@
+{% extends 'game/base_game.html.twig' %}
+
+{% block game_title %}🎰 Symfsino - Slots{% endblock %}
+
+{% block game_styles %}
+    <link rel="stylesheet" href="{{ asset('styles/game/slots.css') }}">
+{% endblock %}
+
+{% block game_sidebar %}
+    <div class="card info-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Slots 3×3</span>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000) }}</small>
+        </div>
+
+        <div class="card-body form-compact">
+            <div class="mb-3">
+                <div class="typo-eyebrow">Balance</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">{{ app.user.balance }}</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow">Description</div>
+                <p class="mb-0 typo-helper">{{ descriptionInGame }}</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="betInput" class="form-label">Mise</label>
+                <input id="betInput" type="number" class="form-control"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000) }}"
+                       value="{{ minBet|default(1) }}">
+                <div class="form-text text-secondary">Mise par lancer.</div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button id="playBtn" class="btn btn-primary">Lancer</button>
+            </div>
+
+            <hr class="border-secondary">
+
+            <div class="mb-2"><div class="typo-eyebrow">Auto-roll</div></div>
+            <div class="row g-2 align-items-end mb-2">
+                <div class="col-6">
+                    <label for="autoCount" class="form-label mb-1">Nombre de lancers</label>
+                    <input id="autoCount" type="number" class="form-control" min="1" value="10">
+                </div>
+                <div class="col-6 d-grid">
+                    <button id="autoStartBtn" class="btn btn-outline-light">Démarrer</button>
+                </div>
+            </div>
+            <div class="d-grid">
+                <button id="autoStopBtn" class="btn btn-outline-danger" disabled>Stop</button>
+            </div>
+            <div class="mt-2"><small id="autoStatus" class="text-white-50">Auto : inactif</small></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_playfield %}
+    <div class="card game-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Zone de jeu</span>
+            <small class="typo-helper">Lignes: 3H · 3V · 2D</small>
+        </div>
+
+        <div class="card-body slot-wrapper">
+            <div class="reels-wrap">
+                <div class="reels" id="reels">
+                    <div class="reel"><div class="reel-strip" data-reel="0"></div></div>
+                    <div class="reel"><div class="reel-strip" data-reel="1"></div></div>
+                    <div class="reel"><div class="reel-strip" data-reel="2"></div></div>
+                </div>
+            </div>
+
+            <div class="status-panel mt-3">
+                <div id="result" class="typo-kpi text-center">En attente…</div>
+            </div>
+
+            <div class="text-center">
+                <div id="winLines" class="small text-white-50">—</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block more_content %}
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary"><span class="typo-title">Table des gains & rareté</span></div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle mb-2">
+                    <thead>
+                    <tr>
+                        <th style="width:56px;">Symbole</th>
+                        <th>Clé</th>
+                        <th style="width:190px;">Multiplicateur (×)</th>
+                        <th style="width:220px;">Rareté</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr><td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt=""></td><td><code>slot1</code></td><td class="fw-semibold">×20</td><td><span class="badge text-bg-danger">Très rare</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot2.png') }}" width="36" height="36" alt=""></td><td><code>slot2</code></td><td class="fw-semibold">×12</td><td><span class="badge text-bg-warning">Rare</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot3.png') }}" width="36" height="36" alt=""></td><td><code>slot3</code></td><td class="fw-semibold">×9</td><td><span class="badge text-bg-warning">Peu fréquent</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot4.png') }}" width="36" height="36" alt=""></td><td><code>slot4</code></td><td class="fw-semibold">×6</td><td><span class="badge text-bg-info">Intermédiaire</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt=""></td><td><code>slot5</code></td><td class="fw-semibold">×4</td><td><span class="badge text-bg-info">Intermédiaire</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt=""></td><td><code>slot6</code></td><td class="fw-semibold">×3</td><td><span class="badge text-bg-secondary">Commun</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt=""></td><td><code>slot7</code></td><td class="fw-semibold">×2</td><td><span class="badge text-bg-secondary">Commun</span></td></tr>
+                    <tr><td><img src="{{ asset('img/slots/slot8.png') }}" width="36" height="36" alt=""></td><td><code>slot8</code></td><td class="fw-semibold">×1</td><td><span class="badge text-bg-success">Très commun</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <ul class="mb-0 small text-white-50">
+                <li>Pondérations côté serveur : slot1 le plus rare → slot8 le plus commun.</li>
+                <li>Lignes payantes : 3 horizontales, 3 verticales, 2 diagonales (3 identiques = gain).</li>
+                <li>Le résultat s’affiche quand l’animation est finie (main propre).</li>
+            </ul>
+        </div>
+    </div>
+    {{ render(path('app_widgets_slots_last_wins')) }}
+
+{% endblock %}
+
+{% block game_scripts %}
+    <script type="module">
+        (function () {
+            let wired = false;
+            let auto = { active:false, total:0, remaining:0, stop:false };
+
+            const CELL_H = 100;
+            const FILL_TOP = 6;
+            const FILL_BOTTOM = 6;
+            const PRE_TAPE = 18;
+            const SPIN_MS = 900;
+            const DECEL_COL = [0.86, 0.98, 1.10];
+            const STOP_DELAY = [0, 120, 240];
+            const BOUNCE_OFFSET = 10;
+            const BOUNCE_DOWN_MS = 90;
+            const BOUNCE_UP_MS = 140;
+
+            const IMG = [
+                "{{ asset('img/slots/slot1.png') }}",
+                "{{ asset('img/slots/slot2.png') }}",
+                "{{ asset('img/slots/slot3.png') }}",
+                "{{ asset('img/slots/slot4.png') }}",
+                "{{ asset('img/slots/slot5.png') }}",
+                "{{ asset('img/slots/slot6.png') }}",
+                "{{ asset('img/slots/slot7.png') }}",
+                "{{ asset('img/slots/slot8.png') }}"
+            ];
+
+            function init() {
+                if (wired) return;
+
+                const playBtn    = document.getElementById('playBtn');
+                const betInput   = document.getElementById('betInput');
+                const resultEl   = document.getElementById('result');
+                const balanceEl  = document.getElementById('balanceDisplay');
+                const winLinesEl = document.getElementById('winLines');
+
+                const strips = Array.from(document.querySelectorAll('.reel-strip'));
+                const autoCount  = document.getElementById('autoCount');
+                const autoStart  = document.getElementById('autoStartBtn');
+                const autoStop   = document.getElementById('autoStopBtn');
+                const autoStatus = document.getElementById('autoStatus');
+
+                if (!playBtn || !betInput || strips.length !== 3 || !resultEl || !balanceEl || !winLinesEl || !autoCount || !autoStart || !autoStop || !autoStatus) return;
+                wired = true;
+
+                const startUrl   = "{{ path('app_game_slots_start') }}";
+                const resolveUrl = "{{ path('app_game_slots_resolve') }}";
+                const csrf       = "{{ csrf_token('slots_play') }}";
+
+                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+                const setManualDisabled = (d)=>{ playBtn.disabled = !!d; playBtn.classList.toggle('disabled', !!d); };
+                const setAutoUI = (active) => {
+                    auto.active = active;
+                    autoStop.disabled = !active;
+                    autoStart.disabled = !!active;
+                    betInput.disabled = !!active;
+                    setManualDisabled(active);
+                };
+
+                function rndArr(n){ const out = new Array(n); for (let i=0;i<n;i++) out[i] = IMG[(Math.random()*IMG.length)|0]; return out; }
+                function mapSym(sym){
+                    if (typeof sym === 'string' && sym.startsWith('slot')) {
+                        const idx = parseInt(sym.slice(4),10);
+                        if (idx>=1 && idx<=IMG.length) return IMG[idx-1];
+                    }
+                    return IMG[7];
+                }
+                function buildLoopStrip(images){ const html = images.map(src=>`<div class="symbol"><img src="${src}" alt=""></div>`).join(''); return html+html; }
+
+                function clearHighlights(){
+                    document.querySelectorAll('.symbol.is-win, .symbol.is-muted').forEach(el=>{
+                        el.classList.remove('is-win','is-muted');
+                    });
+                }
+
+                function startSpin(stripEl, speedMs=SPIN_MS){
+                    clearHighlights();
+                    const tape = rndArr(PRE_TAPE);
+                    stripEl.innerHTML = buildLoopStrip(tape);
+                    stripEl.style.setProperty('--spin-speed', `${speedMs}ms`);
+                    stripEl.style.transition='none';
+                    stripEl.style.transform='translateY(-50%)';
+                    stripEl.style.animation = '';
+                    void stripEl.offsetWidth;
+                    stripEl.classList.add('spin');
+                }
+
+                function stopToFinal(stripEl, final3Imgs, decelSec){
+                    stripEl.classList.remove('spin');
+                    stripEl.style.animation = 'none';
+
+                    const top = rndArr(FILL_TOP);
+                    const bottom = rndArr(FILL_BOTTOM);
+                    const finalContent = [...top, ...final3Imgs, ...bottom];
+                    stripEl.innerHTML = finalContent.map(src=>`<div class="symbol"><img src="${src}" alt=""></div>`).join('');
+
+                    const targetY = -(FILL_TOP * CELL_H);
+                    const startY  = -((FILL_TOP + 2) * CELL_H);
+
+                    stripEl.style.transition = 'none';
+                    stripEl.style.transform = `translateY(${startY}px)`;
+                    void stripEl.offsetWidth;
+
+                    const whenDecelEnd = new Promise((resolve)=>{
+                        const onEnd = (ev)=>{
+                            if (ev.propertyName !== 'transform') return;
+                            stripEl.removeEventListener('transitionend', onEnd);
+                            resolve();
+                        };
+                        stripEl.addEventListener('transitionend', onEnd);
+
+                        requestAnimationFrame(()=>{
+                            stripEl.style.transition = `transform ${decelSec}s cubic-bezier(.2,.9,.1,1)`;
+                            requestAnimationFrame(()=>{
+                                stripEl.style.transform = `translateY(${targetY}px)`;
+                            });
+                        });
+                    });
+
+                    const triggerBounce = ()=>{
+                        stripEl.style.transition = `transform ${BOUNCE_DOWN_MS}ms cubic-bezier(.2,.8,.2,1)`;
+                        stripEl.style.transform  = `translateY(${targetY + BOUNCE_OFFSET}px)`;
+                        setTimeout(()=>{
+                            stripEl.style.transition = `transform ${BOUNCE_UP_MS}ms cubic-bezier(.2,1,.2,1)`;
+                            stripEl.style.transform  = `translateY(${targetY}px)`;
+                        }, BOUNCE_DOWN_MS);
+                    };
+
+                    return { whenDecelEnd, triggerBounce };
+                }
+
+                async function apiStart(amount){
+                    const res = await fetch(startUrl, {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({ amount, _token: csrf })
+                    });
+                    const data = await res.json().catch(()=>null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && data.error) ? data.error : `Erreur (${res.status})`;
+                        throw new Error(msg);
+                    }
+                    return data; // {spinId}
+                }
+
+                async function apiResolve(spinId){
+                    const res = await fetch(resolveUrl, {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body: JSON.stringify({ spinId, _token: csrf })
+                    });
+                    const data = await res.json().catch(()=>null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && data.error) ? data.error : `Erreur (${res.status})`;
+                        throw new Error(msg);
+                    }
+                    return data; // {grid,wins,payout,balance,...}
+                }
+
+                function renderWins(el, wins){
+                    el.textContent = (wins && wins.length)
+                        ? wins.map(l => `${l.name} ×${l.multiplier}`).join(' · ')
+                        : '—';
+                }
+
+                // --- NEW: highlight visuel des cases gagnantes ---
+                function highlightVisibleWins(strips, wins){
+                    clearHighlights();
+                    if (!wins || !wins.length) return;
+
+                    const WIN_POS = new Set(wins.flatMap(line => line.positions.map(([r,c]) => `${r}:${c}`)));
+
+                    for (let c=0; c<3; c++){
+                        const strip = strips[c];
+                        // indices visibles dans le strip final : FILL_TOP, FILL_TOP+1, FILL_TOP+2
+                        for (let r=0; r<3; r++){
+                            const child = strip.children[FILL_TOP + r]; // .symbol
+                            if (!child) continue;
+                            const key = `${r}:${c}`;
+                            if (WIN_POS.has(key)) child.classList.add('is-win');
+                            else child.classList.add('is-muted');
+                        }
+                    }
+                }
+
+                async function playOnce(amount){
+                    resultEl.textContent = 'Lancement…';
+                    winLinesEl.textContent = '—';
+                    clearHighlights();
+
+                    let spinId;
+                    try { spinId = (await apiStart(amount)).spinId; }
+                    catch(e){ resultEl.textContent = e.message || 'Erreur'; return; }
+
+                    strips.forEach((s, i) => startSpin(s, SPIN_MS + i*80));
+                    await sleep(320);
+
+                    let data;
+                    try { data = await apiResolve(spinId); }
+                    catch(e){ resultEl.textContent = e.message || 'Erreur'; return; }
+
+                    const col0 = [data.grid[0][0], data.grid[1][0], data.grid[2][0]].map(mapSym);
+                    const col1 = [data.grid[0][1], data.grid[1][1], data.grid[2][1]].map(mapSym);
+                    const col2 = [data.grid[0][2], data.grid[1][2], data.grid[2][2]].map(mapSym);
+
+                    const s0 = stopToFinal(strips[0], col0, DECEL_COL[0]);
+                    await sleep(120);
+                    const s1 = stopToFinal(strips[1], col1, DECEL_COL[1]);
+                    await sleep(120);
+                    const s2 = stopToFinal(strips[2], col2, DECEL_COL[2]);
+
+                    await Promise.all([s0.whenDecelEnd, s1.whenDecelEnd, s2.whenDecelEnd]);
+
+                    highlightVisibleWins(strips, data.wins || []);
+
+                    renderWins(winLinesEl, data.wins || []);
+                    if (typeof data.balance !== 'undefined') balanceEl.textContent = data.balance;
+                    const isWin = (data.payout || 0) > 0;
+
+                    requestAnimationFrame(()=>{
+                        resultEl.textContent = isWin ? `Gagné +${data.payout}` : `Perdu -${amount}`;
+                        s0.triggerBounce(); s1.triggerBounce(); s2.triggerBounce();
+                    });
+                }
+
+                async function onManual(ev){
+                    if (ev) ev.preventDefault();
+                    if (auto.active) return;
+                    const amount = parseInt(betInput.value,10) || 0;
+                    setManualDisabled(true);
+                    try { await playOnce(amount); }
+                    catch(e){ resultEl.textContent = e.message || 'Erreur'; }
+                    finally { setManualDisabled(false); }
+                }
+
+                async function runAuto(){
+                    const amount = parseInt(betInput.value,10) || 0;
+                    auto.stop = false; setAutoUI(true);
+                    while (auto.remaining > 0 && !auto.stop) {
+                        const idx = auto.total - auto.remaining + 1;
+                        autoStatus.textContent = `Auto : lancer ${idx}/${auto.total}`;
+                        try { await playOnce(amount); }
+                        catch(e){ resultEl.textContent = e.message || 'Erreur'; break; }
+                        auto.remaining--;
+                        if (auto.remaining > 0 && !auto.stop) await sleep(250);
+                    }
+                    autoStatus.textContent = 'Auto : terminé';
+                    setAutoUI(false);
+                }
+
+                function onAutoStart(ev){
+                    if (ev) ev.preventDefault();
+                    if (auto.active) return;
+                    const n = Math.max(1, parseInt(autoCount.value,10) || 0);
+                    auto.total = n; auto.remaining = n;
+                    autoStatus.textContent = `Auto : prêt (${n})`;
+                    runAuto();
+                }
+                function onAutoStop(ev){
+                    if (ev) ev.preventDefault();
+                    if (!auto.active) return;
+                    auto.stop = true;
+                    autoStatus.textContent = 'Auto : arrêt demandé…';
+                }
+
+                playBtn.addEventListener('click', onManual);
+                autoStart.addEventListener('click', onAutoStart);
+                autoStop.addEventListener('click', onAutoStop);
+            }
+
+            document.addEventListener('DOMContentLoaded', init);
+            document.addEventListener('turbo:load', init);
+        })();
+    </script>
+{% endblock %}

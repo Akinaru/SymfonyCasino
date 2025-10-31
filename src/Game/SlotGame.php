@@ -11,7 +11,7 @@ final class SlotGame implements GameInterface
     public function getName(): string { return '🎰 Slot'; }
     public function getUrl(): string
     {
-        return $this->router->generate('app_game_dice_index');
+        return $this->router->generate('app_game_slots_index');
     }
     public function getDescription(): ?string { return 'Tire les 3 items similaire pour toucher le gros lot.'; }
     public static function getDescriptionInGame(): ?string { return ''; }

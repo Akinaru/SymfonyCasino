@@ -1,0 +1,95 @@
+{# templates/widgets/slots_last_wins.html.twig #}
+{% set itemImgs = {
+    'slot1': asset('img/slots/slot1.png'),
+    'slot2': asset('img/slots/slot2.png'),
+    'slot3': asset('img/slots/slot3.png'),
+    'slot4': asset('img/slots/slot4.png'),
+    'slot5': asset('img/slots/slot5.png'),
+    'slot6': asset('img/slots/slot6.png'),
+    'slot7': asset('img/slots/slot7.png'),
+    'slot8': asset('img/slots/slot8.png')
+} %}
+
+<div class="card bg-dark border-secondary">
+    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+        <span class="fw-semibold text-light">Dernières wins · Slots</span>
+        <small class="text-white-50">10 plus récentes</small>
+    </div>
+
+    <div class="list-group list-group-flush">
+        {% if rows is empty %}
+            <div class="list-group-item bg-dark text-white-50">
+                Aucune win pour le moment.
+            </div>
+        {% else %}
+            {% for row in rows %}
+                {% set p = row.partie %}
+                {% set u = p.utilisateur %}
+
+                {% set winMap = {} %}
+                {% if row.wins is iterable %}
+                    {% for w in row.wins %}
+                        {% for pos in w.positions|default([]) %}
+                            {% set k = pos[0] ~ '-' ~ pos[1] %}
+                            {% set winMap = winMap|merge({ (k): true }) %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+
+                <div class="list-group-item bg-dark text-light">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge text-bg-success">+{{ p.gain|number_format(0, ',', ' ') }}</span>
+                            <span class="text-white-50 small">
+                                {{ p.finLe ? p.finLe|date('d/m/Y H:i') : '' }}
+                            </span>
+                        </div>
+
+                        <div class="vr opacity-25"></div>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="{{ u.getAvatarUrl() }}/28" alt="avatar"
+                                 width="28" height="28"
+                                 style="object-fit:cover; image-rendering:-webkit-optimize-contrast; border-radius:4px;">
+                            <span class="small">
+                                <span class="text-white-50">Joueur :</span>
+                                <span class="fw-semibold">{{ u.pseudo ?? '—' }}</span>
+                            </span>
+                        </div>
+
+                        <div class="ms-auto small text-white-50">#{{ p.id }}</div>
+                    </div>
+
+                    {% if row.grid is iterable %}
+                        <div class="mt-2 p-2 rounded"
+                             style="background: rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08);">
+                            <div class="d-grid" style="grid-template-columns: repeat(3, 1fr); gap:8px;">
+                                {% for r in 0..2 %}
+                                    {% for c in 0..2 %}
+                                        {% set sym = row.grid[r][c] %}
+                                        {% set img = itemImgs[sym]|default(asset('img/slots/slot8.png')) %}
+                                        {% set key = r ~ '-' ~ c %}
+                                        {% set isWin = key in winMap|keys %}
+                                        <div class="d-flex align-items-center justify-content-center rounded position-relative"
+                                             style="
+                                                height:56px;
+                                                border:1px solid rgba(255,255,255,.06);
+                                                box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+                                             ">
+                                            <img src="{{ img }}" alt="{{ sym }}" width="36" height="36"
+                                                 style="object-fit:contain; image-rendering:-webkit-optimize-contrast;">
+                                            {% if isWin %}
+                                                <span class="position-absolute top-0 start-0 w-100 h-100"
+                                                      style="border:2px solid rgba(39,174,96,.75); border-radius:6px; box-shadow:0 0 12px rgba(39,174,96,.35) inset;"></span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
