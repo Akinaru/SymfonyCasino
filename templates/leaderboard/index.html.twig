@@ -1,0 +1,140 @@
+{# templates/leaderboard/index.html.twig #}
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Leaderboard — Wager{% endblock %}
+
+{% block page_content %}
+    <div class="card bg-dark border-secondary">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h1 class="h5 mb-0 text-light">Leaderboard — Wager</h1>
+            <small class="text-white-50">Top 10 (somme des mises)</small>
+        </div>
+
+        <div class="card-body">
+            {# ===== PODIUM (1,2,3) — stage placé EN BAS de chaque colonne ===== #}
+            <div class="podium row g-3 justify-content-center text-center align-items-end mb-4">
+                {# 2ème #}
+                <div class="col-12 col-md-4 d-flex flex-column align-items-center order-2 order-md-1">
+                    {% set r = podium[1] ?? null %}
+                    <div class="podium-spot podium-2 position-relative">
+                        <div class="player-figure position-relative">
+                            <img src="{{ (r ? r.playerUrl : 'https://mc-heads.net/player/MHF_Steve') }}"
+                                 alt="{{ r ? r.pseudo : 'Personne' }}"
+                                 class="player-img player-2">
+                        </div>
+                        <div class="podium-caption mt-2">
+                            <div class="fw-semibold text-light">#2 — {{ r ? r.pseudo : 'Personne' }}</div>
+                            <small class="text-white-50">Wager: {{ r ? r.wager : 0 }}</small>
+                        </div>
+                        <div class="stage stage-2">
+                            <div class="stage-block bg-secondary text-dark rounded-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {# 1er #}
+                <div class="col-12 col-md-4 d-flex flex-column align-items-center order-1 order-md-2">
+                    {% set r = podium[0] ?? null %}
+                    <div class="podium-spot podium-1 position-relative">
+                        <div class="player-figure position-relative">
+                            <img src="{{ (r ? r.playerUrl : 'https://mc-heads.net/player/MHF_Steve') }}"
+                                 alt="{{ r ? r.pseudo : 'Personne' }}"
+                                 class="player-img player-1">
+                        </div>
+                        <div class="podium-caption mt-2">
+                            <div class="fw-semibold text-light">#1 — {{ r ? r.pseudo : 'Personne' }}</div>
+                            <small class="text-white-50">Wager: {{ r ? r.wager : 0 }}</small>
+                        </div>
+                        <div class="stage stage-1">
+                            <div class="stage-block bg-warning text-dark rounded-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {# 3ème #}
+                <div class="col-12 col-md-4 d-flex flex-column align-items-center order-3">
+                    {% set r = podium[2] ?? null %}
+                    <div class="podium-spot podium-3 position-relative">
+                        <div class="player-figure position-relative">
+                            <img src="{{ (r ? r.playerUrl : 'https://mc-heads.net/player/MHF_Steve') }}"
+                                 alt="{{ r ? r.pseudo : 'Personne' }}"
+                                 class="player-img player-3">
+                        </div>
+                        <div class="podium-caption mt-2">
+                            <div class="fw-semibold text-light">#3 — {{ r ? r.pseudo : 'Personne' }}</div>
+                            <small class="text-white-50">Wager: {{ r ? r.wager : 0 }}</small>
+                        </div>
+                        <div class="stage stage-3">
+                            <div class="stage-block bg-info text-dark rounded-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ===== TOP 4 → 10 (dans la même carte), 1 user par ligne ===== #}
+            <div class="list-group list-group-flush">
+                {% for r in rest %}
+                    <div class="list-group-item bg-dark border-secondary text-light d-flex align-items-center gap-3">
+                        <div class="badge bg-secondary fs-6" style="min-width:42px;">#{{ r.rank }}</div>
+                        <img src="{{ r.headUrl }}" alt="{{ r.pseudo }}" width="48" height="48"
+                             style="border-radius:6px; image-rendering:-webkit-optimize-contrast;">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold text-truncate">{{ r.pseudo }}</div>
+                            <small class="text-white-50">Wager: {{ r.wager }}</small>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* --- PODIUM LAYERING --- */
+        .podium-spot{ width:100%; max-width:280px; position: relative; }
+
+        .stage{
+            display:flex; justify-content:center; align-items:flex-end;
+            margin-top:-65px;                /* chevauchement comme avant */
+            position: relative;              /* nécessaire pour z-index */
+            z-index: 1;                      /* 👉 derrière */
+            pointer-events: none;            /* ne gêne pas les interactions */
+        }
+        .stage .stage-block{
+            width:100%; max-width:220px; height:80px;
+            box-shadow: inset 0 0 0 2px rgba(0,0,0,.25);
+        }
+        .stage-1 .stage-block{ height:120px; }
+        .stage-2 .stage-block{ height: 90px; }
+        .stage-3 .stage-block{ height: 80px; }
+
+        /* Joueur au-dessus du stage */
+        .player-figure{
+            display:flex; justify-content:center; align-items:center;
+            position: relative;
+            z-index: 2;                      /* 👉 devant le stage */
+        }
+        .player-img{
+            width:140px; height:210px; object-fit:contain;
+            image-rendering:-webkit-optimize-contrast;
+            filter: drop-shadow(0 4px 14px rgba(0,0,0,.55));
+        }
+        .player-2, .player-3{ width:120px; height:180px; }
+
+        /* Texte au-dessus de tout */
+        .podium-caption{
+            position: relative;
+            z-index: 3;                      /* 👉 devant le stage & le joueur */
+        }
+        .podium-caption .fw-semibold{ line-height:1.1; }
+
+        .crown{
+            position:absolute;
+            top:-14px; left:50%;
+            transform: translateX(-50%) rotate(-8deg);
+            font-size:28px;
+            text-shadow:0 2px 6px rgba(0,0,0,.45);
+            z-index:4;                       /* reste au-dessus */
+        }
+    </style>
+
+{% endblock %}
