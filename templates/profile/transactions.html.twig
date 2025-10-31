@@ -76,14 +76,15 @@
                         <td>#{{ t.id }}</td>
                         <td><span class="text-white-50">{{ t.creeLe|date('d/m/Y H:i') }}</span></td>
                         <td>
-                            {% if t.gameKey %}
-                                <span class="badge text-bg-info text-dark">{{ t.gameKey }}</span>
-                            {% elseif t.partie %}
-                                <span class="badge text-bg-secondary">Partie #{{ t.partie.id }}</span>
+                            {% set key = t.gameKey ?? (t.partie ? t.partie.gameKey : null) %}
+                            {% set name = key ? (namesByKey[key] ?? key) : null %}
+                            {% if name %}
+                                <span class="badge text-bg-info text-dark">{{ name }}</span>
                             {% else %}
                                 <span class="text-white-50">—</span>
                             {% endif %}
                         </td>
+
                         <td>
                             <span class="badge {{ isCredit ? 'text-bg-success' : 'text-bg-danger' }}">
                                 {{ t.type.value ?? t.type }}

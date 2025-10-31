@@ -1,5 +1,5 @@
 <?php
-
+// src/Game/GameRegistry.php
 namespace App\Game;
 
 final class GameRegistry
@@ -7,9 +7,6 @@ final class GameRegistry
     /** @var array<string, GameInterface> */
     private array $games = [];
 
-    /**
-     * @param iterable<GameInterface> $games
-     */
     public function __construct(iterable $games)
     {
         foreach ($games as $game) {
@@ -17,24 +14,17 @@ final class GameRegistry
         }
     }
 
-    /**
-     * @return GameInterface[]
-     */
-    public function all(): array
-    {
-        return array_values($this->games);
-    }
+    /** @return GameInterface[] */
+    public function all(): array { return array_values($this->games); }
 
-    public function byKey(string $key): ?GameInterface
-    {
-        return $this->games[$key] ?? null;
-    }
+    public function byKey(string $key): ?GameInterface { return $this->games[$key] ?? null; }
 
-    /**
-     * @return string[]
-     */
-    public function keys(): array
+    /** @return string[] */
+    public function keys(): array { return array_keys($this->games); }
+
+    public function name(?string $key): ?string
     {
-        return array_keys($this->games);
+        if (!$key) return null;
+        return $this->games[$key]->getName() ?? null;
     }
 }
