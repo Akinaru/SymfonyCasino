@@ -25,6 +25,7 @@ final class TransactionManager
         }
 
         $user->setBalance($before - $amount);
+        $user->setWagger(($user->getWagger() ?? 0) + $amount);
 
         $tx = (new Transaction())
             ->setUtilisateur($user)

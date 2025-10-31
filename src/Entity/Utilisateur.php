@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\TransactionType;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -28,6 +29,9 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'integer', options: ['default' => 0])]
     private int $balance = 0;
+
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $wagger = 0;
 
     /**
      * @var list<string> The user roles
@@ -103,6 +107,17 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getWagger(): float
+    {
+        return $this->wagger / 100;
+    }
+
+    public function setWagger(float $euros): self
+    {
+        $this->wagger = (int) round($euros * 100);
+        return $this;
+    }
+
     /**
      * A visual identifier that represents this user.
      *
@@ -148,6 +163,106 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $password;
 
         return $this;
+    }
+
+    /**
+     * Compte le nombre de paris (transactions de type MISE).
+     * @param iterable<Transaction> $transactions
+     */
+    public function getBetsCountFrom(iterable $transactions): int
+    {
+        $c = 0;
+        foreach ($transactions as $t) {
+            if ($t->getType() === TransactionType::MISE) {
+                $c++;
+            }
+        }
+        return $c;
+    }
+
+    /**
+     * Taux de victoire (%) = nb(GAIN) / nb(MISE) * 100.
+     * @param iterable<Transaction> $transactions
+     */
+    public function getWinRateFrom(iterable $transactions): float
+    {
+        $bets = 0;
+        $wins = 0;
+
+        foreach ($transactions as $t) {
+            $type = $t->getType();
+            if ($type === TransactionType::MISE) {
+                $bets++;
+            } elseif ($type === TransactionType::GAIN) {
+                $wins++;
+            }
+        }
+
+        if ($bets === 0) {
+            return 0.0;
+        }
+
+        return ($wins / $bets) * 100.0;
+    }
+
+    /**
+     * Mise moyenne (en unités de ta colonne "montant", ici euros entiers).
+     * Moyenne des |montant| pour les MISE (les mises sont négatives en base).
+     * @param iterable<Transaction> $transactions
+     */
+    public function getAverageBetFrom(iterable $transactions): float
+    {
+        $sum = 0.0;
+        $n   = 0;
+
+        foreach ($transactions as $t) {
+            if ($t->getType() === TransactionType::MISE) {
+                $sum += abs($t->getMontant());
+                $n++;
+            }
+        }
+
+        if ($n === 0) {
+            return 0.0;
+        }
+
+        return $sum / $n;
+    }
+
+    /**
+     * Plus gros gain (maximum des montants pour type GAIN).
+     * @param iterable<Transaction> $transactions
+     */
+    public function getBiggestWinFrom(iterable $transactions): int
+    {
+        $max = 0;
+        foreach ($transactions as $t) {
+            if ($t->getType() === TransactionType::GAIN) {
+                $m = $t->getMontant(); // positif
+                if ($m > $max) {
+                    $max = $m;
+                }
+            }
+        }
+        return $max;
+    }
+
+    /**
+     * Jeu favori (laisse à null pour le moment comme demandé).
+     * @param iterable<Transaction> $transactions
+     */
+    public function getFavoriteGameKeyFrom(iterable $transactions): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Dernier jeu (laisse à null pour le moment).
+     * @param iterable<Transaction> $transactions
+     */
+    public function getLastGameKeyFrom(iterable $transactions): ?string
+    {
+        return null;
     }
 
     /**

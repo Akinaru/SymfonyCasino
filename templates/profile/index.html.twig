@@ -1,23 +1,94 @@
+{# templates/profile/index.html.twig #}
 {% extends 'profile/base_profil.html.twig' %}
 
 {% block title %}🎰 Symfsino - Profil{% endblock %}
 
 {% block profile_content %}
     <div class="py-4 text-white text-white-scope">
-        <h1 class="h4 mb-3">Mon profil</h1>
+        <h1 class="h4 mb-3">Mes statistiques</h1>
 
-        {# IDs uniques pour l’aperçu live #}
-        {% set ns = form.vars.id %}
-        {% set avatarInputId = ns ~ '-avatar-input' %}
-        {% set avatarPreviewId = ns ~ '-avatar-preview' %}
-        {% set currentAvatar = form.avatar is defined and form.avatar.vars.value ? form.avatar.vars.value : '' %}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Pseudo</div>
+                        <div class="fs-5 fw-semibold">{{ app.user.pseudo ?? '—' }}</div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Wager total</div>
+                        <div class="fs-5 fw-semibold">{{ app.user.wagger|default(0) }}</div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Nombre de paris</div>
+                        <div class="fs-5 fw-semibold">{{ stats.betsCount|default(0) }}</div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Taux de victoire</div>
+                        <div class="fs-5 fw-semibold {{ (stats.winRate|default(0)) >= 50 ? 'text-success' : 'text-warning' }}">
+                            {{ stats.winRate|default(0)|number_format(1, ',', ' ') }}%
+                        </div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Mise moyenne</div>
+                        <div class="fs-5 fw-semibold">{{ stats.avgBet|default(0)|number_format(0, ',', ' ') }}</div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Plus gros gain</div>
+                        <div class="fs-5 fw-semibold text-success">
+                            {% if stats.biggestWin|default(0) > 0 %}+{% endif %}
+                            {{ stats.biggestWin|default(0)|number_format(0, ',', ' ') }}
+                        </div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Jeu favori</div>
+                        <div class="fw-semibold">
+                            {% set _fav = stats.favoriteGameKey|default(null) %}
+                            {{ _fav ? (namesByKey[_fav]|default(_fav)) : '—' }}
+                        </div>
+                    </div></div>
+            </div>
+
+            <div class="col-6 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Dernier jeu</div>
+                        <div class="fw-semibold">
+                            {% set _last = stats.lastGameKey|default(null) %}
+                            {{ _last ? (namesByKey[_last]|default(_last)) : '—' }}
+                        </div>
+                    </div></div>
+            </div>
+
+            <div class="col-12 col-lg-3">
+                <div class="card border-secondary h-100"><div class="card-body">
+                        <div class="small mb-1">Niveau VIP</div>
+                        <div class="fs-5 fw-semibold">VIP {{ stats.vipLevel|default(1) }}</div>
+                    </div></div>
+            </div>
+        </div>
+
+        <h1 class="h4 mb-3">Mes informations</h1>
 
         {{ form_start(form, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
-
         {{ form_errors(form) }}
 
         <div class="row g-4">
-            {# Colonne gauche : identité + avatar #}
             <div class="col-md-6">
                 <div class="mb-3">
                     {{ form_label(form.pseudo, null, { label_attr: { class: 'form-label' } }) }}
@@ -33,6 +104,11 @@
 
                 {% if form.avatar is defined %}
                     <div class="mb-3">
+                        {% set ns = form.vars.id %}
+                        {% set avatarInputId = ns ~ '-avatar-input' %}
+                        {% set avatarPreviewId = ns ~ '-avatar-preview' %}
+                        {% set currentAvatar = form.avatar.vars.value ? form.avatar.vars.value : '' %}
+
                         {{ form_label(form.avatar, null, { label_attr: { class: 'form-label' } }) }}
                         {{ form_widget(form.avatar, { id: avatarInputId, attr: { class: 'form-control' } }) }}
                         {{ form_errors(form.avatar) }}
@@ -52,7 +128,6 @@
                 {% endif %}
             </div>
 
-            {# Colonne droite : changement de mot de passe #}
             <div class="col-md-6">
                 <h5 class="mb-2">Changer le mot de passe</h5>
                 <p class="mb-3">Laissez ces champs vides si vous ne souhaitez pas modifier votre mot de passe.</p>
@@ -88,16 +163,14 @@
 
     <script>
         (function () {
-            const input = document.getElementById('{{ avatarInputId }}');
-            const preview = document.getElementById('{{ avatarPreviewId }}');
+            const input = document.getElementById('{{ form.vars.id ~ "-avatar-input" }}');
+            const preview = document.getElementById('{{ form.vars.id ~ "-avatar-preview" }}');
             if (!input || !preview) return;
-
             const update = () => {
                 const v = (input.value || '').trim();
                 const name = v !== '' ? encodeURIComponent(v) : 'Steve';
                 preview.src = `https://mc-heads.net/avatar/${name}/128`;
             };
-
             input.addEventListener('input', update);
         })();
     </script>
