@@ -58,7 +58,6 @@ final class RegisterController extends AbstractController
                 }
             }
         }
-        // --- Fin debug ---
 
         if ($form->isSubmitted() && $form->isValid()) {
             $hashedPassword = $passwordHasher->hashPassword(
@@ -66,6 +65,9 @@ final class RegisterController extends AbstractController
                 $form->get('plainPassword')->getData()
             );
             $user->setPassword($hashedPassword);
+
+            // Balance de départ
+            $user->setBalance(50000);
 
             $em->persist($user);
             $em->flush();
