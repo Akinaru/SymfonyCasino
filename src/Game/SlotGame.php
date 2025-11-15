@@ -15,7 +15,7 @@ final class SlotGame implements GameInterface
     }
     public function getDescription(): ?string { return 'Tire les 3 items similaire pour toucher le gros lot.'; }
     public static function getDescriptionInGame(): ?string { return ''; }
-    public function getImageUrl() : ?string { return 'https://i.redd.it/1wsjdtem9jef1.jpeg'; }
+    public function getImageUrl() : ?string { return 'https://i.ytimg.com/vi/sxmGEDFiRAQ/maxresdefault.jpg'; }
     public function getMinBet(): ?int { return 1; }
     public function getMaxBet(): ?int { return 1000; }
 }

@@ -3,8 +3,8 @@
 {% block title %}🎰 Symfsino - Inscription{% endblock %}
 
 {% block content %}
-    <div class="text-white">
-        <h1>Créer un compte</h1>
+    <div class="texte-gris">
+        <h1>Creer un compte</h1>
 
         {# Affiche les erreurs globales du formulaire (ex : CSRF) #}
         {% if registrationForm.vars.errors|length %}
@@ -19,13 +19,19 @@
         {% set currentAvatar = registrationForm.avatar.vars.value ?? '' %}
 
         {{ form_start(registrationForm, { attr: { novalidate: 'novalidate', 'data-turbo': 'false' } }) }}
-        {{ form_row(registrationForm.pseudo) }}
-        {{ form_row(registrationForm.email) }}
+        <div class="mb-3">
+            {{ form_row(registrationForm.pseudo) }}
+        </div>
+        <div class="mb-3">
+            {{ form_row(registrationForm.email) }}
+        </div>
 
         {# Champ avatar + aperçu live #}
         <div class="mb-3">
-            {{ form_label(registrationForm.avatar) }}
-            {{ form_widget(registrationForm.avatar, { id: avatarInputId }) }}
+            <div class="mb-3">
+                {{ form_label(registrationForm.avatar) }}
+                {{ form_widget(registrationForm.avatar, { id: avatarInputId }) }}
+            </div>
             <div class="mt-2">
                 <img
                     id="{{ avatarPreviewId }}"
@@ -40,13 +46,16 @@
             {{ form_errors(registrationForm.avatar) }}
         </div>
 
-        {{ form_row(registrationForm.plainPassword) }}
+        <div class="mb-3">
+            {{ form_row(registrationForm.plainPassword) }}
+        </div>
 
-        <button class="btn btn-primary">S'inscrire</button>
+        <button class="btn btn-primary w-100">S'inscrire</button>
+        <button disabled class="mt-3 btn btn-primary w-100">S'inscrire</button>
         {{ form_end(registrationForm) }}
 
         <p class="mt-3">
-            Déjà un compte ?
+            Deja un compte ?
             <a href="{{ path('app_login') }}">Se connecter</a>
         </p>
     </div>

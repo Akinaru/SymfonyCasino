@@ -13,23 +13,23 @@
         </div>
 
         {# ——— HERO ——— #}
-        <section class="py-5 mb-4 text-white rounded-3">
+        <section class="py-5 mb-4 texte-gris rounded-3">
             <div class="container-fluid py-4">
                 <h1 class="display-5 fw-bold">🎰 Symfsino</h1>
                 <p class="col-lg-8 fs-5">
                     Bienvenue dans la salle de jeux. Slots, tirages & jackpots — simple, rapide, 100% fun.
                 </p>
                 <div class="d-flex flex-wrap gap-2 mt-3">
-                    <a href="{{ path("app_leaderboard_index") }}" class="btn btn-success btn-lg">Leaderboard</a>
-                    <a href="{{ path("app_market_index") }}" class="btn btn-danger btn-lg">Marché</a>
+                    <a href="{{ path("app_leaderboard_index") }}" class="btn btn-primary btn-lg">Leaderboard</a>
+                    <a href="{{ path("app_market_index") }}" class="btn btn-primary btn-lg">Marché</a>
 
 
                     {% if app.user %}
-                        <a href="{{ path("app_inventory_index") }}" class="btn btn-info btn-lg">Inventaire</a>
-                        <a href="{{ path('app_profile_index') }}" class="btn btn-outline-light btn-lg">Mon profil</a>
+                        <a href="{{ path("app_inventory_index") }}" class="btn btn-primary btn-lg">Inventaire</a>
+                        <a href="{{ path('app_profile_index') }}" class="btn btn-primary btn-lg">Mon profil</a>
                     {% else %}
-                        <a href="{{ path('app_register') }}" class="btn btn-warning btn-lg">Créer un compte</a>
-                        <a href="{{ path('app_login') }}" class="btn btn-outline-light btn-lg">Se connecter</a>
+                        <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg">Créer un compte</a>
+                        <a href="{{ path('app_login') }}" class="btn btn-primary btn-lg">Se connecter</a>
                     {% endif %}
                 </div>
             </div>
@@ -46,8 +46,8 @@
             </style>
 
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <h2 class="h4 mb-0">Jeux disponibles</h2>
-                <a href="#" class="btn btn-outline-secondary btn-sm">Tout voir</a>
+                <h2 class="h4 mb-0 texte-gris">Jeux disponibles</h2>
+                <a href="#" class="btn btn-primary btn-sm">Tout voir</a>
             </div>
 
             <div class="row g-3">
