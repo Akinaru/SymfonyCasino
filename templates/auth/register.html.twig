@@ -6,6 +6,13 @@
     <div class="text-white">
         <h1>Créer un compte</h1>
 
+        {# Affiche les erreurs globales du formulaire (ex : CSRF) #}
+        {% if registrationForm.vars.errors|length %}
+            <div class="alert alert-danger mb-3">
+                {{ form_errors(registrationForm) }}
+            </div>
+        {% endif %}
+
         {% set ns = registrationForm.vars.id %}
         {% set avatarInputId = ns ~ '-avatar-input' %}
         {% set avatarPreviewId = ns ~ '-avatar-preview' %}

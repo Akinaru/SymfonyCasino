@@ -29,7 +29,9 @@ final class RegisterController extends AbstractController
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
 
+        // --- Debug unicité + erreurs formulaire ---
         if ($form->isSubmitted()) {
+            // Vérif email déjà utilisé
             if ($email = $user->getEmail()) {
                 $existingEmail = $em->getRepository(Utilisateur::class)->findOneBy(['email' => $email]);
                 if ($existingEmail) {
@@ -37,20 +39,28 @@ final class RegisterController extends AbstractController
                 }
             }
 
+            // Vérif pseudo déjà utilisé
             if ($pseudo = $user->getPseudo()) {
                 $existingPseudo = $em->getRepository(Utilisateur::class)->findOneBy(['pseudo' => $pseudo]);
                 if ($existingPseudo) {
                     $form->get('pseudo')->addError(new FormError('Ce pseudo est déjà pris.'));
                 }
             }
+
+            // Log de toutes les erreurs si le form n'est pas valide
+            if (!$form->isValid()) {
+                foreach ($form->getErrors(true) as $error) {
+                    $origin = $error->getOrigin();
+                    $logger->error('[REGISTER] Erreur formulaire', [
+                        'message' => $error->getMessage(),
+                        'field'   => $origin ? $origin->getName() : null,
+                    ]);
+                }
+            }
         }
+        // --- Fin debug ---
 
         if ($form->isSubmitted() && $form->isValid()) {
-            dump([
-                'isValid' => $form->isValid(),
-                'errors'  => (string) $form->getErrors(true, true),
-            ]);
-
             $hashedPassword = $passwordHasher->hashPassword(
                 $user,
                 $form->get('plainPassword')->getData()
