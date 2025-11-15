@@ -10,6 +10,7 @@
 /var/
 /vendor/
 /tmp
+.env.prod.docker
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
