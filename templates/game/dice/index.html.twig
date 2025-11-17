@@ -15,7 +15,9 @@
         <div class="card-body form-compact">
             <div class="mb-3">
                 <div class="typo-eyebrow">Balance</div>
-                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">{{ app.user.balance }}</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
             </div>
 
             <div class="mb-3">
@@ -232,8 +234,22 @@
                 function setResult(text) { if (text && text.trim() !== '') resultEl.textContent = text; }
                 function resetVisual() {
                     coinEl.classList.remove('spin');
-                    coinImg.src = waitSrc; coinImg.alt = 'Attente';
+                    coinImg.src = waitSrc;
+                    coinImg.alt = 'Attente';
                 }
+
+                function refreshHeaderBalanceLive() {
+                    const containers = document.querySelectorAll('[id="header-balance-live"]');
+                    if (!containers.length) return;
+
+                    containers.forEach((container) => {
+                        const btn = container.querySelector('[data-live-action-param="refresh"]');
+                        if (!btn) return;
+
+                        btn.click();
+                    });
+                }
+
 
                 async function apiPlay(amount) {
                     const res  = await fetch(endpoint, {
@@ -250,19 +266,22 @@
                 }
 
                 function animateSpin() {
-                    coinEl.classList.remove('spin'); void coinEl.offsetWidth; coinEl.classList.add('spin');
+                    coinEl.classList.remove('spin');
+                    void coinEl.offsetWidth;
+                    coinEl.classList.add('spin');
                 }
 
                 async function applyResultFromData(data, amount) {
                     const isWin = (typeof data.win === 'boolean') ? data.win : (Number(data.payout) > 0);
+
                     await sleep(450);
                     const side = isWin ? 'face' : 'pile';
                     coinImg.src = side === 'face' ? faceSrc : pileSrc;
                     coinImg.alt = side === 'face' ? 'Face' : 'Pile';
                     setResult(isWin ? `Tu as gagné ${data.payout}` : `Tu as perdu ${amount}`);
-                    if (typeof data.balance !== 'undefined') {
-                        balanceEl.textContent = data.balance;
-                    }
+
+                    refreshHeaderBalanceLive();
+
                 }
 
                 async function playOnce(amount) {
@@ -336,4 +355,6 @@
             document.addEventListener('turbo:load', initCoinFlip);
         })();
     </script>
+
+
 {% endblock %}

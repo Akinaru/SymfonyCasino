@@ -17,7 +17,6 @@ class LeaderboardController extends AbstractController
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
-        // Catégorie: Wager (somme des mises)
         $qb = $em->createQueryBuilder()
             ->select('u AS user, COALESCE(SUM(p.mise), 0) AS wager')
             ->from(Utilisateur::class, 'u')
@@ -34,7 +33,6 @@ class LeaderboardController extends AbstractController
             $user  = $row['user'];
             $wager = (int) $row['wager'];
 
-            // Déduire le nom MC à partir de getAvatarUrl() OU pseudo, sinon fallback "MHF_Steve"
             $avatarUrl = (string) ($user->getAvatarUrl() ?? '');
             $mcName = null;
             if (\preg_match('~mc-heads\.net/(?:avatar|player)/([^/]+)~i', $avatarUrl, $m)) {
@@ -52,28 +50,28 @@ class LeaderboardController extends AbstractController
                 'mcName'    => $mcName,
                 'playerUrl' => "https://mc-heads.net/player/{$mcName}",
                 'headUrl'   => "https://mc-heads.net/avatar/{$mcName}/64",
+                'isEmpty'   => false,
             ];
         }
 
-        // Pad jusqu’à 10 avec des slots vides (MHF_Steve)
+        // Podium: toujours les vrais joueurs (1..3 max)
+        $podium = \array_slice($rows, 0, 3);
+
+        // Reste: 4..10 avec slots vides marqués
+        $rest = \array_slice($rows, 3);
         $count = \count($rows);
-        for ($i = $count; $i < 10; $i++) {
-            $rank = $i + 1;
-            $mc   = 'MHF_Steve';
-            $rows[] = [
+        for ($rank = $count + 1; $rank <= 10; $rank++) {
+            $rest[] = [
                 'rank'      => $rank,
                 'user'      => null,
-                'pseudo'    => 'MHF_Steve',
+                'pseudo'    => null,
                 'wager'     => 0,
-                'mcName'    => $mc,
-                'playerUrl' => "https://mc-heads.net/player/{$mc}",
-                'headUrl'   => "https://mc-heads.net/avatar/{$mc}/64",
+                'mcName'    => null,
+                'playerUrl' => null,
+                'headUrl'   => null,
+                'isEmpty'   => true,
             ];
         }
-
-        // Podium (1..3) + reste (4..10) dans **la même carte**
-        $podium = \array_slice($rows, 0, 3);
-        $rest   = \array_slice($rows, 3);
 
         return $this->render('leaderboard/index.html.twig', [
             'category' => 'wager',

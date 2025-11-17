@@ -5,12 +5,6 @@
 {% block page_content %}
     <main class="py-4">
 
-        <div class="sign">
-            <p>Bienvenue</p>
-            <p class="color1">Sur le super</p>
-            <p class="colorc">CASINO</p>
-            <p>Amusez vous !</p>
-        </div>
 
         {# ——— HERO ——— #}
         <section class="py-5 mb-4 texte-gris rounded-3">
@@ -47,7 +41,6 @@
 
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <h2 class="h4 mb-0 texte-gris">Jeux disponibles</h2>
-                <a href="#" class="btn btn-primary btn-sm">Tout voir</a>
             </div>
 
             <div class="row g-3">
@@ -57,7 +50,7 @@
                             <div class="card shadow-sm game-card h-100">
                                 <img
                                     src="{{ game.imageUrl }}"
-                                    class="card-img-top game-card-img p-3
+                                    class="card-img-top game-card-img
                                     alt="{{ game.name }}"
                                     loading="lazy"
                                 >

@@ -16,7 +16,9 @@
         <div class="card-body form-compact">
             <div class="mb-3">
                 <div class="typo-eyebrow">Balance</div>
-                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">{{ app.user.balance }}</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
             </div>
 
             <div class="mb-3">
@@ -227,6 +229,16 @@
                     setManualDisabled(active);
                 };
 
+                function refreshHeaderBalanceLive() {
+                    const containers = document.querySelectorAll('[id="header-balance-live"]');
+                    if (!containers.length) return;
+                    containers.forEach((container) => {
+                        const btn = container.querySelector('[data-live-action-param="refresh"]');
+                        if (!btn) return;
+                        btn.click();
+                    });
+                }
+
                 function rndArr(n){ const out = new Array(n); for (let i=0;i<n;i++) out[i] = IMG[(Math.random()*IMG.length)|0]; return out; }
                 function mapSym(sym){
                     if (typeof sym === 'string' && sym.startsWith('slot')) {
@@ -310,7 +322,7 @@
                         const msg = (data && data.error) ? data.error : `Erreur (${res.status})`;
                         throw new Error(msg);
                     }
-                    return data; // {spinId}
+                    return data;
                 }
 
                 async function apiResolve(spinId){
@@ -324,7 +336,7 @@
                         const msg = (data && data.error) ? data.error : `Erreur (${res.status})`;
                         throw new Error(msg);
                     }
-                    return data; // {grid,wins,payout,balance,...}
+                    return data;
                 }
 
                 function renderWins(el, wins){
@@ -333,7 +345,6 @@
                         : '—';
                 }
 
-                // --- NEW: highlight visuel des cases gagnantes ---
                 function highlightVisibleWins(strips, wins){
                     clearHighlights();
                     if (!wins || !wins.length) return;
@@ -342,9 +353,8 @@
 
                     for (let c=0; c<3; c++){
                         const strip = strips[c];
-                        // indices visibles dans le strip final : FILL_TOP, FILL_TOP+1, FILL_TOP+2
                         for (let r=0; r<3; r++){
-                            const child = strip.children[FILL_TOP + r]; // .symbol
+                            const child = strip.children[FILL_TOP + r];
                             if (!child) continue;
                             const key = `${r}:${c}`;
                             if (WIN_POS.has(key)) child.classList.add('is-win');
@@ -360,7 +370,11 @@
 
                     let spinId;
                     try { spinId = (await apiStart(amount)).spinId; }
-                    catch(e){ resultEl.textContent = e.message || 'Erreur'; return; }
+                    catch(e){
+                        resultEl.textContent = e.message || 'Erreur';
+                        auto.stop = true;
+                        return;
+                    }
 
                     strips.forEach((s, i) => startSpin(s, SPIN_MS + i*80));
                     await sleep(320);
@@ -384,7 +398,7 @@
                     highlightVisibleWins(strips, data.wins || []);
 
                     renderWins(winLinesEl, data.wins || []);
-                    if (typeof data.balance !== 'undefined') balanceEl.textContent = data.balance;
+                    refreshHeaderBalanceLive();
                     const isWin = (data.payout || 0) > 0;
 
                     requestAnimationFrame(()=>{
@@ -442,4 +456,6 @@
             document.addEventListener('turbo:load', init);
         })();
     </script>
+
+
 {% endblock %}

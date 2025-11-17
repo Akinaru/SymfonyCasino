@@ -112,13 +112,3 @@ fieldset:disabled .btn-primary {
     color: #a0a0a0;
 }
 
-.card {
-    background-image: url(/card_background.png);
-    background-size: 100% 100%;   /* s'étire en largeur + hauteur */
-    background-position: center;
-    background-repeat: no-repeat;
-    border: 0;
-    border-radius: 10px;
-}
-
-

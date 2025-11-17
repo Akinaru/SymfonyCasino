@@ -1,14 +1,5 @@
 {
     "controllers": {
-        "@symfony/ux-live-component": {
-            "live": {
-                "enabled": true,
-                "fetch": "eager",
-                "autoimport": {
-                    "@symfony/ux-live-component/dist/live.min.css": true
-                }
-            }
-        },
         "@symfony/ux-turbo": {
             "turbo-core": {
                 "enabled": true,
@@ -16,6 +7,12 @@
             },
             "mercure-turbo-stream": {
                 "enabled": false,
+                "fetch": "eager"
+            }
+        },
+        "@symfony/ux-live-component": {
+            "live": {
+                "enabled": true,
                 "fetch": "eager"
             }
         }

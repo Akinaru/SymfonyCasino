@@ -1,0 +1,12 @@
+<div {{ attributes }}>
+    {{ amount|number_format(2, ',', ' ') }}
+    <button
+        type="button"
+        data-action="live#action"
+        data-live-action-param="refresh"
+        class="d-none"
+        aria-hidden="true"
+    >
+        refresh
+    </button>
+</div>
