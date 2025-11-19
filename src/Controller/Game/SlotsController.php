@@ -5,7 +5,7 @@ use App\Entity\Partie;
 use App\Entity\Utilisateur;
 use App\Enum\IssueType;
 use App\Manager\TransactionManager;
-use App\Notifier\LastGamesNotifier;
+use App\Notifier\SlotLastGameNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -41,12 +41,12 @@ class SlotsController extends AbstractController
     ];
 
     public function __construct(
-        private LastGamesNotifier $lastGamesNotifier,
+        private SlotLastGameNotifier $slotLastGameNotifier,
     ) {
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(): Response
+    public function index(EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
@@ -56,21 +56,62 @@ class SlotsController extends AbstractController
 
         // Items triés par index (1..8)
         $items = array_values(self::SLOT_META);
-        usort($items, fn($a,$b) => $a['index'] <=> $b['index']);
+        usort($items, fn($a, $b) => $a['index'] <=> $b['index']);
 
         // Pourcentages estimés par symbole (normalisation des weights)
         $sum = array_sum(self::WEIGHTS);
         $percents = [];
         foreach (self::WEIGHTS as $k => $w) {
-            $percents[$k] = round(($w * 100) / $sum, 2); // ex: 12.34
+            $percents[$k] = round(($w * 100) / $sum, 2);
+        }
+
+        // 🔹 10 dernières parties de slots
+        $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
+            ->addSelect('u')
+            ->join('p.utilisateur', 'u')
+            ->where('p.game_key = :game')
+            ->setParameter('game', 'slots')
+            ->orderBy('p.debut_le', 'DESC')
+            ->setMaxResults(10);
+
+        $parties = $qb->getQuery()->getResult();
+
+        $lastGames = [];
+        foreach ($parties as $partie) {
+            if (!$partie instanceof Partie) {
+                continue;
+            }
+
+            $grid = null;
+            $metaJson = $partie->getMetaJson();
+            if ($metaJson) {
+                $decoded = json_decode($metaJson, true);
+                if (is_array($decoded) && isset($decoded['grid']) && is_array($decoded['grid'])) {
+                    $grid = $decoded['grid'];
+                }
+            }
+
+            $user = $partie->getUtilisateur();
+
+            $lastGames[] = [
+                'id'          => $partie->getId(),
+                'mise'        => $partie->getMise(),
+                'gain'        => $partie->getGain(),
+                'resultatNet' => $partie->getResultatNet(),
+                'issue'       => $partie->getIssue()?->value ?? null,
+                'grid'        => $grid,
+                'username'    => $user?->getPseudo() ?? ($user ? 'J'.$user->getId() : 'Joueur ?'),
+                'avatarUrl'   => $user ? $user->getAvatarUrl() : 'https://mc-heads.net/avatar',
+            ];
         }
 
         return $this->render('game/slots/index.html.twig', [
-            'minBet'      => $minBet,
-            'maxBet'      => $maxBet,
-            'descriptionInGame' => $descriptionInGame,
-            'items'       => $items,
-            'percents'    => $percents, // <—
+            'minBet'           => $minBet,
+            'maxBet'           => $maxBet,
+            'descriptionInGame'=> $descriptionInGame,
+            'items'            => $items,
+            'percents'         => $percents,
+            'lastGames'        => $lastGames,
         ]);
     }
 
@@ -149,7 +190,7 @@ class SlotsController extends AbstractController
             return $this->json(['ok' => false, 'error' => 'Invalid CSRF token.'], 400);
         }
         if ($spinId === '') {
-            return $this->json(['ok'=>false,'error'=>'spinId manquant.'], 400);
+            return $this->json(['ok'=>false,'error'=>'Spin manquant.'], 400);
         }
 
         $session = $request->getSession();
@@ -272,7 +313,7 @@ class SlotsController extends AbstractController
             $em->flush();
 
             // 🔔 Envoi Mercure pour la nouvelle partie
-            $this->lastGamesNotifier->notifyPartie($partie);
+            $this->slotLastGameNotifier->notifyPartie($partie);
 
             return [
                 'grid'      => $grid,

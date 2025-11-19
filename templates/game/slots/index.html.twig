@@ -87,9 +87,75 @@
 
 {% block more_content %}
     <div class="info-card card text-light mb-3">
-        <div id="last-games-panel">
-            <h2>Dernières parties</h2>
-            <ul id="last-games-list"></ul>
+        <div id="last-games-panel"
+             data-slot1="{{ asset('img/slots/slot1.png') }}"
+             data-slot2="{{ asset('img/slots/slot2.png') }}"
+             data-slot3="{{ asset('img/slots/slot3.png') }}"
+             data-slot4="{{ asset('img/slots/slot4.png') }}"
+             data-slot5="{{ asset('img/slots/slot5.png') }}"
+             data-slot6="{{ asset('img/slots/slot6.png') }}"
+             data-slot7="{{ asset('img/slots/slot7.png') }}"
+             data-slot8="{{ asset('img/slots/slot8.png') }}"
+        >
+            <div class="card-header border-secondary">
+                <span class="typo-title">Dernières parties</span>
+            </div>
+
+            {# 🔹 card-body sans p-2 #}
+            <div class="card-body">
+                <table class="table table-dark table-sm mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:32px;">Avatar</th>
+                        <th>Joueur</th>
+                        <th style="min-width:80px;">Grille</th>
+                        <th class="text-end" style="width:80px;">Résultat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="last-games-list">
+                    {% for game in lastGames %}
+                        {% set grid = game.grid ?? [] %}
+                        <tr>
+                            <td>
+                                <img src="{{ game.avatarUrl }}"
+                                     alt="Avatar"
+                                     class="rounded"
+                                     style="width:40px;height:40px;">
+                            </td>
+                            <td class="small">
+                                {{ game.username }}
+                            </td>
+                            <td>
+                                <div class="slot-mini-grid d-inline-grid"
+                                     style="display:inline-grid;grid-template-columns:repeat(3,20px);gap:2px;">
+                                    {% for r in 0..2 %}
+                                        {% set row = grid[r] ?? [] %}
+                                        {% for c in 0..2 %}
+                                            {% set sym = row[c] ?? 'slot8' %}
+                                            {% if sym starts with 'slot' %}
+                                                {% set index = sym|slice(4) %}
+                                            {% else %}
+                                                {% set index = '8' %}
+                                            {% endif %}
+                                            <img src="{{ asset('img/slots/slot' ~ index ~ '.png') }}"
+                                                 alt=""
+                                                 style="width:20px;height:20px;">
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="small text-end">
+                                {% if game.resultatNet >= 0 %}
+                                    <span class="text-success balance">+{{ game.resultatNet }}</span>
+                                {% else %}
+                                    <span class="text-danger balance">{{ game.resultatNet }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

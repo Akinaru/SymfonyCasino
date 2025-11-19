@@ -1,5 +1,5 @@
 <?php
-// src/Notifier/LastGamesNotifier.php
+// src/Notifier/SlotLastGameNotifier.php
 
 namespace App\Notifier;
 
@@ -7,10 +7,10 @@ use App\Entity\Partie;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 
-class LastGamesNotifier
+class SlotLastGameNotifier
 {
     /**
-     * Topic Mercure sur lequel on publie les dernières parties.
+     * Topic Mercure du flux "dernières parties Slots".
      */
     private const TOPIC_LAST_GAMES = 'https://casino.gallotta.fr/mercure/last-games';
 
@@ -23,11 +23,28 @@ class LastGamesNotifier
     {
         $utilisateur = $partie->getUtilisateur();
 
+        $grid = null;
+        if ($partie->getMetaJson()) {
+            $meta = json_decode($partie->getMetaJson(), true);
+            if (is_array($meta) && isset($meta['grid']) && is_array($meta['grid'])) {
+                $grid = $meta['grid'];
+            }
+        }
+
+        $username = null;
+        $avatarUrl = null;
+        if ($utilisateur) {
+            $username  = $utilisateur->getPseudo() ?: $utilisateur->getEmail();
+            $avatarUrl = $utilisateur->getAvatarUrl();
+        }
+
         $payload = [
             'type'   => 'partie.created',
             'partie' => [
                 'id'           => $partie->getId(),
                 'user_id'      => $utilisateur?->getId(),
+                'username'     => $username,
+                'avatar_url'   => $avatarUrl,
                 'game_key'     => $partie->getGameKey(),
                 'mise'         => $partie->getMise(),
                 'gain'         => $partie->getGain(),
@@ -35,6 +52,7 @@ class LastGamesNotifier
                 'issue'        => $partie->getIssue()->value,
                 'debut_le'     => $partie->getDebutLe()->format(\DateTimeInterface::ATOM),
                 'fin_le'       => $partie->getFinLe()?->format(\DateTimeInterface::ATOM),
+                'grid'         => $grid,
             ],
         ];
 

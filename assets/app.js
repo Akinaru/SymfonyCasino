@@ -1,7 +1,7 @@
 import './stimulus_bootstrap.js';
 import './bootstrap.js';
 import '@symfony/ux-live-component';
-import './mercure/last-games.js';
+import './mercure/games/slots-lastgames.js';
 
 /*
  * Welcome to your app's main JavaScript file!
