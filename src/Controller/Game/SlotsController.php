@@ -46,7 +46,7 @@ class SlotsController extends AbstractController
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         $minBet = 1;
-        $maxBet = 1000;
+        $maxBet = 1000000;
         $descriptionInGame = "Slots 3×3, 8 lignes payantes (3 horizontales, 3 verticales, 2 diagonales). Symboles pondérés du plus rare au plus commun : Émeraude, Diamant, Redstone, Or, Lapis, Fer, Charbon, Bâton. Le résultat s’affiche à la fin de l’animation.";
 
         // Items triés par index (1..8)
@@ -85,7 +85,7 @@ class SlotsController extends AbstractController
         }
 
         $minBet = 1;
-        $maxBet = 1000;
+        $maxBet = 1000000;
 
         if ($rawAmount === null || $rawAmount === '') {
             return $this->json(['ok' => false, 'error' => 'Veuillez saisir un montant.'], 400);

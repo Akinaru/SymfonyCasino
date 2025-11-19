@@ -10,7 +10,7 @@
     <div class="card info-card text-light h-100">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
             <span class="typo-title mb-0">Pile ou Face</span>
-            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000) }}</small>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
         </div>
         <div class="card-body form-compact">
             <div class="mb-3">
@@ -28,7 +28,7 @@
             <div class="mb-3">
                 <label for="betInput" class="form-label">Montant du pari</label>
                 <input id="betInput" type="number" class="form-control"
-                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000) }}"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000000) }}"
                        value="{{ minBet|default(1) }}">
                 <div class="form-text text-secondary">Jouez de manière responsable.</div>
             </div>
@@ -149,7 +149,7 @@
         </div>
         <div class="card-body">
             <ul class="mb-2">
-                <li>Mises min./max. : <strong>{{ minBet|default(1) }}</strong> / <strong>{{ maxBet|default(1000) }}</strong>.</li>
+                <li>Mises min./max. : <strong>{{ minBet|default(1) }}</strong> / <strong>{{ maxBet|default(1000000) }}</strong>.</li>
                 <li>Résultats déterminés côté serveur — l’animation est un <em>feedback visuel</em>.</li>
                 <li>Bonus/Promotions soumis à conditions (ex. wagering).</li>
             </ul>

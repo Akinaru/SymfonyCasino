@@ -17,5 +17,5 @@ final class SlotGame implements GameInterface
     public static function getDescriptionInGame(): ?string { return ''; }
     public function getImageUrl() : ?string { return 'https://i.ytimg.com/vi/sxmGEDFiRAQ/maxresdefault.jpg'; }
     public function getMinBet(): ?int { return 1; }
-    public function getMaxBet(): ?int { return 1000; }
+    public function getMaxBet(): ?int { return 1000000; }
 }

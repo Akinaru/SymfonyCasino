@@ -26,5 +26,5 @@ Limites de table affichées dans le panneau, animation purement visuelle, résul
     }
     public function getImageUrl() : ?string { return 'https://i.redd.it/1wsjdtem9jef1.jpeg'; }
     public function getMinBet(): ?int { return 1; }
-    public function getMaxBet(): ?int { return 1000; }
+    public function getMaxBet(): ?int { return 1000000; }
 }

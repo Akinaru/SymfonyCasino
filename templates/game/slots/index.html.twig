@@ -10,7 +10,7 @@
     <div class="card info-card text-light h-100">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
             <span class="typo-title mb-0">Slots 3×3</span>
-            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000) }}</small>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
         </div>
 
         <div class="card-body form-compact">
@@ -29,7 +29,7 @@
             <div class="mb-3">
                 <label for="betInput" class="form-label">Mise</label>
                 <input id="betInput" type="number" class="form-control"
-                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000) }}"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000000) }}"
                        value="{{ minBet|default(1) }}">
                 <div class="form-text text-secondary">Mise par lancer.</div>
             </div>
@@ -87,7 +87,7 @@
 
 {% block more_content %}
     <div class="info-card card text-light mb-3">
-        <div class="card-header border-secondary"><span class="typo-title">Table des gains & rareté</span></div>
+        <div class="card-header border-secondary"><span class="typo-title">Table des gains & rarete</span></div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-dark table-striped align-middle mb-2">
@@ -96,64 +96,64 @@
                         <th style="width:56px;">Symbole</th>
                         <th>Item</th>
                         <th style="width:160px;">Multiplicateur (×)</th>
-                        <th style="width:160px;">Probabilité (~%)</th>
-                        <th style="width:220px;">Rareté</th>
+                        <th style="width:160px;">Probabilite (~%)</th>
+                        <th style="width:220px;">Rarete</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        <td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt="Émeraude"></td>
-                        <td>Émeraude</td>
-                        <td class="fw-semibold">×20</td>
+                        <td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt="Emeraude"></td>
+                        <td>Emeraude</td>
+                        <td class="">×20</td>
                         <td>{{ percents['slot1']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-danger">Très rare</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot2.png') }}" width="36" height="36" alt="Diamant"></td>
                         <td>Diamant</td>
-                        <td class="fw-semibold">×12</td>
+                        <td class="">×12</td>
                         <td>{{ percents['slot2']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-warning">Rare</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot3.png') }}" width="36" height="36" alt="Redstone"></td>
                         <td>Redstone</td>
-                        <td class="fw-semibold">×9</td>
+                        <td class="">×9</td>
                         <td>{{ percents['slot3']|number_format(2, ',', ' ') }}%</td>
-                        <td><span class="badge text-bg-warning">Peu fréquent</span></td>
+                        <td><span class="badge text-bg-warning">Peu frequent</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot4.png') }}" width="36" height="36" alt="Or"></td>
                         <td>Or</td>
-                        <td class="fw-semibold">×6</td>
+                        <td class="">×6</td>
                         <td>{{ percents['slot4']|number_format(2, ',', ' ') }}%</td>
-                        <td><span class="badge text-bg-info">Intermédiaire</span></td>
+                        <td><span class="badge text-bg-info">Intermediaire</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt="Lapis"></td>
                         <td>Lapis</td>
-                        <td class="fw-semibold">×4</td>
+                        <td class="">×4</td>
                         <td>{{ percents['slot5']|number_format(2, ',', ' ') }}%</td>
-                        <td><span class="badge text-bg-info">Intermédiaire</span></td>
+                        <td><span class="badge text-bg-info">Intermediaire</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt="Fer"></td>
                         <td>Fer</td>
-                        <td class="fw-semibold">×3</td>
+                        <td class="">×3</td>
                         <td>{{ percents['slot6']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt="Charbon"></td>
                         <td>Charbon</td>
-                        <td class="fw-semibold">×2</td>
+                        <td class="">×2</td>
                         <td>{{ percents['slot7']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot8.png') }}" width="36" height="36" alt="Bâton"></td>
                         <td>Bâton</td>
-                        <td class="fw-semibold">×1</td>
+                        <td class="">×1</td>
                         <td>{{ percents['slot8']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-success">Très commun</span></td>
                     </tr>
@@ -161,9 +161,9 @@
                 </table>
             </div>
             <ul class="mb-0 small text-white-50">
-                <li>Pondérations côté serveur : Émeraude (plus rare) → Bâton (plus commun). Les pourcentages sont approximatifs (tirage pondéré).</li>
+                <li>Ponderations côte serveur : Emeraude (plus rare) → Bâton (plus commun). Les pourcentages sont approximatifs (tirage pondere).</li>
                 <li>Lignes payantes : 3 horizontales, 3 verticales, 2 diagonales (3 identiques = gain).</li>
-                <li>Le résultat s’affiche quand l’animation est finie (main propre).</li>
+                <li>Le resultat s’affiche quand l’animation est finie (main propre).</li>
             </ul>
         </div>
     </div>
@@ -402,7 +402,7 @@
                     const isWin = (data.payout || 0) > 0;
 
                     requestAnimationFrame(()=>{
-                        resultEl.textContent = isWin ? `Gagné +${data.payout}` : `Perdu -${amount}`;
+                        resultEl.textContent = isWin ? `Gagne +${data.payout}` : `Perdu -${amount}`;
                         s0.triggerBounce(); s1.triggerBounce(); s2.triggerBounce();
                     });
                 }
@@ -428,7 +428,7 @@
                         auto.remaining--;
                         if (auto.remaining > 0 && !auto.stop) await sleep(250);
                     }
-                    autoStatus.textContent = 'Auto : terminé';
+                    autoStatus.textContent = 'Auto : termine';
                     setAutoUI(false);
                 }
 
@@ -444,7 +444,7 @@
                     if (ev) ev.preventDefault();
                     if (!auto.active) return;
                     auto.stop = true;
-                    autoStatus.textContent = 'Auto : arrêt demandé…';
+                    autoStatus.textContent = 'Auto : arrêt demande…';
                 }
 
                 playBtn.addEventListener('click', onManual);

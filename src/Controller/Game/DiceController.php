@@ -23,7 +23,7 @@ class DiceController extends AbstractController
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
         $minBet = 1;
-        $maxBet = 1000;
+        $maxBet = 1000000;
         $descriptionInGame = DiceGame::getDescriptionInGame();
 
         // Pas besoin de passer un token ici : dans Twig, utilise {{ csrf_token('dice_play') }}
@@ -55,7 +55,7 @@ class DiceController extends AbstractController
         }
 
         $minBet = 1;
-        $maxBet = 1000;
+        $maxBet = 1000000;
 
         /** Validations détaillées du montant **/
         if ($rawAmount === null || $rawAmount === '') {
