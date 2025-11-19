@@ -1,13 +1,32 @@
 {# templates/leaderboard/index.html.twig #}
 {% extends 'base_front.html.twig' %}
 
-{% block title %}Leaderboard — Wager{% endblock %}
+{% block title %}Leaderboard — {{ label }}{% endblock %}
 
 {% block page_content %}
-    <div class="card bg-dark border-secondary mt-5">
+    {# Onglets (Wager / Balance / Bientôt...) #}
+    <ul class="nav nav-tabs mt-4">
+        {% for tab in tabs %}
+            {% set isActive = (tab.key == active_tab) %}
+            <li class="nav-item">
+                {% if tab.route is not null %}
+                    <a class="nav-link {% if isActive %}active{% endif %}"
+                       href="{{ path(tab.route) }}">
+                        {{ tab.label }}
+                    </a>
+                {% else %}
+                    <span class="nav-link disabled text-muted">
+                        {{ tab.label }}
+                    </span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="card bg-dark border-secondary mt-3">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-            <h1 class="h5 mb-0 text-light">Leaderboard — Wager</h1>
-            <small class="text-white-50">Top 10 (somme des mises)</small>
+            <h1 class="h5 mb-0 text-light">Leaderboard — {{ label }}</h1>
+            <small class="text-white-50">{{ subtitle }}</small>
         </div>
 
         <div class="card-body">
@@ -25,7 +44,7 @@
                             </div>
                             <div class="podium-caption mt-2">
                                 <div class="text-light">#2 — {{ r.pseudo }}</div>
-                                <div class="text-white balance">{{ r.wager|number_format(2, ',', ' ') }}</div>
+                                <div class="text-white balance">{{ r.value|number_format(2, ',', ' ') }}</div>
                             </div>
                             <div class="stage stage-2">
                                 <div class="stage-block bg-secondary text-dark rounded-2"></div>
@@ -46,7 +65,7 @@
                             </div>
                             <div class="podium-caption mt-2">
                                 <div class="text-light">#1 — {{ r.pseudo }}</div>
-                                <div class="text-white balance">{{ r.wager|number_format(2, ',', ' ') }}</div>
+                                <div class="text-white balance">{{ r.value|number_format(2, ',', ' ') }}</div>
                             </div>
                             <div class="stage stage-1">
                                 <div class="stage-block bg-warning text-dark rounded-2"></div>
@@ -67,7 +86,7 @@
                             </div>
                             <div class="podium-caption mt-2">
                                 <div class="text-light">#3 — {{ r.pseudo }}</div>
-                                <div class="text-white balance">{{ r.wager|number_format(2, ',', ' ') }}</div>
+                                <div class="text-white balance">{{ r.value|number_format(2, ',', ' ') }}</div>
                             </div>
                             <div class="stage stage-3">
                                 <div class="stage-block bg-info text-dark rounded-2"></div>
@@ -101,7 +120,7 @@
                                 <div class="fw-semibold text-truncate">{{ r.pseudo }}</div>
                                 <div class="text-white d-flex">
                                     <div class="balance">
-                                        {{ r.wager|number_format(2, ',', ' ') }}
+                                        {{ r.value|number_format(2, ',', ' ') }}
                                     </div>
                                 </div>
                             </div>
