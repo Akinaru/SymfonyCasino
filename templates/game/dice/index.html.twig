@@ -84,6 +84,68 @@
 {% endblock %}
 
 {% block more_content %}
+    {# 🔹 Dernières parties Dice #}
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Dernières parties Dice</span>
+        </div>
+        <div class="card-body">
+            <div id="dice-last-games-panel"
+                 data-face="{{ asset('img/dice/face.png') }}"
+                 data-pile="{{ asset('img/dice/pile.png') }}">
+                <table class="table table-dark table-sm mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:48px;">Avatar</th>
+                        <th>Joueur</th>
+                        <th style="min-width:100px;">Issue</th>
+                        <th class="text-end" style="width:80px;">Résultat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="dice-last-games-list">
+                    {% for game in lastGames %}
+                        <tr>
+                            <td>
+                                <img src="{{ game.avatar_url }}"
+                                     alt="Avatar"
+                                     class="rounded"
+                                     style="width:40px;height:40px;image-rendering:pixelated;">
+                            </td>
+                            <td class="small">
+                                {{ game.username }}
+                            </td>
+                            <td>
+                                <div style="height:70px;display:flex;align-items:center;">
+                                    {% if game.isWin %}
+                                        <img src="{{ asset('img/dice/face.png') }}"
+                                             alt="Face"
+                                             style="width:48px;height:48px;image-rendering:pixelated;">
+                                    {% else %}
+                                        <img src="{{ asset('img/dice/pile.png') }}"
+                                             alt="Pile"
+                                             style="width:48px;height:48px;image-rendering:pixelated;">
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="small text-end">
+                                {% set net = game.resultat_net %}
+                                {% if net > 0 %}
+                                    <span class="text-success balance">+{{ net }}</span>
+                                {% elseif net < 0 %}
+                                    <span class="text-danger balance">{{ net }}</span>
+                                {% else %}
+                                    <span class="text-muted balance">0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# 🔹 Tes cards existantes #}
     <div class="info-card card text-light mb-3">
         <div class="card-header border-secondary">
             <span class="typo-title">À propos du jeu</span>

@@ -7,6 +7,7 @@ use App\Entity\Utilisateur;
 use App\Enum\IssueType;
 use App\Game\DiceGame;
 use App\Manager\TransactionManager;
+use App\Notifier\DiceLastGameNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,8 +18,13 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/games/dice', name: 'app_game_dice_')]
 class DiceController extends AbstractController
 {
+    public function __construct(
+        private DiceLastGameNotifier $diceLastGameNotifier,
+    ) {
+    }
+
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(): Response
+    public function index(EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
@@ -26,11 +32,48 @@ class DiceController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = DiceGame::getDescriptionInGame();
 
-        // Pas besoin de passer un token ici : dans Twig, utilise {{ csrf_token('dice_play') }}
+        // 🔹 10 dernières parties "dice" (même pattern que Slots)
+        $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
+            ->addSelect('u')
+            ->join('p.utilisateur', 'u')
+            ->where('p.game_key = :game')
+            ->setParameter('game', 'dice')
+            ->orderBy('p.debut_le', 'DESC')
+            ->setMaxResults(10);
+
+        /** @var Partie[] $parties */
+        $parties = $qb->getQuery()->getResult();
+
+        $lastGames = [];
+        foreach ($parties as $partie) {
+            if (!$partie instanceof Partie) {
+                continue;
+            }
+
+            $user = $partie->getUtilisateur();
+            $meta = json_decode($partie->getMetaJson() ?? '{}', true) ?: [];
+            $roll = $meta['roll'] ?? null;
+
+            $lastGames[] = [
+                'id'           => $partie->getId(),
+                'user_id'      => $user?->getId(),
+                'game_key'     => $partie->getGameKey(),
+                'mise'         => $partie->getMise(),
+                'gain'         => $partie->getGain(),
+                'resultat_net' => $partie->getResultatNet(),
+                'issue'        => $partie->getIssue()?->value ?? null,
+                'username'     => $user?->getPseudo() ?: ($user?->getEmail() ?? 'Inconnu'),
+                'avatar_url'   => $user?->getAvatarUrl() ?? 'https://mc-heads.net/avatar',
+                'roll'         => $roll,
+                'isWin'        => $partie->getResultatNet() > 0,
+            ];
+        }
+
         return $this->render('game/dice/index.html.twig', [
-            'minBet' => $minBet,
-            'maxBet' => $maxBet,
-            'descriptionInGame' => $descriptionInGame
+            'minBet'            => $minBet,
+            'maxBet'            => $maxBet,
+            'descriptionInGame' => $descriptionInGame,
+            'lastGames'         => $lastGames,
         ]);
     }
 
@@ -45,10 +88,9 @@ class DiceController extends AbstractController
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        $data   = json_decode($request->getContent(), true) ?? [];
+        $data      = json_decode($request->getContent(), true) ?? [];
         $rawAmount = $data['amount'] ?? null;
-        $amount = (int)($data['amount'] ?? 0);
-        $token  = (string)($data['_token'] ?? '');
+        $token     = (string)($data['_token'] ?? '');
 
         if (!$this->isCsrfTokenValid('dice_play', $token)) {
             return $this->json(['ok' => false, 'error' => 'Invalid CSRF token.'], 400);
@@ -57,15 +99,12 @@ class DiceController extends AbstractController
         $minBet = 1;
         $maxBet = 1000000;
 
-        /** Validations détaillées du montant **/
         if ($rawAmount === null || $rawAmount === '') {
             return $this->json(['ok' => false, 'error' => 'Veuillez saisir un montant.'], 400);
         }
-
         if (!is_numeric($rawAmount)) {
             return $this->json(['ok' => false, 'error' => 'Montant invalide : saisissez un nombre.'], 400);
         }
-
         if ((string)(int)$rawAmount !== (string)$rawAmount) {
             return $this->json(['ok' => false, 'error' => 'Le montant doit être un entier, sans décimales.'], 400);
         }
@@ -93,14 +132,14 @@ class DiceController extends AbstractController
         $now = new \DateTimeImmutable();
 
         $result = $em->wrapInTransaction(function () use ($em, $user, $amount, $now, $txm) {
-            // 1) Débit immédiat via le manager (persiste user + transaction)
+            // Débit
             $txBet = $txm->debit($user, $amount, 'dice', null, $now);
 
-            // 2) Résolution du lancer
+            // Tirage
             $roll   = random_int(1, 6);
             $payout = $roll > 3 ? $amount * 2 : 0;
 
-            // 3) Création de la partie
+            // Partie
             $partie = (new Partie())
                 ->setUtilisateur($user)
                 ->setGameKey('dice')
@@ -113,15 +152,16 @@ class DiceController extends AbstractController
                 ->setMetaJson(json_encode(['roll' => $roll], JSON_UNESCAPED_UNICODE));
 
             $em->persist($partie);
-
-            // Lier la mise à la partie
             $txBet->setPartie($partie);
 
-            // 4) Crédit si gagné via le manager
-            $txm->credit($user, $payout, 'dice', $partie, $now);
+            if ($payout > 0) {
+                $txm->credit($user, $payout, 'dice', $partie, $now);
+            }
 
-            // On flush pour garantir un ID de partie
             $em->flush();
+
+            // Mercure
+            $this->diceLastGameNotifier->notifyPartie($partie, $roll);
 
             return [
                 'roll'      => $roll,
