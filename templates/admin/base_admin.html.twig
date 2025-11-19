@@ -4,42 +4,38 @@
 
 {% block page_content %}
 
-    {# Route courante #}
     {% set current = app.request.attributes.get('_route') %}
 
-    {# Nav admin (fond noir) #}
-    <nav class="nav nav-underline mb-3 pb-2 border-bottom border-secondary" role="navigation">
+    <nav class="nav mb-3 pb-2 border-bottom border-secondary" role="navigation">
+
         <a
-            class="nav-link {{ current == 'app_dashboard' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-            aria-current="{{ current == 'app_dashboard' ? 'page' : null }}"
             href="{{ path('app_dashboard') }}"
+            class="btn btn-primary mt-1 {{ current == 'app_dashboard' ? 'active' }}"
         >
             Dashboard
         </a>
 
         <a
-            class="nav-link {{ current starts with 'app_admin_utilisateur' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-            aria-current="{{ current starts with 'app_admin_utilisateur' ? 'page' : null }}"
             href="{{ path('app_admin_utilisateur_index') }}"
+            class="btn btn-primary mt-1 {{ current starts with 'app_admin_utilisateur' ? 'active' }}"
         >
             Utilisateurs
         </a>
 
         <a
-            class="nav-link {{ current starts with 'app_admin_games' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-            aria-current="{{ current starts with 'app_admin_games' ? 'page' : null }}"
             href="{{ path('app_admin_games_index') }}"
+            class="btn btn-primary mt-1 {{ current starts with 'app_admin_games' ? 'active' }}"
         >
             Jeux
         </a>
 
         <a
-            class="nav-link {{ current starts with 'app_admin_market' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-            aria-current="{{ current starts with 'app_admin_market' ? 'page' : null }}"
             href="{{ path('app_admin_market_index') }}"
+            class="btn btn-primary mt-1 {{ current starts with 'app_admin_market' ? 'active' }}"
         >
             Items
         </a>
+
     </nav>
 
     {% block admin_content %}{% endblock %}

@@ -1,9 +1,212 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Backoffice · Dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block admin_content %}
 
-    <p>Bienvenue sur le dashboard administrateur {{ app.user.pseudo }}</p>
+    <div class="container-fluid">
+
+        <!-- En-tete -->
+        <div class="mb-4">
+            <h1 class="h3 text-white">Dashboard</h1>
+            <p class="text-light">Panneau global d'administration du casino</p>
+        </div>
+
+        <!-- Statistiques principales -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body">
+                        <h6 class="text-white-50">Nombre total d'utilisateurs</h6>
+                        <p class="display-6 mb-0">12 842</p>
+                        <small class="text-white-50">Nouveaux aujourd'hui : 43</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body">
+                        <h6 class="text-white-50">Joueurs actifs</h6>
+                        <p class="display-6 mb-0">312</p>
+                        <small class="text-white-50">Dernieres 5 minutes</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body d-flex flex-column align-items-start">
+                        <h6 class="text-white-50">Total des mises aujourd'hui</h6>
+                        <p class="display-6 mb-0 balance">482 900</p>
+                        <small class="text-white-50">Credits casino</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body d-flex flex-column align-items-start">
+                        <h6 class="text-white-50">Paiements effectues aujourd'hui</h6>
+                        <p class="display-6 mb-0 balance">321 770</p>
+                        <small class="text-white-50">Credits casino</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Statistiques secondaires -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body">
+                        <h6 class="text-white-50">Nombre total de parties aujourd'hui</h6>
+                        <p class="h4 mb-1">18 442</p>
+                        <small class="text-white-50">Toutes categories confondues</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-body">
+                        <h6 class="text-white-50">Utilisateurs bannis</h6>
+                        <p class="h4 mb-1">142</p>
+                        <small class="text-white-50">Total historique</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Top gagnants / perdants -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-header border-secondary">
+                        Top gagnants (aujourd'hui)
+                    </div>
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                        <tr class="text-white-50">
+                            <th>Utilisateur</th>
+                            <th>Jeu</th>
+                            <th>Montant</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>IronMaster</td>
+                            <td>Dice</td>
+                            <td><span class="balance">14 200</span></td>
+                        </tr>
+                        <tr>
+                            <td>BlockMiner</td>
+                            <td>Wheel</td>
+                            <td><span class="balance">11 900</span></td>
+                        </tr>
+                        <tr>
+                            <td>ZeroShift</td>
+                            <td>Slots</td>
+                            <td><span class="balance">8 430</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card bg-dark border-secondary text-white">
+                    <div class="card-header border-secondary">
+                        Top pertes (aujourd'hui)
+                    </div>
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                        <tr class="text-white-50">
+                            <th>Utilisateur</th>
+                            <th>Jeu</th>
+                            <th>Montant</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>NightBlade</td>
+                            <td>Slots</td>
+                            <td><span class="balance">5 700</span></td>
+                        </tr>
+                        <tr>
+                            <td>CoreFire</td>
+                            <td>Dice</td>
+                            <td><span class="balance">4 980</span></td>
+                        </tr>
+                        <tr>
+                            <td>SkyRunner</td>
+                            <td>Wheel</td>
+                            <td><span class="balance">4 100</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Derniers inscrits -->
+        <div class="card bg-dark border-secondary text-white mb-4">
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                Derniers utilisateurs inscrits
+                <a href="#" class="btn btn-sm btn-outline-light">Voir tout</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                    <tr class="text-white-50">
+                        <th>Utilisateur</th>
+                        <th>Solde</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>DarkForge</td>
+                        <td><span class="balance">1 240</span></td>
+                        <td>2025-11-17</td>
+                        <td><span class="badge bg-success">Actif</span></td>
+                    </tr>
+                    <tr>
+                        <td>RedDust</td>
+                        <td><span class="balance">340</span></td>
+                        <td>2025-11-17</td>
+                        <td><span class="badge bg-warning text-dark">En attente</span></td>
+                    </tr>
+                    <tr>
+                        <td>CraftByte</td>
+                        <td><span class="balance">0</span></td>
+                        <td>2025-11-16</td>
+                        <td><span class="badge bg-danger">Banni</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="card bg-dark border-secondary text-white mb-5">
+            <div class="card-header border-secondary">
+                Journaux recents
+            </div>
+
+            <div class="card-body text-white-50">
+                Bientot...
+            </div>
+        </div>
+
+    </div>
 
 {% endblock %}

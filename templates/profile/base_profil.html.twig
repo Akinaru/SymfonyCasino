@@ -4,45 +4,43 @@
 {% block title %}Espace profil{% endblock %}
 
 {% block page_content %}
-    {# Route courante #}
     {% set current = app.request.attributes.get('_route') %}
 
     <section class="mb-4">
-        <nav class="nav nav-underline mb-3 pb-2 border-bottom border-secondary" role="navigation">
+
+        <nav class="d-flex gap-2 mb-3 pb-2 border-bottom border-secondary" role="navigation">
+
             <a
-                class="nav-link {{ current == 'app_profile_index' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-                aria-current="{{ current == 'app_profile_index' ? 'page' : null }}"
                 href="{{ path('app_profile_index') }}"
+                class="btn btn-primary mt-1 {{ current == 'app_profile_index' ? 'active' }}"
             >
                 Mon profil
             </a>
 
             <a
-                class="nav-link {{ current == 'app_profile_transactions' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-                aria-current="{{ current == 'app_profile_transactions' ? 'page' : null }}"
                 href="{{ path('app_profile_transactions') }}"
+                class="btn btn-primary mt-1 {{ current == 'app_profile_transactions' ? 'active' }}"
             >
                 Transactions
             </a>
 
             <a
-                class="nav-link {{ current == 'app_profile_records' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-                aria-current="{{ current == 'app_profile_records' ? 'page' : null }}"
                 href="{{ path('app_profile_records') }}"
+                class="btn btn-primary mt-1 {{ current == 'app_profile_records' ? 'active' }}"
             >
                 Records
             </a>
 
             <a
-                class="nav-link {{ current == 'app_inventory' ? 'active fw-semibold link-light' : 'link-secondary' }}"
-                aria-current="{{ current == 'app_inventory' ? 'page' : null }}"
                 href="{{ path('app_inventory_index') }}"
+                class="btn btn-primary mt-1 {{ current == 'app_inventory' ? 'active' }}"
             >
                 Inventaire
             </a>
+
         </nav>
+
     </section>
 
-    {# Contenu spécifique à chaque page du profil #}
     {% block profile_content %}{% endblock %}
 {% endblock %}

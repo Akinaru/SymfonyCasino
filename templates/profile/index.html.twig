@@ -11,28 +11,28 @@
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Pseudo</div>
-                        <div class="fs-5 fw-semibold">{{ app.user.pseudo ?? '—' }}</div>
+                        <div class="fs-5 ">{{ app.user.pseudo ?? '—' }}</div>
                     </div></div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Wager total</div>
-                        <div class="fs-5 fw-semibold">{{ app.user.wagger|default(0) }}</div>
+                        <div class="fs-5 ">{{ app.user.wagger|default(0) }}</div>
                     </div></div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Nombre de paris</div>
-                        <div class="fs-5 fw-semibold">{{ stats.betsCount|default(0) }}</div>
+                        <div class="fs-5 ">{{ stats.betsCount|default(0) }}</div>
                     </div></div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Taux de victoire</div>
-                        <div class="fs-5 fw-semibold {{ (stats.winRate|default(0)) >= 50 ? 'text-success' : 'text-warning' }}">
+                        <div class="fs-5  {{ (stats.winRate|default(0)) >= 50 ? 'text-success' : 'text-warning' }}">
                             {{ stats.winRate|default(0)|number_format(1, ',', ' ') }}%
                         </div>
                     </div></div>
@@ -41,14 +41,14 @@
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Mise moyenne</div>
-                        <div class="fs-5 fw-semibold">{{ stats.avgBet|default(0)|number_format(0, ',', ' ') }}</div>
+                        <div class="fs-5 ">{{ stats.avgBet|default(0)|number_format(0, ',', ' ') }}</div>
                     </div></div>
             </div>
 
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Plus gros gain</div>
-                        <div class="fs-5 fw-semibold text-success">
+                        <div class="fs-5  text-success">
                             {% if stats.biggestWin|default(0) > 0 %}+{% endif %}
                             {{ stats.biggestWin|default(0)|number_format(0, ',', ' ') }}
                         </div>
@@ -58,7 +58,7 @@
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Jeu favori</div>
-                        <div class="fw-semibold">
+                        <div class="">
                             {% set _fav = stats.favoriteGameKey|default(null) %}
                             {{ _fav ? (namesByKey[_fav]|default(_fav)) : '—' }}
                         </div>
@@ -68,7 +68,7 @@
             <div class="col-6 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Dernier jeu</div>
-                        <div class="fw-semibold">
+                        <div class="">
                             {% set _last = stats.lastGameKey|default(null) %}
                             {{ _last ? (namesByKey[_last]|default(_last)) : '—' }}
                         </div>
@@ -78,7 +78,7 @@
             <div class="col-12 col-lg-3">
                 <div class="card border-secondary h-100"><div class="card-body">
                         <div class="small mb-1">Niveau VIP</div>
-                        <div class="fs-5 fw-semibold">VIP {{ stats.vipLevel|default(1) }}</div>
+                        <div class="fs-5 ">VIP {{ stats.vipLevel|default(1) }}</div>
                     </div></div>
             </div>
         </div>

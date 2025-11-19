@@ -145,32 +145,43 @@ class ProfileController extends AbstractController
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        $qb = $em->createQueryBuilder()
-            ->select('p')
-            ->from(Partie::class, 'p')
-            ->where('p.utilisateur = :user')
-            ->andWhere('p.game_key = :g')
-            ->andWhere('p.gain > 0')
-            ->orderBy('p.gain', 'DESC')
-            ->addOrderBy('p.fin_le', 'DESC')
-            ->setMaxResults(1)
-            ->setParameter('user', $user)
-            ->setParameter('g', 'slots');
+        // Fonction interne pour récupérer le meilleur score d’un jeu
+        $getBestRecord = function(string $gameKey) use ($em, $user) {
+            $qb = $em->createQueryBuilder()
+                ->select('p')
+                ->from(Partie::class, 'p')
+                ->where('p.utilisateur = :user')
+                ->andWhere('p.game_key = :g')
+                ->andWhere('p.gain > 0')
+                ->orderBy('p.gain', 'DESC')
+                ->addOrderBy('p.fin_le', 'DESC')
+                ->setMaxResults(1)
+                ->setParameter('user', $user)
+                ->setParameter('g', $gameKey);
 
-        $bestSlots = $qb->getQuery()->getOneOrNullResult();
+            $best = $qb->getQuery()->getOneOrNullResult();
 
-        $record = null;
-        if ($bestSlots instanceof Partie) {
-            $meta = json_decode($bestSlots->getMetaJson() ?? '[]', true) ?: [];
-            $record = [
-                'partie' => $bestSlots,
+            if (!$best instanceof Partie) {
+                return null;
+            }
+
+            $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
+
+            return [
+                'partie' => $best,
                 'grid'   => $meta['grid'] ?? null,
                 'wins'   => $meta['wins'] ?? [],
             ];
-        }
+        };
+
+        // Récupération des records
+        $recordSlots = $getBestRecord('slots');
+        $recordDice  = $getBestRecord('dice');
 
         return $this->render('profile/records.html.twig', [
-            'recordSlots' => $record,
+            'recordSlots' => $recordSlots,
+            'recordDice'  => $recordDice,
         ]);
     }
+
 }
