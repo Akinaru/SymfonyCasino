@@ -1,11 +1,11 @@
 <?php
-// src/Controller/Game/SlotsController.php
 namespace App\Controller\Game;
 
 use App\Entity\Partie;
 use App\Entity\Utilisateur;
 use App\Enum\IssueType;
 use App\Manager\TransactionManager;
+use App\Notifier\LastGamesNotifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -39,6 +39,11 @@ class SlotsController extends AbstractController
         'slot7' => 18,
         'slot8' => 28,
     ];
+
+    public function __construct(
+        private LastGamesNotifier $lastGamesNotifier,
+    ) {
+    }
 
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(): Response
@@ -265,6 +270,9 @@ class SlotsController extends AbstractController
             }
 
             $em->flush();
+
+            // 🔔 Envoi Mercure pour la nouvelle partie
+            $this->lastGamesNotifier->notifyPartie($partie);
 
             return [
                 'grid'      => $grid,
