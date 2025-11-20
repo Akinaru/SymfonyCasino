@@ -10,7 +10,7 @@
                 Symfsino
             </a>
 
-            {# Balance (centre, visible ≥ lg) #}
+            {# Balance centre #}
             {% if app.user %}
                 <div class="d-none d-lg-flex align-items-center justify-content-center flex-grow-1">
                     <div class="badge text-bg-light border fs-6 px-2 d-flex justify-content-between align-items-center">
@@ -23,7 +23,7 @@
                 <div class="d-none d-lg-flex flex-grow-1"></div>
             {% endif %}
 
-            {# Zone compte + burger (à droite) #}
+            {# Compte / Burger #}
             <div class="d-flex align-items-center gap-2">
                 {% if app.user %}
                     <div class="dropdown text-end">
@@ -35,7 +35,7 @@
                                 <span class="badge bg-danger">Admin</span>
                             {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end text-small" aria-labelledby="dropdownUser1">
+                        <ul class="dropdown-menu dropdown-menu-end text-small">
                             <li><span class="dropdown-item-text"><strong>{{ app.user.email }}</strong></span></li>
                             <li><hr class="dropdown-divider"></li>
                             {% if is_granted('ROLE_ADMIN') %}
@@ -53,25 +53,21 @@
                     </div>
                 {% endif %}
 
-                {# Burger mobile #}
+                {# Burger #}
                 <button class="navbar-toggler d-lg-none border-0 ms-1" type="button"
-                        data-bs-toggle="collapse" data-bs-target="#mainNav"
-                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                        data-bs-toggle="collapse" data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
             </div>
 
-            {# Menu mobile (collapse) #}
+            {# Menu mobile #}
             <div class="collapse w-100 mt-2 d-lg-none" id="mainNav">
                 <ul class="nav flex-column">
                     <li class="nav-item"><span class="nav-link px-2 link-dark">Bientôt</span></li>
                     <li class="nav-item"><span class="nav-link px-2 link-dark">Bientôt</span></li>
                     {% if app.user %}
                         <li class="nav-item mt-2">
-            <span class="badge text-bg-light border fs-6 px-3 py-2">
-              Solde :
-              {{ app.user.balance }} €
-            </span>
+                            <span class="badge text-bg-light border fs-6 px-3 py-2">Solde : {{ app.user.balance }} €</span>
                         </li>
                     {% endif %}
                 </ul>
@@ -84,4 +80,119 @@
     <div class="container">
         {% block page_content %}{% endblock %}
     </div>
+
+
+    {# =============================== #}
+    {#   CHAT FIXE À DROITE FERME/OUVERT   #}
+    {# =============================== #}
+
+    <button id="chat-toggle-btn"
+            class="btn btn-primary position-fixed rounded-circle d-flex justify-content-center align-items-center"
+            style="width:55px; height:55px; bottom:20px; right:20px; z-index:2000;">
+        💬
+    </button>
+
+    <div id="chat-panel"
+         class="position-fixed bg-white border-start shadow"
+         style="top:0; right:-350px; width:350px; height:100vh; z-index:2001; transition:right .3s ease;">
+
+        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+            <strong>Chat en direct</strong>
+            <button class="btn btn-sm btn-outline-secondary" id="chat-close">Fermer</button>
+        </div>
+
+        <div id="chat-messages" class="p-3 overflow-auto"
+             style="height: calc(100vh - 150px);">
+            {# messages dynamiques par Mercure #}
+        </div>
+
+        <form id="chat-form" class="p-3 border-top">
+            <div class="input-group">
+                <input id="chat-input" type="text" class="form-control" placeholder="Votre message…" required>
+                <button class="btn btn-primary" type="submit">Envoyer</button>
+            </div>
+        </form>
+    </div>
+
+
+    {# =============================== #}
+    {#   JS - MERCURE + LOAD + SEND    #}
+    {# =============================== #}
+    <script type="module">
+        import { setupChatMercure } from "/assets/mercure/chat/chat-bus.js";
+
+        const panel = document.getElementById('chat-panel');
+        const toggle = document.getElementById('chat-toggle-btn');
+        const closeBtn = document.getElementById('chat-close');
+        const messagesBox = document.getElementById('chat-messages');
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('chat-input');
+
+        window.currentUserId = {{ app.user ? app.user.id : 0 }};
+
+        toggle.addEventListener('click', () => {
+            panel.style.right = panel.style.right === '0px' ? '-350px' : '0px';
+        });
+
+        closeBtn.addEventListener('click', () => {
+            panel.style.right = '-350px';
+        });
+
+        // ========= Rendu message =========
+        window.renderChatMessage = function(msg) {
+            const isMe = msg.user.id === window.currentUserId;
+
+            const html = `
+                <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
+                    ${isMe ? '' : `
+                        <img src="${msg.user.avatar}" width="38" height="38" class="me-2 border rounded">
+                    `}
+                    <div class="${isMe ? 'text-end' : ''}">
+                        <div class="small text-muted">${msg.user.pseudo} · ${msg.createdAt}</div>
+                        <div class="p-2 rounded ${isMe ? 'bg-light border' : 'bg-primary text-white'}">
+                            ${msg.content.replace(/</g, "&lt;")}
+                        </div>
+                    </div>
+                    ${isMe ? `
+                        <img src="${msg.user.avatar}" width="38" height="38" class="ms-2 border rounded">
+                    ` : ''}
+                </div>
+            `;
+
+            messagesBox.insertAdjacentHTML('beforeend', html);
+            messagesBox.scrollTop = messagesBox.scrollHeight;
+        };
+
+        // ========= Charger historique =========
+        async function loadMessages() {
+            const res = await fetch('/chat/messages');
+            const data = await res.json();
+            messagesBox.innerHTML = '';
+            data.forEach(window.renderChatMessage);
+        }
+
+        loadMessages();
+
+        // ========= Envoi =========
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            const formData = new FormData();
+            formData.append('content', text);
+
+            await fetch('/chat/send', {
+                method: 'POST',
+                body: formData
+            });
+
+            input.value = '';
+        });
+
+        // ========= Mercure =========
+        setupChatMercure();
+    </script>
+
 {% endblock %}

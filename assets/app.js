@@ -3,6 +3,7 @@ import './bootstrap.js';
 import '@symfony/ux-live-component';
 import './mercure/games/slots-lastgames.js';
 import './mercure/games/dice-lastgames.js';
+import './mercure/chat/chat-bus.js'
 
 /*
  * Welcome to your app's main JavaScript file!

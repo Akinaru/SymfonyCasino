@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Notifier;
+
+use App\Entity\Message;
+use Symfony\Component\Mercure\HubInterface;
+use Symfony\Component\Mercure\Update;
+
+class ChatMessageNotifier
+{
+    /**
+     * Topic Mercure du chat global.
+     */
+    private const TOPIC_CHAT = 'https://casino.gallotta.fr/mercure/chat';
+
+    public function __construct(
+        private HubInterface $hub
+    ) {}
+
+    public function notify(Message $message): void
+    {
+        $u = $message->getUser();
+
+        $payload = [
+            'type' => 'chat.message',
+            'message' => [
+                'id'      => $message->getId(),
+                'content' => $message->getContent(),
+                'createdAt' => $message->getCreatedAt()->format('Y-m-d H:i'),
+                'user' => [
+                    'id' => $u->getId(),
+                    'pseudo' => $u->getPseudo() ?? $u->getEmail(),
+                    'avatar' => $u->getAvatarUrl(),
+                ],
+            ],
+        ];
+
+        $update = new Update(
+            self::TOPIC_CHAT,
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
+        );
+
+        $this->hub->publish($update);
+    }
+}
