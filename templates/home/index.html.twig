@@ -32,39 +32,123 @@
         {# ——— JEUX (cards) ——— #}
         <section class="mb-4">
             <style>
-                /* Uniformise la hauteur des cartes et des visuels */
-                .game-card { display: flex; flex-direction: column; height: 100%; }
-                .game-card-img { height: 180px; object-fit: cover; }
-                .game-card-body { display: flex; flex-direction: column; }
-                .game-card-actions { margin-top: auto; display: flex; gap: .5rem; align-items: center; }
+                .game-card {
+                    border: none;
+                    overflow: hidden;
+                    border-radius: 1rem;
+                    background: transparent;
+                    display: flex;
+                    height: 100%;
+                    transition:
+                        transform .25s ease,
+                        box-shadow .25s ease,
+                        filter .25s ease;
+                }
+
+                /* Wrapper pour format portrait responsive */
+                .game-card-img-wrapper {
+                    position: relative;
+                    width: 100%;
+                    padding-top: 150%; /* ratio portrait ~ 2:3 */
+                    overflow: hidden;
+                    border-radius: 1rem;
+                }
+
+                .game-card-img {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block;
+                    transition:
+                        transform .4s ease,
+                        filter .4s ease;
+                }
+
+                .game-card:hover {
+                    transform: translateY(-4px) scale(1.02);
+                    box-shadow:
+                        0 10px 25px rgba(0, 0, 0, 0.35),
+                        0 0 0 1px rgba(255, 255, 255, 0.05);
+                }
+
+                .game-card:hover .game-card-img {
+                    transform: scale(1.08);
+                    filter: brightness(1.05) saturate(1.1);
+                }
+
+                .game-card-link {
+                    cursor: pointer;
+                }
+
+                /* Fausse carte */
+                .game-card-placeholder .game-card-img {
+                    filter: grayscale(0.05) brightness(0.95);
+                }
+
+                .game-card-placeholder:hover .game-card-img {
+                    filter: grayscale(0) brightness(1.05) saturate(1.1);
+                }
             </style>
 
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <h2 class="h4 mb-0 texte-gris">Jeux disponibles</h2>
             </div>
 
-            <div class="row g-3">
+            {# On force des lignes complètes en se basant sur 5 colonnes à partir du breakpoint md #}
+            {% set columns = 5 %}
+            {% set gamesCount = games|length %}
+
+            {% if gamesCount == 0 %}
+                {% set fillers = columns %}
+            {% else %}
+                {% set remainder = gamesCount % columns %}
+                {% if remainder == 0 %}
+                    {% set fillers = 0 %}
+                {% else %}
+                    {% set fillers = columns - remainder %}
+                {% endif %}
+            {% endif %}
+
+            {% set fillerImageUrl = 'https://mediumrare.imgix.net/seeAll-en.jpg?&dpr=2&format=auto&auto=format&q=50&w=220' %}
+
+            <div class="row row-cols-2 row-cols-md-5 g-3">
+                {# Cartes réelles #}
                 {% for game in games %}
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <a href="{{ game.url }}" class="text-decoration-none text-reset d-block h-100">
+                    <div class="col">
+                        <a href="{{ game.url }}" class="text-decoration-none text-reset d-block h-100 game-card-link">
                             <div class="card shadow-sm game-card h-100">
-                                <img
-                                    src="{{ game.imageUrl }}"
-                                    class="card-img-top game-card-img
-                                    alt="{{ game.name }}"
-                                    loading="lazy"
-                                >
-                                <div class="card-body game-card-body">
-                                    <h5 class="card-title mb-1">{{ game.name }}</h5>
-                                    <p class="card-text mb-0">{{ game.description }}</p>
+                                <div class="game-card-img-wrapper">
+                                    <img
+                                        src="{{ game.imageUrl }}"
+                                        class="card-img-top game-card-img"
+                                        alt="{{ game.name }}"
+                                        loading="lazy"
+                                    >
                                 </div>
                             </div>
                         </a>
                     </div>
                 {% endfor %}
+
+                {# Fausse cartes pour compléter la dernière ligne (toujours un nombre pair / ligne complète) #}
+                {% for i in 1..fillers %}
+                    <div class="col">
+                        <div class="card shadow-sm game-card game-card-placeholder h-100" aria-hidden="true">
+                            <div class="game-card-img-wrapper">
+                                <img
+                                    src="{{ fillerImageUrl }}"
+                                    class="card-img-top game-card-img"
+                                    alt="Plus de jeux à venir"
+                                    loading="lazy"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </section>
-
 
 
     </main>
