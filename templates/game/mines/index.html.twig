@@ -3,6 +3,34 @@
 {% block game_title %}💣 Symfsino - Mines{% endblock %}
 
 {% block game_styles %}
+    <style>
+        .mines-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 8px;
+            width: 100%;
+        }
+
+        .mines-grid .mine-cell {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* cases carrées */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .mines-grid .mine-cell .mine-icon {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            pointer-events: none;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
 {% endblock %}
 
 {% block game_sidebar %}
@@ -73,7 +101,8 @@
 
                 <div id="mines-grid"
                      class="mines-grid"
-                     style="display:grid;grid-template-columns:repeat(5,52px);grid-auto-rows:52px;gap:6px;">
+                     data-emerald="{{ asset('img/mines/emerald.png') }}"
+                     data-bomb="{{ asset('img/mines/bombs.png') }}">
                 </div>
             </div>
         </div>
@@ -143,6 +172,48 @@
         </div>
     </div>
 
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Table des multiplicateurs Mines</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle mb-2">
+                    <thead>
+                    <tr>
+                        <th>Diamants \\ Mines</th>
+                        {% for mines in minMines..maxMines %}
+                            <th class="text-center">{{ mines }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for revealed, row in multipliersGrid %}
+                        <tr>
+                            <th scope="row">{{ revealed }}</th>
+                            {% for mines in minMines..maxMines %}
+                                {% set mult = row[mines] ?? null %}
+                                <td class="text-center">
+                                    {% if mult is not null %}
+                                        ×{{ mult|number_format(2, ',', ' ') }}
+                                    {% else %}
+                                        <span class="text-muted">–</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="mb-0 small text-white-50">
+                Lignes = nombre de diamants trouvés, colonnes = nombre de mines placées.
+            </p>
+        </div>
+    </div>
+
+
+
 {% endblock %}
 
 {% block game_scripts %}
@@ -179,6 +250,9 @@
 
                 wired = true;
 
+                const emeraldSrc = gridEl.dataset.emerald || '';
+                const bombSrc    = gridEl.dataset.bomb || '';
+
                 const startEndpoint   = "{{ path('app_game_mines_start') }}";
                 const revealEndpoint  = "{{ path('app_game_mines_reveal') }}";
                 const cashoutEndpoint = "{{ path('app_game_mines_cashout') }}";
@@ -207,15 +281,33 @@
                 function updatePotentialWinDisplay() {
                     if (currentState === 'in_progress' && baseBetAmount > 0) {
                         const potential = Math.floor(baseBetAmount * currentMultiplier);
-                        resultEl.textContent = 'x' + currentMultiplier.toFixed(2) + ' → Gain potentiel : ' + potential;
+                        resultEl.innerHTML =
+                            'x' + currentMultiplier.toFixed(2) +
+                            ' → Gain potentiel : ' +
+                            '<span class="balance balance-inline">' + potential + '</span>';
                     }
+                }
+
+                function clearCellContent(btn) {
+                    btn.textContent = '';
+                    btn.innerHTML = '';
+                }
+
+                function setCellImage(btn, src, alt) {
+                    clearCellContent(btn);
+                    if (!src) return;
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.alt = alt;
+                    img.className = 'mine-icon';
+                    btn.appendChild(img);
                 }
 
                 function resetGridVisual() {
                     const cells = gridEl.querySelectorAll('.mine-cell');
                     cells.forEach((cell) => {
                         cell.className = 'mine-cell btn btn-outline-secondary';
-                        cell.textContent = '';
+                        clearCellContent(cell);
                         cell.disabled = false;
                     });
                     revealedCells.clear();
@@ -321,10 +413,6 @@
                     const index = parseInt(btn.dataset.index || '0', 10);
                     if (revealedCells.has(index)) return;
 
-                    btn.disabled = true;
-                    btn.classList.remove('btn-outline-secondary');
-                    btn.classList.add('btn-secondary');
-
                     setStatus('Révélation de la case ' + (index + 1) + '…');
 
                     try {
@@ -335,8 +423,8 @@
                         });
 
                         if (data.exploded) {
-                            btn.className = 'mine-cell btn btn-danger';
-                            btn.textContent = '💣';
+                            btn.className = 'mine-cell btn btn-outline-danger';
+                            setCellImage(btn, bombSrc, 'Bombe');
 
                             if (Array.isArray(data.bombs)) {
                                 data.bombs.forEach((bombIndex) => {
@@ -344,7 +432,7 @@
                                     const bombBtn = gridEl.querySelector('[data-index="' + bombIndex + '"]');
                                     if (bombBtn) {
                                         bombBtn.className = 'mine-cell btn btn-outline-danger';
-                                        bombBtn.textContent = '💣';
+                                        setCellImage(bombBtn, bombSrc, 'Bombe');
                                         bombBtn.disabled = true;
                                     }
                                 });
@@ -360,8 +448,8 @@
 
                         } else {
                             revealedCells.add(index);
-                            btn.className = 'mine-cell btn btn-success';
-                            btn.textContent = '💎';
+                            btn.className = 'mine-cell btn btn-outline-success';
+                            setCellImage(btn, emeraldSrc, 'Émeraude');
 
                             currentMultiplier = data.multiplier || currentMultiplier;
                             updateMultiplierDisplay();
@@ -374,7 +462,7 @@
                         setStatus('Erreur.');
                         btn.disabled = false;
                         btn.className = 'mine-cell btn btn-outline-secondary';
-                        btn.textContent = '';
+                        clearCellContent(btn);
                     }
                 }
 
@@ -393,7 +481,9 @@
                         currentMultiplier = data.multiplier || currentMultiplier;
                         updateMultiplierDisplay();
 
-                        setResult('Tu encaisses ' + data.payout + ' (net ' + data.net + ').');
+                        // 👉 ici : plus de (net x) + span.balance
+                        resultEl.innerHTML = 'Tu encaisses <span class="balance balance-inline">' + data.payout + '</span>';
+
                         setStatus('Partie terminée, gains crédités.');
                         setGameState('cashed_out');
                         refreshHeaderBalanceLive();

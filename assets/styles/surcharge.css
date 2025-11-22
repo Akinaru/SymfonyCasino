@@ -100,6 +100,12 @@ fieldset:disabled .btn-primary {
     ease-in-out;
 }
 
+.form-control:disabled {
+    background-color: #323333;
+    color: #777676;
+    opacity: 1;
+}
+
 .form-control::placeholder {
     color: #707070;
     opacity: 1;

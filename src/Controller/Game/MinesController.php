@@ -24,6 +24,8 @@ class MinesController extends AbstractController
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
+    #[Route('', name: 'index', methods: ['GET'])]
+    #[Route('', name: 'index', methods: ['GET'])]
     public function index(EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
@@ -32,6 +34,7 @@ class MinesController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = MinesGame::getDescriptionInGame();
 
+        // Dernières parties
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -72,11 +75,45 @@ class MinesController extends AbstractController
             ];
         }
 
+        // Grille 2D : lignes = nb de diamants révélés, colonnes = nb de mines
+        $minMines    = MinesGame::MIN_MINES;
+        $maxMines    = MinesGame::MAX_MINES;
+        $maxDiamonds = MinesGame::GRID_SIZE - $minMines; // max de diamants possible (avec le moins de mines)
+
+        /** @var array<int, array<int, float|null>> $multipliersGrid */
+        $multipliersGrid = [];
+
+        for ($revealed = 1; $revealed <= $maxDiamonds; $revealed++) {
+            $row = [];
+
+            for ($mines = $minMines; $mines <= $maxMines; $mines++) {
+                // Impossible de révéler plus de diamants que de cases safe
+                if ($revealed > MinesGame::GRID_SIZE - $mines) {
+                    $row[$mines] = null;
+                    continue;
+                }
+
+                try {
+                    $row[$mines] = MinesGame::getMultiplier($mines, $revealed);
+                } catch (\Throwable $e) {
+                    $row[$mines] = null;
+                }
+            }
+
+            $multipliersGrid[$revealed] = $row;
+        }
+
         return $this->render('game/mines/index.html.twig', [
             'minBet'            => $minBet,
             'maxBet'            => $maxBet,
             'descriptionInGame' => $descriptionInGame,
             'lastGames'         => $lastGames,
+
+            // Pour le tableau "comme l'image"
+            'minMines'         => $minMines,
+            'maxMines'         => $maxMines,
+            'maxDiamonds'      => $maxDiamonds,
+            'multipliersGrid'  => $multipliersGrid,
         ]);
     }
 

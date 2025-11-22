@@ -33,6 +33,10 @@ html, body {
     align-items: center;
 }
 
+.balance-inline {
+    display: inline-flex !important;
+}
+
 .balance::after {
     content: "";
     display: inline-block;
