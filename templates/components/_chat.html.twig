@@ -68,24 +68,44 @@
     }
 
     window.renderChatMessage = function(msg) {
-        const isMe = msg.user.id === window.currentUserId;
+        if (!messagesBox) return;
 
-        const html = `
-            <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
-                ${isMe ? '' : `
-                    <img src="${msg.user.avatar}" width="38" height="38" class="me-2 border rounded">
-                `}
-                <div class="${isMe ? 'text-end' : ''}">
-                    <div class="small text-muted">${msg.user.pseudo} · ${msg.createdAt}</div>
-                    <div class="p-2 rounded ${isMe ? 'bg-primary text-white' : 'bg-light border'}">
-                        ${msg.content.replace(/</g, "&lt;")}
-                    </div>
+        const currentUserId = window.currentUserId ?? 0;
+        const isSystem = !!msg.isSystem;
+
+        let html = '';
+
+        if (isSystem) {
+            const safeContent = String(msg.content ?? '').replace(/</g, "&lt;");
+            html = `
+                <div class="text-center text-muted small my-2">
+                    ${safeContent}
+                    ${msg.createdAt ? `<span class="ms-1 text-secondary">· ${msg.createdAt}</span>` : ''}
                 </div>
-                ${isMe ? `
-                    <img src="${msg.user.avatar}" width="38" height="38" class="ms-2 border rounded">
-                ` : ''}
-            </div>
-        `;
+            `;
+        } else {
+            const user = msg.user || {};
+            const isMe = user.id === currentUserId;
+
+            const safeContent = String(msg.content ?? '').replace(/</g, "&lt;");
+
+            html = `
+                <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
+                    ${isMe ? '' : `
+                        <img src="${user.avatar || ''}" width="38" height="38" class="me-2 border rounded">
+                    `}
+                    <div class="${isMe ? 'text-end' : ''}">
+                        <div class="small text-muted">${user.pseudo || 'Inconnu'} · ${msg.createdAt || ''}</div>
+                        <div class="p-2 rounded ${isMe ? 'bg-primary text-white' : 'bg-light border'}">
+                            ${safeContent}
+                        </div>
+                    </div>
+                    ${isMe ? `
+                        <img src="${user.avatar || ''}" width="38" height="38" class="ms-2 border rounded">
+                    ` : ''}
+                </div>
+            `;
+        }
 
         messagesBox.insertAdjacentHTML('beforeend', html);
         messagesBox.scrollTop = messagesBox.scrollHeight;

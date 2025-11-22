@@ -12,7 +12,9 @@ export function setupChatMercure() {
         const msg = data.message;
         if (!msg) return;
 
-        renderChatMessage(msg);
+        if (typeof window.renderChatMessage === 'function') {
+            window.renderChatMessage(msg);
+        }
     });
 
     mercureBus.on('chat.clear', () => {
@@ -30,24 +32,41 @@ window.renderChatMessage = function(msg) {
     if (!box) return;
 
     const currentUserId = window.currentUserId ?? 0;
-    const isMe = msg.user.id === currentUserId;
+    const isSystem = !!msg.isSystem;
 
-    const html = `
-        <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
-            ${isMe ? '' : `
-                <img src="${msg.user.avatar}" width="38" height="38" class="me-2 border rounded">
-            `}
-            <div class="${isMe ? 'text-end' : ''}">
-                <div class="small text-muted">${msg.user.pseudo} · ${msg.createdAt}</div>
-                <div class="p-2 rounded ${isMe ? 'bg-light border' : 'bg-primary text-white'}">
-                    ${msg.content.replace(/</g, "&lt;")}
-                </div>
+    let html = '';
+
+    if (isSystem) {
+        const safeContent = String(msg.content ?? '').replace(/</g, "&lt;");
+        html = `
+            <div class="text-center text-muted small my-2">
+                ${safeContent}
+                ${msg.createdAt ? `<span class="ms-1 text-secondary">· ${msg.createdAt}</span>` : ''}
             </div>
-            ${isMe ? `
-                <img src="${msg.user.avatar}" width="38" height="38" class="ms-2 border rounded">
-            ` : ''}
-        </div>
-    `;
+        `;
+    } else {
+        const user = msg.user || {};
+        const isMe = user.id === currentUserId;
+
+        const safeContent = String(msg.content ?? '').replace(/</g, "&lt;");
+
+        html = `
+            <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
+                ${isMe ? '' : `
+                    <img src="${user.avatar || ''}" width="38" height="38" class="me-2 border rounded">
+                `}
+                <div class="${isMe ? 'text-end' : ''}">
+                    <div class="small text-muted">${user.pseudo || 'Inconnu'} · ${msg.createdAt || ''}</div>
+                    <div class="p-2 rounded ${isMe ? 'bg-light border' : 'bg-primary text-white'}">
+                        ${safeContent}
+                    </div>
+                </div>
+                ${isMe ? `
+                    <img src="${user.avatar || ''}" width="38" height="38" class="ms-2 border rounded">
+                ` : ''}
+            </div>
+        `;
+    }
 
     box.insertAdjacentHTML('beforeend', html);
     box.scrollTop = box.scrollHeight;

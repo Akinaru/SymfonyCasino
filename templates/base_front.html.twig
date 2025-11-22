@@ -42,6 +42,8 @@
                                 <li><a class="dropdown-item-text" href="{{ path('app_dashboard') }}">Backoffice</a></li>
                             {% endif %}
                             <li><a class="dropdown-item-text" href="{{ path("app_profile_index") }}">Profil</a></li>
+                            {# Bouton Tips #}
+                            <li><a class="dropdown-item-text" href="#" id="open-tip-modal">Envoyer un tip</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{{ path('app_logout') }}">Se déconnecter</a></li>
                         </ul>
@@ -76,9 +78,147 @@
         </div>
     </header>
 
+    {# Container pour les alertes de tips (HAUT DROITE) #}
+    <div id="tip-alert-container"
+         class="position-fixed top-0 end-0 p-3"
+         style="z-index:2100; max-width:420px; width:100%;">
+    </div>
+
+    {# Expose l'id utilisateur globalement (utilisé pour chat + tips) #}
+    {% if app.user %}
+        <script>
+            window.currentUserId = {{ app.user.id }};
+        </script>
+    {% else %}
+        <script>
+            window.currentUserId = 0;
+        </script>
+    {% endif %}
+
     <div class="container">
         {% block page_content %}{% endblock %}
     </div>
+
+    {# Modale Tips #}
+    {% if app.user %}
+        <div class="modal fade" id="tipModal" tabindex="-1" aria-labelledby="tipModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="tip-form">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="tipModalLabel">Envoyer un tip</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="tip-pseudo" class="form-label">Pseudo du joueur</label>
+                                <input type="text" class="form-control" id="tip-pseudo" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="tip-amount" class="form-label">Montant</label>
+                                <div class="input-group">
+                                    <input type="number" min="0.01" step="0.01" class="form-control" id="tip-amount" required>
+                                    <span class="input-group-text">€</span>
+                                </div>
+                            </div>
+                            <div class="alert alert-danger d-none" id="tip-error"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Envoyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { setupTipsMercure } from "/assets/mercure/tips/tips-bus.js";
+
+            const openTipBtn      = document.getElementById('open-tip-modal');
+            const tipModalEl      = document.getElementById('tipModal');
+            const tipForm         = document.getElementById('tip-form');
+            const tipPseudoInput  = document.getElementById('tip-pseudo');
+            const tipAmountInput  = document.getElementById('tip-amount');
+            const tipError        = document.getElementById('tip-error');
+
+            let tipModal = null;
+            if (tipModalEl && window.bootstrap) {
+                tipModal = new bootstrap.Modal(tipModalEl);
+            }
+
+            if (openTipBtn && tipModal) {
+                openTipBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (tipError) {
+                        tipError.classList.add('d-none');
+                        tipError.textContent = '';
+                    }
+                    if (tipPseudoInput) tipPseudoInput.value = '';
+                    if (tipAmountInput) tipAmountInput.value = '';
+                    tipModal.show();
+                });
+            }
+
+            if (tipForm) {
+                tipForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (tipError) {
+                        tipError.classList.add('d-none');
+                        tipError.textContent = '';
+                    }
+
+                    const pseudo = tipPseudoInput ? tipPseudoInput.value.trim() : '';
+                    const amount = tipAmountInput ? tipAmountInput.value.trim() : '';
+
+                    if (!pseudo || !amount) {
+                        if (tipError) {
+                            tipError.textContent = 'Veuillez remplir tous les champs.';
+                            tipError.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('pseudo', pseudo);
+                    formData.append('amount', amount);
+
+                    const res = await fetch('/tips/send', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!res.ok) {
+                        let msg = 'Une erreur est survenue.';
+                        try {
+                            const data = await res.json();
+                            if (data.error === 'user_not_found') {
+                                msg = 'Pseudo introuvable.';
+                            } else if (data.error === 'insufficient_balance') {
+                                msg = 'Solde insuffisant.';
+                            } else if (data.error === 'no_self_tip') {
+                                msg = 'Vous ne pouvez pas vous envoyer un tip.';
+                            } else if (data.error === 'invalid') {
+                                msg = 'Données invalides.';
+                            }
+                        } catch (e) {}
+
+                        if (tipError) {
+                            tipError.textContent = msg;
+                            tipError.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (tipModal) {
+                        tipModal.hide();
+                    }
+                });
+            }
+
+            setupTipsMercure();
+        </script>
+    {% endif %}
 
     {% include 'components/_chat.html.twig' %}
 

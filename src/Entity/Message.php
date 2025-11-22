@@ -14,7 +14,7 @@ class Message
     private ?int $id = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Utilisateur $user = null;
 
     #[ORM\Column(type: 'text')]
@@ -23,9 +23,13 @@ class Message
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $system = false;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
+        $this->system = false;
     }
 
     public function getId(): ?int
@@ -38,7 +42,7 @@ class Message
         return $this->user;
     }
 
-    public function setUser(Utilisateur $user): self
+    public function setUser(?Utilisateur $user): self
     {
         $this->user = $user;
         return $this;
@@ -58,5 +62,16 @@ class Message
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function isSystem(): bool
+    {
+        return $this->system;
+    }
+
+    public function setSystem(bool $system): self
+    {
+        $this->system = $system;
+        return $this;
     }
 }

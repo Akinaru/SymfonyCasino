@@ -16,19 +16,20 @@ class ChatMessageNotifier
 
     public function notify(Message $message): void
     {
-        $u = $message->getUser();
+        $user = $message->getUser();
 
         $payload = [
-            'type' => 'chat.message',
+            'type'    => 'chat.message',
             'message' => [
                 'id'        => $message->getId(),
                 'content'   => $message->getContent(),
                 'createdAt' => $message->getCreatedAt()->format('Y-m-d H:i'),
-                'user'      => [
-                    'id'     => $u->getId(),
-                    'pseudo' => $u->getPseudo() ?? $u->getEmail(),
-                    'avatar' => $u->getAvatarUrl(),
-                ],
+                'isSystem'  => $message->isSystem(),
+                'user'      => $user ? [
+                    'id'     => $user->getId(),
+                    'pseudo' => $user->getPseudo() ?? $user->getEmail(),
+                    'avatar' => $user->getAvatarUrl(),
+                ] : null,
             ],
         ];
 

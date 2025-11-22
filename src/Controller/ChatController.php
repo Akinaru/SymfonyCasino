@@ -25,15 +25,18 @@ class ChatController extends AbstractController
         $messages = array_reverse($messages);
 
         $data = array_map(function (Message $m) {
+            $user = $m->getUser();
+
             return [
                 'id'        => $m->getId(),
                 'content'   => $m->getContent(),
                 'createdAt' => $m->getCreatedAt()->format('Y-m-d H:i'),
-                'user'      => [
-                    'id'     => $m->getUser()->getId(),
-                    'pseudo' => $m->getUser()->getPseudo() ?? $m->getUser()->getEmail(),
-                    'avatar' => $m->getUser()->getAvatarUrl(),
-                ],
+                'isSystem'  => $m->isSystem(),
+                'user'      => $user ? [
+                    'id'     => $user->getId(),
+                    'pseudo' => $user->getPseudo() ?? $user->getEmail(),
+                    'avatar' => $user->getAvatarUrl(),
+                ] : null,
             ];
         }, $messages);
 
@@ -52,9 +55,13 @@ class ChatController extends AbstractController
             return new JsonResponse(['error' => 'empty'], 400);
         }
 
+        /** @var \App\Entity\Utilisateur $user */
+        $user = $this->getUser();
+
         $msg = new Message();
-        $msg->setUser($this->getUser());
+        $msg->setUser($user);
         $msg->setContent($content);
+        $msg->setSystem(false);
 
         $em->persist($msg);
         $em->flush();
