@@ -1,8 +1,11 @@
 import './stimulus_bootstrap.js';
 import './bootstrap.js';
 import '@symfony/ux-live-component';
+
+// Import des controlleurs mercures
 import './mercure/games/slots-lastgames.js';
 import './mercure/games/dice-lastgames.js';
+import './mercure/games/mines-lastgames.js';
 import './mercure/chat/chat-bus.js'
 
 /*

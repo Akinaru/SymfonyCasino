@@ -1,0 +1,427 @@
+{% extends 'game/base_game.html.twig' %}
+
+{% block game_title %}💣 Symfsino - Mines{% endblock %}
+
+{% block game_styles %}
+{% endblock %}
+
+{% block game_sidebar %}
+    <div class="card info-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Mines</span>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
+        </div>
+        <div class="card-body form-compact">
+            <div class="mb-3">
+                <div class="typo-eyebrow">Balance</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow">Description</div>
+                <p class="mb-0 typo-helper">{{ descriptionInGame }}</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="betInput" class="form-label">Montant du pari</label>
+                <input id="betInput" type="number" class="form-control"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000000) }}"
+                       value="{{ minBet|default(1) }}">
+                <div class="form-text text-secondary">Jouez de manière responsable.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="minesInput" class="form-label">Nombre de mines</label>
+                <input id="minesInput" type="number" class="form-control"
+                       min="{{ constant('App\\Game\\MinesGame::MIN_MINES') }}"
+                       max="{{ constant('App\\Game\\MinesGame::MAX_MINES') }}"
+                       value="3">
+                <div class="form-text text-secondary">
+                    Entre {{ constant('App\\Game\\MinesGame::MIN_MINES') }} et {{ constant('App\\Game\\MinesGame::MAX_MINES') }}.
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button id="startBtn" class="btn btn-primary">Démarrer une partie</button>
+                <button id="cashoutBtn" class="btn btn-primary" disabled>Encaisser</button>
+            </div>
+
+            <hr class="border-secondary">
+
+            <div class="mt-2">
+                <small id="minesStatus" class="text-white-50">Aucune partie en cours.</small><br>
+                <small id="minesMultiplier" class="text-white-50">Multiplicateur actuel : x1.00</small><br>
+                <small id="minesCurrentWin" class="text-white-50">Gain actuel : 0.00 €</small>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_playfield %}
+    <div class="card game-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Zone de jeu</span>
+        </div>
+
+        <div class="card-body">
+            <div class="playfield-area d-flex flex-column align-items-center gap-3">
+                <div class="status-row">
+                    <div id="result" class="typo-kpi">En attente…</div>
+                </div>
+
+                <div id="mines-grid"
+                     class="mines-grid"
+                     style="display:grid;grid-template-columns:repeat(5,52px);grid-auto-rows:52px;gap:6px;">
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block more_content %}
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Dernières parties Mines</span>
+        </div>
+        <div class="card-body">
+            <div id="mines-last-games-panel">
+                <table class="table table-dark table-sm mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:48px;">Avatar</th>
+                        <th>Joueur</th>
+                        <th style="width:80px;">Mines</th>
+                        <th style="width:110px;">Diamants</th>
+                        <th style="min-width:100px;">Date / heure</th>
+                        <th class="text-start" style="width:100px;">Mise</th>
+                        <th class="text-end" style="width:100px;">Résultat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="mines-last-games-list">
+                    {% for game in lastGames %}
+                        <tr>
+                            <td>
+                                <img src="{{ game.avatar_url }}"
+                                     alt="Avatar"
+                                     class="rounded"
+                                     style="width:40px;height:40px;image-rendering:pixelated;">
+                            </td>
+                            <td class="small">
+                                {{ game.username }}
+                            </td>
+                            <td class="small">
+                                {{ game.mines ?? '-' }}
+                            </td>
+                            <td class="small">
+                                {{ game.revealedCount ?? 0 }}
+                            </td>
+                            <td class="small">
+                                {% if game.debut_le is defined and game.debut_le %}
+                                    {{ game.debut_le|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </td>
+                            <td class="small text-start">
+                                <span class="balance">{{ game.mise }}</span>
+                            </td>
+                            <td class="small text-end">
+                                {% set net = game.resultat_net %}
+                                {% if net > 0 %}
+                                    <span class="text-success balance">+{{ net }}</span>
+                                {% elseif net < 0 %}
+                                    <span class="text-danger balance">{{ net }}</span>
+                                {% else %}
+                                    <span class="balance">0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block game_scripts %}
+    <script type="module">
+        (function () {
+            let wired = false;
+
+            function refreshHeaderBalanceLive() {
+                const containers = document.querySelectorAll('[id="header-balance-live"]');
+                if (!containers.length) return;
+
+                containers.forEach((container) => {
+                    const btn = container.querySelector('[data-live-action-param="refresh"]');
+                    if (!btn) return;
+                    btn.click();
+                });
+            }
+
+            function initMinesGame() {
+                if (wired) return;
+
+                const gridEl       = document.getElementById('mines-grid');
+                const resultEl     = document.getElementById('result');
+                const betInput     = document.getElementById('betInput');
+                const minesInput   = document.getElementById('minesInput');
+                const startBtn     = document.getElementById('startBtn');
+                const cashoutBtn   = document.getElementById('cashoutBtn');
+                const statusEl     = document.getElementById('minesStatus');
+                const multiplierEl = document.getElementById('minesMultiplier');
+
+                if (!gridEl || !resultEl || !betInput || !minesInput || !startBtn || !cashoutBtn || !statusEl || !multiplierEl) {
+                    return;
+                }
+
+                wired = true;
+
+                const startEndpoint   = "{{ path('app_game_mines_start') }}";
+                const revealEndpoint  = "{{ path('app_game_mines_reveal') }}";
+                const cashoutEndpoint = "{{ path('app_game_mines_cashout') }}";
+                const csrf            = "{{ csrf_token('mines_play') }}";
+
+                let currentGameId     = null;
+                let currentState      = 'idle';
+                let currentMines      = null;
+                let currentMultiplier = 1.0;
+                let revealedCells     = new Set();
+                let baseBetAmount     = 0;
+
+                function setStatus(text) {
+                    statusEl.textContent = text;
+                }
+
+                function setResult(text) {
+                    if (!text || !text.trim()) return;
+                    resultEl.textContent = text;
+                }
+
+                function updateMultiplierDisplay() {
+                    multiplierEl.textContent = 'Multiplicateur actuel : x' + currentMultiplier.toFixed(2);
+                }
+
+                function updatePotentialWinDisplay() {
+                    if (currentState === 'in_progress' && baseBetAmount > 0) {
+                        const potential = Math.floor(baseBetAmount * currentMultiplier);
+                        resultEl.textContent = 'x' + currentMultiplier.toFixed(2) + ' → Gain potentiel : ' + potential;
+                    }
+                }
+
+                function resetGridVisual() {
+                    const cells = gridEl.querySelectorAll('.mine-cell');
+                    cells.forEach((cell) => {
+                        cell.className = 'mine-cell btn btn-outline-secondary';
+                        cell.textContent = '';
+                        cell.disabled = false;
+                    });
+                    revealedCells.clear();
+                }
+
+                function setGameState(state) {
+                    currentState = state;
+
+                    if (state === 'idle') {
+                        startBtn.disabled   = false;
+                        cashoutBtn.disabled = true;
+                        betInput.disabled   = false;
+                        minesInput.disabled = false;
+                        baseBetAmount       = 0;
+                    } else if (state === 'in_progress') {
+                        startBtn.disabled   = true;
+                        cashoutBtn.disabled = false;
+                        betInput.disabled   = true;
+                        minesInput.disabled = true;
+                    } else {
+                        startBtn.disabled   = false;
+                        cashoutBtn.disabled = true;
+                        betInput.disabled   = false;
+                        minesInput.disabled = false;
+                    }
+                }
+
+                function buildGridIfNeeded() {
+                    if (gridEl.children.length === 25) return;
+
+                    gridEl.innerHTML = '';
+                    for (let i = 0; i < 25; i++) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'mine-cell btn btn-outline-secondary';
+                        btn.dataset.index = String(i);
+                        btn.addEventListener('click', onCellClick);
+                        gridEl.appendChild(btn);
+                    }
+                }
+
+                async function apiPost(url, payload) {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && typeof data.error === 'string' && data.error.trim() !== '')
+                            ? data.error
+                            : 'Erreur (' + res.status + ')';
+                        throw new Error(msg);
+                    }
+                    return data;
+                }
+
+                async function handleStart(ev) {
+                    if (ev) ev.preventDefault();
+                    if (currentState === 'in_progress') return;
+
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    const mines  = parseInt(minesInput.value, 10) || 0;
+
+                    baseBetAmount = amount;
+
+                    setResult('Préparation de la partie…');
+                    setStatus('Initialisation…');
+                    currentMultiplier = 1.0;
+                    updateMultiplierDisplay();
+                    updatePotentialWinDisplay();
+                    resetGridVisual();
+
+                    try {
+                        const data = await apiPost(startEndpoint, {
+                            amount,
+                            mines,
+                            _token: csrf,
+                        });
+
+                        currentGameId     = data.game_id;
+                        currentMines      = data.mines;
+                        currentMultiplier = data.multiplier || 1.0;
+                        updateMultiplierDisplay();
+                        updatePotentialWinDisplay();
+
+                        setStatus('Mise placée, mines cachées, clique sur une case pour commencer.');
+                        setGameState('in_progress');
+                        refreshHeaderBalanceLive();
+                    } catch (e) {
+                        setResult(e.message || 'Erreur au démarrage de la partie');
+                        setStatus('Erreur.');
+                        setGameState('idle');
+                    }
+                }
+
+                async function onCellClick(ev) {
+                    const btn = ev.currentTarget;
+                    if (!btn || currentState !== 'in_progress') return;
+                    if (btn.disabled) return;
+                    if (currentGameId === null) return;
+
+                    const index = parseInt(btn.dataset.index || '0', 10);
+                    if (revealedCells.has(index)) return;
+
+                    btn.disabled = true;
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.classList.add('btn-secondary');
+
+                    setStatus('Révélation de la case ' + (index + 1) + '…');
+
+                    try {
+                        const data = await apiPost(revealEndpoint, {
+                            game_id: currentGameId,
+                            cell: index,
+                            _token: csrf,
+                        });
+
+                        if (data.exploded) {
+                            btn.className = 'mine-cell btn btn-danger';
+                            btn.textContent = '💣';
+
+                            if (Array.isArray(data.bombs)) {
+                                data.bombs.forEach((bombIndex) => {
+                                    if (bombIndex === index) return;
+                                    const bombBtn = gridEl.querySelector('[data-index="' + bombIndex + '"]');
+                                    if (bombBtn) {
+                                        bombBtn.className = 'mine-cell btn btn-outline-danger';
+                                        bombBtn.textContent = '💣';
+                                        bombBtn.disabled = true;
+                                    }
+                                });
+                            }
+
+                            setResult('BOOM 💥 Tu as perdu la mise.');
+                            setStatus('Partie terminée (mine trouvée).');
+                            setGameState('lost');
+                            refreshHeaderBalanceLive();
+
+                            const allCells = gridEl.querySelectorAll('.mine-cell');
+                            allCells.forEach((cell) => { cell.disabled = true; });
+
+                        } else {
+                            revealedCells.add(index);
+                            btn.className = 'mine-cell btn btn-success';
+                            btn.textContent = '💎';
+
+                            currentMultiplier = data.multiplier || currentMultiplier;
+                            updateMultiplierDisplay();
+                            updatePotentialWinDisplay();
+
+                            setStatus('Tu peux continuer à cliquer ou encaisser.');
+                        }
+                    } catch (e) {
+                        setResult(e.message || 'Erreur pendant la révélation.');
+                        setStatus('Erreur.');
+                        btn.disabled = false;
+                        btn.className = 'mine-cell btn btn-outline-secondary';
+                        btn.textContent = '';
+                    }
+                }
+
+                async function handleCashout(ev) {
+                    if (ev) ev.preventDefault();
+                    if (currentState !== 'in_progress' || currentGameId === null) return;
+
+                    setStatus('Encaissement en cours…');
+
+                    try {
+                        const data = await apiPost(cashoutEndpoint, {
+                            game_id: currentGameId,
+                            _token: csrf,
+                        });
+
+                        currentMultiplier = data.multiplier || currentMultiplier;
+                        updateMultiplierDisplay();
+
+                        setResult('Tu encaisses ' + data.payout + ' (net ' + data.net + ').');
+                        setStatus('Partie terminée, gains crédités.');
+                        setGameState('cashed_out');
+                        refreshHeaderBalanceLive();
+
+                        const allCells = gridEl.querySelectorAll('.mine-cell');
+                        allCells.forEach((cell) => { cell.disabled = true; });
+
+                    } catch (e) {
+                        setResult(e.message || 'Erreur à l’encaissement.');
+                        setStatus('Erreur.');
+                    }
+                }
+
+                // Init
+                buildGridIfNeeded();
+                resetGridVisual();
+                setGameState('idle');
+                setStatus('Aucune partie en cours.');
+                setResult('En attente…');
+                updateMultiplierDisplay();
+
+                startBtn.addEventListener('click', handleStart);
+                cashoutBtn.addEventListener('click', handleCashout);
+            }
+
+            document.addEventListener('DOMContentLoaded', initMinesGame);
+            document.addEventListener('turbo:load', initMinesGame);
+        })();
+    </script>
+{% endblock %}
+
