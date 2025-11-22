@@ -43,10 +43,7 @@ final class MinesGame implements GameInterface
 
 
 
-    public function getImageUrl(): ?string
-    {
-        return 'https://mediumrare.imgix.net/15a51a2ae2895872ae2b600fa6fe8d7f8d32c9814766b66ddea2b288d04ba89c?q=85';
-    }
+    public function getImageUrl() : ?string { return '/games/mines.png'; }
 
     public function getMinBet(): ?int
     {
