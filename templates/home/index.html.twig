@@ -125,22 +125,26 @@
                 <h2 class="h4 mb-0 texte-gris">Jeux disponibles</h2>
             </div>
 
-            {# On force des lignes complètes en se basant sur 5 colonnes à partir du breakpoint md #}
+            {# On force au moins 2 lignes complètes (5 colonnes) #}
             {% set columns = 5 %}
+            {% set rows = 2 %}
             {% set gamesCount = games|length %}
+            {% set baseTotal = columns * rows %}
 
-            {% if gamesCount == 0 %}
-                {% set fillers = columns %}
-            {% else %}
+            {% if gamesCount >= baseTotal %}
+                {# Plus de 10 jeux : on garde le modulo pour compléter la dernière ligne #}
                 {% set remainder = gamesCount % columns %}
                 {% if remainder == 0 %}
                     {% set fillers = 0 %}
                 {% else %}
                     {% set fillers = columns - remainder %}
                 {% endif %}
+            {% else %}
+                {# Moins de 10 jeux : on complète jusqu'à 10 items #}
+                {% set fillers = baseTotal - gamesCount %}
             {% endif %}
 
-            {% set fillerImageUrl = 'https://mediumrare.imgix.net/seeAll-en.jpg?&dpr=2&format=auto&auto=format&q=50&w=220' %}
+            {% set fillerImageUrl = asset('games/placeholder.png') %}
 
             <div class="row row-cols-2 row-cols-md-5 g-3">
                 {# Cartes réelles #}
@@ -166,23 +170,29 @@
                     </div>
                 {% endfor %}
 
-                {# Fausse cartes pour compléter la dernière ligne (toujours un nombre pair / ligne complète) #}
+                {# Fausse cartes pour compléter les lignes #}
                 {% for i in 1..fillers %}
                     <div class="col">
-                        <div class="card shadow-sm game-card game-card-placeholder h-100" aria-hidden="true">
-                            <div class="game-card-img-wrapper">
-                                <img
-                                    src="{{ fillerImageUrl }}"
-                                    class="card-img-top game-card-img"
-                                    alt="Plus de jeux à venir"
-                                    loading="lazy"
-                                >
+                        <div class="game-card-wrapper game-card-placeholder" aria-hidden="true">
+                            <div class="game-card-title">
+                                Bientôt
+                            </div>
+                            <div class="card shadow-sm game-card h-100">
+                                <div class="game-card-img-wrapper">
+                                    <img
+                                        src="{{ fillerImageUrl }}"
+                                        class="card-img-top game-card-img"
+                                        alt="Plus de jeux à venir"
+                                        loading="lazy"
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         </section>
+
 
     </main>
 {% endblock %}
