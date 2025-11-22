@@ -46,6 +46,7 @@ class SlotsController extends AbstractController
     }
 
     #[Route('', name: 'index', methods: ['GET'])]
+    #[Route('', name: 'index', methods: ['GET'])]
     public function index(EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
@@ -54,18 +55,15 @@ class SlotsController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = "Slots 3×3, 8 lignes payantes (3 horizontales, 3 verticales, 2 diagonales). Symboles pondérés du plus rare au plus commun : Émeraude, Diamant, Redstone, Or, Lapis, Fer, Charbon, Bâton. Le résultat s’affiche à la fin de l’animation.";
 
-        // Items triés par index (1..8)
         $items = array_values(self::SLOT_META);
         usort($items, fn($a, $b) => $a['index'] <=> $b['index']);
 
-        // Pourcentages estimés par symbole (normalisation des weights)
         $sum = array_sum(self::WEIGHTS);
         $percents = [];
         foreach (self::WEIGHTS as $k => $w) {
             $percents[$k] = round(($w * 100) / $sum, 2);
         }
 
-        // 🔹 10 dernières parties de slots
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -102,16 +100,17 @@ class SlotsController extends AbstractController
                 'grid'        => $grid,
                 'username'    => $user?->getPseudo() ?? ($user ? 'J'.$user->getId() : 'Joueur ?'),
                 'avatarUrl'   => $user ? $user->getAvatarUrl() : 'https://mc-heads.net/avatar',
+                'debut_le'    => $partie->getDebutLe(),
             ];
         }
 
         return $this->render('game/slots/index.html.twig', [
-            'minBet'           => $minBet,
-            'maxBet'           => $maxBet,
-            'descriptionInGame'=> $descriptionInGame,
-            'items'            => $items,
-            'percents'         => $percents,
-            'lastGames'        => $lastGames,
+            'minBet'            => $minBet,
+            'maxBet'            => $maxBet,
+            'descriptionInGame' => $descriptionInGame,
+            'items'             => $items,
+            'percents'          => $percents,
+            'lastGames'         => $lastGames,
         ]);
     }
 

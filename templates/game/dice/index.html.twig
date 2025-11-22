@@ -84,7 +84,6 @@
 {% endblock %}
 
 {% block more_content %}
-    {# 🔹 Dernières parties Dice #}
     <div class="info-card card text-light mb-3">
         <div class="card-header border-secondary">
             <span class="typo-title">Dernières parties Dice</span>
@@ -99,7 +98,9 @@
                         <th style="width:48px;">Avatar</th>
                         <th>Joueur</th>
                         <th style="min-width:100px;">Issue</th>
-                        <th class="text-end" style="width:80px;">Résultat</th>
+                        <th style="min-width:100px;">Date / heure</th>
+                        <th class="text-start" style="width:120px;">Mise</th>
+                        <th class="text-start" style="width:80px;">Résultat</th>
                     </tr>
                     </thead>
                     <tbody id="dice-last-games-list">
@@ -127,14 +128,20 @@
                                     {% endif %}
                                 </div>
                             </td>
+                            <td class="small">
+                                {% if game.debut_le is defined and game.debut_le %}
+                                    {{ game.debut_le|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </td>
+                            <td class="small text-start">
+                                <span class="balance">{{ game.mise }}</span>
+                            </td>
                             <td class="small text-end">
                                 {% set net = game.resultat_net %}
                                 {% if net > 0 %}
-                                    <span class="text-success balance">+{{ net }}</span>
-                                {% elseif net < 0 %}
-                                    <span class="text-danger balance">{{ net }}</span>
+                                    <span class="text-success balance justify-content-end">+{{ net }}</span>
                                 {% else %}
-                                    <span class="text-muted balance">0</span>
+                                    <span class="balance justify-content-end">0</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -145,7 +152,6 @@
         </div>
     </div>
 
-    {# 🔹 Tes cards existantes #}
     <div class="info-card card text-light mb-3">
         <div class="card-header border-secondary">
             <span class="typo-title">À propos du jeu</span>

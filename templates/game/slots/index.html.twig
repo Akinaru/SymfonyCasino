@@ -109,7 +109,9 @@
                         <th style="width:32px;">Avatar</th>
                         <th>Joueur</th>
                         <th style="min-width:80px;">Grille</th>
-                        <th class="text-end" style="width:80px;">Résultat</th>
+                        <th style="min-width:100px;">Date / heure</th>
+                        <th class="text-start" style="width:120px;">Mise</th>
+                        <th class="text-start" style="width:80px;">Résultat</th>
                     </tr>
                     </thead>
                     <tbody id="last-games-list">
@@ -143,6 +145,14 @@
                                         {% endfor %}
                                     {% endfor %}
                                 </div>
+                            </td>
+                            <td class="small">
+                                {% if game.debut_le is defined and game.debut_le %}
+                                    {{ game.debut_le|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </td>
+                            <td class="small text-start">
+                                <span class="balance">{{ game.mise }}</span>
                             </td>
                             <td class="small text-end">
                                 {% if game.resultatNet >= 0 %}

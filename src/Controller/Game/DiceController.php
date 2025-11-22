@@ -32,7 +32,6 @@ class DiceController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = DiceGame::getDescriptionInGame();
 
-        // 🔹 10 dernières parties "dice" (même pattern que Slots)
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -66,6 +65,7 @@ class DiceController extends AbstractController
                 'avatar_url'   => $user?->getAvatarUrl() ?? 'https://mc-heads.net/avatar',
                 'roll'         => $roll,
                 'isWin'        => $partie->getResultatNet() > 0,
+                'debut_le'     => $partie->getDebutLe(),
             ];
         }
 

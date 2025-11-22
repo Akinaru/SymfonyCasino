@@ -1,27 +1,20 @@
-// assets/mercure/mercure-bus.js
-
 class MercureBus {
     constructor(hubPath = '/.well-known/mercure') {
         this.hubPath = hubPath;
         this.topics = new Set();
         this.handlersByType = new Map();
         this.eventSource = null;
-        this.connected = false;
     }
 
-    /**
-     * Ajoute un topic à écouter.
-     * Peut être appelé plusieurs fois avant ou après connect().
-     */
     addTopic(topic) {
+        const sizeBefore = this.topics.size;
         this.topics.add(topic);
-        // Si on est déjà connecté, on pourrait éventuellement reconnecter
-        // mais pour commencer on fixe les topics au premier connect().
+
+        if (this.eventSource && this.topics.size !== sizeBefore) {
+            this.connect();
+        }
     }
 
-    /**
-     * Enregistre un handler pour un type d'événement (ex: 'partie.created').
-     */
     on(type, handler) {
         if (!this.handlersByType.has(type)) {
             this.handlersByType.set(type, new Set());
@@ -29,27 +22,26 @@ class MercureBus {
         this.handlersByType.get(type).add(handler);
     }
 
-    /**
-     * Ouvre la connexion EventSource si ce n'est pas déjà fait.
-     */
     connect() {
-        if (this.connected || this.eventSource) {
-            return;
-        }
-
         const origin = window.location.origin;
         const url = new URL(this.hubPath, origin);
 
-        // Ajout de tous les topics en query params
         for (const topic of this.topics) {
             url.searchParams.append('topic', topic);
+        }
+
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
         }
 
         const es = new EventSource(url.toString());
 
         es.onopen = () => {
-            this.connected = true;
-            console.log('[MercureBus] connexion ouverte', { url: url.toString() });
+            console.log('[MercureBus] connexion ouverte', {
+                url: url.toString(),
+                topics: Array.from(this.topics),
+            });
         };
 
         es.onmessage = (event) => {
@@ -64,7 +56,6 @@ class MercureBus {
 
                 const handlers = this.handlersByType.get(type);
                 if (!handlers || handlers.size === 0) {
-                    // personne n'écoute ce type : normal dans certains cas
                     return;
                 }
 
@@ -82,12 +73,10 @@ class MercureBus {
 
         es.onerror = (event) => {
             console.error('[MercureBus] erreur EventSource', event);
-            // Tu pourras plus tard ajouter une logique de reconnexion.
         };
 
         this.eventSource = es;
     }
 }
 
-// Instance globale qu'on peut réutiliser partout
 export const mercureBus = new MercureBus();

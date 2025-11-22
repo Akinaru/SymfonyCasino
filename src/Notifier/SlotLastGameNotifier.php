@@ -1,5 +1,4 @@
 <?php
-// src/Notifier/SlotLastGameNotifier.php
 
 namespace App\Notifier;
 
@@ -9,9 +8,6 @@ use Symfony\Component\Mercure\Update;
 
 class SlotLastGameNotifier
 {
-    /**
-     * Topic Mercure du flux "dernières parties Slots".
-     */
     private const TOPIC_LAST_GAMES = 'https://casino.gallotta.fr/mercure/last-games';
 
     public function __construct(
@@ -31,12 +27,8 @@ class SlotLastGameNotifier
             }
         }
 
-        $username = null;
-        $avatarUrl = null;
-        if ($utilisateur) {
-            $username  = $utilisateur->getPseudo() ?: $utilisateur->getEmail();
-            $avatarUrl = $utilisateur->getAvatarUrl();
-        }
+        $username = $utilisateur?->getPseudo() ?? ($utilisateur ? 'J'.$utilisateur->getId() : 'Joueur ?');
+        $avatarUrl = $utilisateur ? $utilisateur->getAvatarUrl() : 'https://mc-heads.net/avatar';
 
         $payload = [
             'type'   => 'partie.created',
@@ -53,6 +45,7 @@ class SlotLastGameNotifier
                 'debut_le'     => $partie->getDebutLe()->format(\DateTimeInterface::ATOM),
                 'fin_le'       => $partie->getFinLe()?->format(\DateTimeInterface::ATOM),
                 'grid'         => $grid,
+                'isWin'        => $partie->getResultatNet() > 0,
             ],
         ];
 

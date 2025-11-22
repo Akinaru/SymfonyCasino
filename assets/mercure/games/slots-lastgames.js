@@ -1,10 +1,37 @@
-// assets/mercure/games/slots-lastgames.js
 import { mercureBus } from '../mercure-bus.js';
 
 const TOPIC_LAST_GAMES = 'https://casino.gallotta.fr/mercure/last-games';
 
-// Sera rempli avec les bonnes URLs (fingerprintées) au setup
 let SLOT_IMAGES = {};
+
+function formatDateTime(value) {
+    if (!value) {
+        return '';
+    }
+
+    let date;
+    if (value instanceof Date) {
+        date = value;
+    } else if (typeof value === 'string') {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return '';
+        }
+        date = parsed;
+    } else {
+        return '';
+    }
+
+    const pad = (n) => (n < 10 ? '0' + n : '' + n);
+
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1);
+    const year = date.getFullYear();
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
 
 function buildGridHtml(grid) {
     if (!Array.isArray(grid)) {
@@ -17,7 +44,7 @@ function buildGridHtml(grid) {
         for (let c = 0; c < 3; c++) {
             const sym = row[c] || 'slot8';
             const src = SLOT_IMAGES[sym] || SLOT_IMAGES.slot8 || '/img/slots/slot8.png';
-            html += `<img src="${src}" alt="" style="width:40px;height:40px;">`;
+            html += `<img src="${src}" alt="" style="width:20px;height:20px;">`;
         }
     }
     html += '</div>';
@@ -28,26 +55,52 @@ function buildGridHtml(grid) {
 function createRow(p) {
     const tr = document.createElement('tr');
 
-    const net = typeof p.resultat_net === 'number'
-        ? p.resultat_net
-        : (typeof p.resultNet === 'number' ? p.resultNet : 0);
+    const netRaw =
+        typeof p.resultat_net === 'number'
+            ? p.resultat_net
+            : typeof p.resultatNet === 'number'
+                ? p.resultatNet
+                : 0;
+    const net = Number.isFinite(netRaw) ? netRaw : 0;
 
-    const netSign = net > 0 ? '+' : '';
+    const miseRaw =
+        typeof p.mise === 'number'
+            ? p.mise
+            : typeof p.bet === 'number'
+                ? p.bet
+                : 0;
+    const mise = Number.isFinite(miseRaw) ? miseRaw : 0;
+
+    const netSign = net >= 0 ? '+' : '';
     const netClass = net >= 0 ? 'text-success' : 'text-danger';
 
     const username = p.username || (p.user_id ? `J${p.user_id}` : 'Joueur ?');
-    const avatarUrl = p.avatar_url || 'https://mc-heads.net/avatar';
+    const avatarUrl = p.avatar_url || p.avatarUrl || 'https://mc-heads.net/avatar';
+
+    const dateValue =
+        p.debut_le ||
+        p.debutLe ||
+        p.started_at ||
+        p.startedAt ||
+        null;
+    const dateStr = formatDateTime(dateValue);
 
     tr.innerHTML = `
     <td>
       <img src="${avatarUrl}" alt="Avatar" class="rounded"
-           style="width:20px;height:20px;">
+           style="width:40px;height:40px;">
     </td>
     <td class="small">
       ${username}
     </td>
     <td>
       ${buildGridHtml(p.grid)}
+    </td>
+    <td class="small">
+      ${dateStr}
+    </td>
+    <td class="small text-start">
+      <span class="balance">${mise}</span>
     </td>
     <td class="small text-end">
       <span class="${netClass} balance">${netSign}${net}</span>
@@ -64,8 +117,11 @@ function setupSlotsLastGames() {
     if (!panel || !list) {
         return;
     }
+    if (panel.dataset.wired === '1') {
+        return;
+    }
+    panel.dataset.wired = '1';
 
-    // 🔹 Récupérer les URLs fingerprintées depuis les data-attributes
     SLOT_IMAGES = {
         slot1: panel.dataset.slot1 || '/img/slots/slot1.png',
         slot2: panel.dataset.slot2 || '/img/slots/slot2.png',
@@ -77,7 +133,6 @@ function setupSlotsLastGames() {
         slot8: panel.dataset.slot8 || '/img/slots/slot8.png',
     };
 
-    // 🔹 Nettoyage des vieux <li> éventuels
     Array.from(list.children).forEach((child) => {
         if (child.tagName !== 'TR') {
             child.remove();
@@ -89,7 +144,7 @@ function setupSlotsLastGames() {
     mercureBus.on('partie.created', (data) => {
         const p = data.partie;
         if (!p) return;
-        if (p.game_key !== 'slots') return;
+        if (p.game_key && p.game_key !== 'slots') return;
 
         const tr = createRow(p);
 
@@ -104,3 +159,4 @@ function setupSlotsLastGames() {
 }
 
 document.addEventListener('DOMContentLoaded', setupSlotsLastGames);
+document.addEventListener('turbo:load', setupSlotsLastGames);
