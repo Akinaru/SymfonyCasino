@@ -1,0 +1,123 @@
+<button id="chat-toggle-btn"
+        class="btn btn-primary position-fixed rounded-circle d-flex justify-content-center align-items-center"
+        style="width:55px; height:55px; bottom:20px; right:20px; z-index:2000;">
+    💬
+</button>
+
+<div id="chat-panel"
+     class="position-fixed bg-white border-start shadow"
+     style="top:0; right:-350px; width:350px; height:100vh; z-index:2001; transition:right .3s ease;">
+
+    <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+        <strong>Chat en direct</strong>
+        <div class="d-flex gap-2">
+            {% if is_granted('ROLE_ADMIN') %}
+                <button class="btn btn-sm btn-primary" id="chat-clear">Vider</button>
+            {% endif %}
+            <button class="btn btn-sm btn-primary" id="chat-close">Fermer</button>
+        </div>
+    </div>
+
+    <div id="chat-messages" class="p-3 overflow-auto"
+         style="height: calc(100vh - 150px);">
+    </div>
+
+    {% if app.user %}
+        <form id="chat-form" class="p-3 border-top">
+            <div class="input-group">
+                <input id="chat-input" type="text" class="form-control" placeholder="Votre message…" required>
+                <button class="btn btn-primary" type="submit">Envoyer</button>
+            </div>
+        </form>
+    {% else %}
+        <div class="p-3 border-top">
+            <a href="{{ path('app_login') }}" class="btn btn-primary w-100">
+                Se connecter pour discuter
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script type="module">
+    import { setupChatMercure } from "/assets/mercure/chat/chat-bus.js";
+
+    const panel = document.getElementById('chat-panel');
+    const toggle = document.getElementById('chat-toggle-btn');
+    const closeBtn = document.getElementById('chat-close');
+    const messagesBox = document.getElementById('chat-messages');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+    const clearBtn = document.getElementById('chat-clear');
+
+    window.currentUserId = {{ app.user ? app.user.id : 0 }};
+
+    toggle.addEventListener('click', () => {
+        panel.style.right = panel.style.right === '0px' ? '-350px' : '0px';
+    });
+
+    closeBtn.addEventListener('click', () => {
+        panel.style.right = '-350px';
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', async () => {
+            await fetch('/chat/clear', {
+                method: 'POST',
+            });
+        });
+    }
+
+    window.renderChatMessage = function(msg) {
+        const isMe = msg.user.id === window.currentUserId;
+
+        const html = `
+            <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : ''}">
+                ${isMe ? '' : `
+                    <img src="${msg.user.avatar}" width="38" height="38" class="me-2 border rounded">
+                `}
+                <div class="${isMe ? 'text-end' : ''}">
+                    <div class="small text-muted">${msg.user.pseudo} · ${msg.createdAt}</div>
+                    <div class="p-2 rounded ${isMe ? 'bg-primary text-white' : 'bg-light border'}">
+                        ${msg.content.replace(/</g, "&lt;")}
+                    </div>
+                </div>
+                ${isMe ? `
+                    <img src="${msg.user.avatar}" width="38" height="38" class="ms-2 border rounded">
+                ` : ''}
+            </div>
+        `;
+
+        messagesBox.insertAdjacentHTML('beforeend', html);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+    };
+
+    async function loadMessages() {
+        const res = await fetch('/chat/messages');
+        const data = await res.json();
+        messagesBox.innerHTML = '';
+        data.forEach(window.renderChatMessage);
+    }
+
+    loadMessages();
+
+    if (form && input) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            const formData = new FormData();
+            formData.append('content', text);
+
+            await fetch('/chat/send', {
+                method: 'POST',
+                body: formData
+            });
+
+            input.value = '';
+        });
+    }
+
+    setupChatMercure();
+</script>

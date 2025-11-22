@@ -15,13 +15,16 @@ export function setupChatMercure() {
         renderChatMessage(msg);
     });
 
+    mercureBus.on('chat.clear', () => {
+        const box = document.getElementById('chat-messages');
+        if (!box) return;
+        box.innerHTML = '';
+        box.scrollTop = 0;
+    });
+
     mercureBus.connect();
 }
 
-/**
- * Reprend EXACTEMENT le rendu Twig existant.
- * Cette fonction doit être visible globalement.
- */
 window.renderChatMessage = function(msg) {
     const box = document.getElementById('chat-messages');
     if (!box) return;
@@ -34,14 +37,12 @@ window.renderChatMessage = function(msg) {
             ${isMe ? '' : `
                 <img src="${msg.user.avatar}" width="38" height="38" class="me-2 border rounded">
             `}
-
             <div class="${isMe ? 'text-end' : ''}">
                 <div class="small text-muted">${msg.user.pseudo} · ${msg.createdAt}</div>
                 <div class="p-2 rounded ${isMe ? 'bg-light border' : 'bg-primary text-white'}">
                     ${msg.content.replace(/</g, "&lt;")}
                 </div>
             </div>
-
             ${isMe ? `
                 <img src="${msg.user.avatar}" width="38" height="38" class="ms-2 border rounded">
             ` : ''}

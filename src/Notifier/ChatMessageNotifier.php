@@ -8,9 +8,6 @@ use Symfony\Component\Mercure\Update;
 
 class ChatMessageNotifier
 {
-    /**
-     * Topic Mercure du chat global.
-     */
     private const TOPIC_CHAT = 'https://casino.gallotta.fr/mercure/chat';
 
     public function __construct(
@@ -24,15 +21,29 @@ class ChatMessageNotifier
         $payload = [
             'type' => 'chat.message',
             'message' => [
-                'id'      => $message->getId(),
-                'content' => $message->getContent(),
+                'id'        => $message->getId(),
+                'content'   => $message->getContent(),
                 'createdAt' => $message->getCreatedAt()->format('Y-m-d H:i'),
-                'user' => [
-                    'id' => $u->getId(),
+                'user'      => [
+                    'id'     => $u->getId(),
                     'pseudo' => $u->getPseudo() ?? $u->getEmail(),
                     'avatar' => $u->getAvatarUrl(),
                 ],
             ],
+        ];
+
+        $update = new Update(
+            self::TOPIC_CHAT,
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
+        );
+
+        $this->hub->publish($update);
+    }
+
+    public function notifyClear(): void
+    {
+        $payload = [
+            'type' => 'chat.clear',
         ];
 
         $update = new Update(

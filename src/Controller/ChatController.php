@@ -22,7 +22,7 @@ class ChatController extends AbstractController
     public function messages(MessageRepository $repo): JsonResponse
     {
         $messages = $repo->findLastMessages(100);
-        $messages = array_reverse($messages); // ordre chronologique
+        $messages = array_reverse($messages);
 
         $data = array_map(function (Message $m) {
             return [
@@ -59,8 +59,20 @@ class ChatController extends AbstractController
         $em->persist($msg);
         $em->flush();
 
-        // 🔔 Mercure — notify tous les clients
         $this->chatNotifier->notify($msg);
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/clear', name: 'clear', methods: ['POST'])]
+    public function clear(
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $em->createQuery('DELETE FROM App\Entity\Message m')->execute();
+
+        $this->chatNotifier->notifyClear();
 
         return new JsonResponse(['success' => true]);
     }
