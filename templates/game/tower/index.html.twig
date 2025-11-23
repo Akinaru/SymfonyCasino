@@ -64,6 +64,26 @@
             justify-content: center;
         }
 
+        /* Empêche la sélection / drag des images et du contenu des cases */
+        .tower-cell,
+        .tower-cell-inner,
+        .tower-icon {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .tower-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
         .tower-cell:not(:disabled):hover {
             transform: translateY(-2px);
             box-shadow: 0 0.5rem 1.1rem rgba(0,0,0,0.85);
@@ -94,14 +114,6 @@
             border-color: rgba(255,255,255,0.05);
             opacity: 0.3 !important;
             filter: grayscale(1) brightness(0.4);
-        }
-
-        .tower-icon {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
         }
     </style>
 {% endblock %}
@@ -183,6 +195,7 @@
                                         class="tower-icon"
                                         src="{{ asset('img/tower/placeholder.png') }}"
                                         alt=""
+                                        draggable="false"
                                     >
                                 </div>
                             </button>
@@ -550,7 +563,6 @@
                             btn.classList.remove('tower-cell-locked');
                             setCellImage(btn, bombSrc, 'Bombe');
 
-                            // ✅ Texte modifié ici (suppression de "Mise perdue.")
                             setResult('BOOM 💥 Tu as touché une bombe.');
                             setStatus('Partie terminée (bombe trouvée).');
                             state.currentMultiplier = data.multiplier || state.currentMultiplier;

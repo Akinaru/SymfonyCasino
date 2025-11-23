@@ -20,6 +20,7 @@
             font-size: 1.4rem;
             padding: 0;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            user-select: none;
         }
 
         .mines-grid .mine-cell .mine-icon {
@@ -29,6 +30,11 @@
             pointer-events: none;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+        }
+
+        /* Aperçu des cases qui seraient révélées avec Shift / Alt */
+        .mines-grid .mine-cell.mine-cell-preview {
+            background-color: #6c757d !important;
         }
     </style>
 {% endblock %}
@@ -265,6 +271,14 @@
                 let revealedCells     = new Set();
                 let baseBetAmount     = 0;
 
+                const GRID_COLS = 5;
+                const GRID_SIZE = 25;
+
+                // État des modifiers + cellule survolée
+                let shiftDown  = false;
+                let altDown    = false;
+                let hoverIndex = null;
+
                 function setStatus(text) {
                     statusEl.textContent = text;
                 }
@@ -283,8 +297,8 @@
                         const potential = Math.floor(baseBetAmount * currentMultiplier);
                         resultEl.innerHTML =
                             'x' + currentMultiplier.toFixed(2) +
-                            ' → Gain potentiel : ' +
-                            '<span class="balance balance-inline">' + potential + '</span>';
+                            ' → Gain potentiel : '
+                            + '<span class="balance balance-inline">' + potential + '</span>';
                     }
                 }
 
@@ -300,7 +314,46 @@
                     img.src = src;
                     img.alt = alt;
                     img.className = 'mine-icon';
+                    img.draggable = false;
+                    img.style.userSelect = 'none';
                     btn.appendChild(img);
+                }
+
+                function clearPreview() {
+                    const cells = gridEl.querySelectorAll('.mine-cell-preview');
+                    cells.forEach((cell) => cell.classList.remove('mine-cell-preview'));
+                }
+
+                function computePreviewIndices(index) {
+                    let indices = [];
+                    if (shiftDown) {
+                        const row = Math.floor(index / GRID_COLS);
+                        for (let c = 0; c < GRID_COLS; c++) {
+                            indices.push(row * GRID_COLS + c);
+                        }
+                    } else if (altDown) {
+                        const col = index % GRID_COLS;
+                        for (let r = 0; r < GRID_SIZE / GRID_COLS; r++) {
+                            indices.push(r * GRID_COLS + col);
+                        }
+                    }
+                    indices = [...new Set(indices)].filter((i) => !revealedCells.has(i));
+                    return indices;
+                }
+
+                function updatePreview() {
+                    clearPreview();
+                    if (currentState !== 'in_progress') return;
+                    if (hoverIndex === null) return;
+                    if (!shiftDown && !altDown) return;
+
+                    const indices = computePreviewIndices(hoverIndex);
+                    indices.forEach((idx) => {
+                        const cell = gridEl.querySelector('[data-index="' + idx + '"]');
+                        if (!cell) return;
+                        if (cell.disabled) return;
+                        cell.classList.add('mine-cell-preview');
+                    });
                 }
 
                 function resetGridVisual() {
@@ -311,10 +364,16 @@
                         cell.disabled = false;
                     });
                     revealedCells.clear();
+                    clearPreview();
                 }
 
                 function setGameState(state) {
                     currentState = state;
+
+                    if (state !== 'in_progress') {
+                        hoverIndex = null;
+                        clearPreview();
+                    }
 
                     if (state === 'idle') {
                         startBtn.disabled   = false;
@@ -336,15 +395,26 @@
                 }
 
                 function buildGridIfNeeded() {
-                    if (gridEl.children.length === 25) return;
+                    if (gridEl.children.length === GRID_SIZE) return;
 
                     gridEl.innerHTML = '';
-                    for (let i = 0; i < 25; i++) {
+                    for (let i = 0; i < GRID_SIZE; i++) {
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.className = 'mine-cell btn btn-outline-secondary';
                         btn.dataset.index = String(i);
+
                         btn.addEventListener('click', onCellClick);
+                        btn.addEventListener('mouseenter', () => {
+                            const idx = parseInt(btn.dataset.index || '0', 10);
+                            hoverIndex = idx;
+                            updatePreview();
+                        });
+                        btn.addEventListener('mouseleave', () => {
+                            hoverIndex = null;
+                            clearPreview();
+                        });
+
                         gridEl.appendChild(btn);
                     }
                 }
@@ -363,6 +433,105 @@
                         throw new Error(msg);
                     }
                     return data;
+                }
+
+                async function revealCell(index) {
+                    if (currentState !== 'in_progress') {
+                        return { stop: true };
+                    }
+
+                    if (index < 0 || index >= GRID_SIZE) {
+                        return { stop: false };
+                    }
+
+                    if (revealedCells.has(index)) {
+                        return { stop: false };
+                    }
+
+                    const btn = gridEl.querySelector('[data-index="' + index + '"]');
+                    if (!btn) return { stop: false };
+
+                    setStatus('Révélation de la case ' + (index + 1) + '…');
+
+                    try {
+                        const data = await apiPost(revealEndpoint, {
+                            game_id: currentGameId,
+                            cell: index,
+                            _token: csrf,
+                        });
+
+                        if (data.exploded) {
+                            btn.className = 'mine-cell btn btn-outline-danger';
+                            setCellImage(btn, bombSrc, 'Bombe');
+
+                            if (Array.isArray(data.bombs)) {
+                                data.bombs.forEach((bombIndex) => {
+                                    if (bombIndex === index) return;
+                                    const bombBtn = gridEl.querySelector('[data-index="' + bombIndex + '"]');
+                                    if (bombBtn) {
+                                        bombBtn.className = 'mine-cell btn btn-outline-danger';
+                                        setCellImage(bombBtn, bombSrc, 'Bombe');
+                                        bombBtn.disabled = true;
+                                    }
+                                });
+                            }
+
+                            setResult('BOOM 💥 Tu as perdu la mise.');
+                            setStatus('Partie terminée (mine trouvée).');
+                            setGameState('lost');
+                            refreshHeaderBalanceLive();
+
+                            if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                window.SymfsinoSessionHistory.update(-baseBetAmount, baseBetAmount, 0);
+                            }
+
+                            const allCells = gridEl.querySelectorAll('.mine-cell');
+                            allCells.forEach((cell) => { cell.disabled = true; });
+
+                            return { stop: true };
+                        }
+
+                        revealedCells.add(index);
+                        btn.className = 'mine-cell btn btn-outline-success';
+                        setCellImage(btn, emeraldSrc, 'Émeraude');
+
+                        currentMultiplier = data.multiplier || currentMultiplier;
+                        updateMultiplierDisplay();
+
+                        if (data.auto_cashed) {
+                            const payout = Number(data.payout || 0);
+                            resultEl.innerHTML =
+                                'Tu as découvert toutes les émeraudes ! Tu encaisses '
+                                + '<span class="balance balance-inline">' + payout + '</span>';
+
+                            setStatus('Partie terminée, toutes les émeraudes ont été trouvées.');
+                            setGameState('cashed_out');
+                            refreshHeaderBalanceLive();
+
+                            if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                const deltaNet = payout - baseBetAmount;
+                                window.SymfsinoSessionHistory.update(deltaNet, baseBetAmount, payout);
+                            }
+
+                            const allCells = gridEl.querySelectorAll('.mine-cell');
+                            allCells.forEach((cellEl) => { cellEl.disabled = true; });
+
+                            return { stop: true };
+                        }
+
+                        updatePotentialWinDisplay();
+                        setStatus('Tu peux continuer à cliquer ou encaisser.');
+                        return { stop: false };
+                    } catch (e) {
+                        setResult(e.message || 'Erreur pendant la révélation.');
+                        setStatus('Erreur.');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.className = 'mine-cell btn btn-outline-secondary';
+                            clearCellContent(btn);
+                        }
+                        return { stop: true };
+                    }
                 }
 
                 async function handleStart(ev) {
@@ -413,82 +582,34 @@
                     const index = parseInt(btn.dataset.index || '0', 10);
                     if (revealedCells.has(index)) return;
 
-                    setStatus('Révélation de la case ' + (index + 1) + '…');
+                    if (ev.shiftKey || ev.altKey) {
+                        let indices = [];
 
-                    try {
-                        const data = await apiPost(revealEndpoint, {
-                            game_id: currentGameId,
-                            cell: index,
-                            _token: csrf,
-                        });
-
-                        if (data.exploded) {
-                            btn.className = 'mine-cell btn btn-outline-danger';
-                            setCellImage(btn, bombSrc, 'Bombe');
-
-                            if (Array.isArray(data.bombs)) {
-                                data.bombs.forEach((bombIndex) => {
-                                    if (bombIndex === index) return;
-                                    const bombBtn = gridEl.querySelector('[data-index="' + bombIndex + '"]');
-                                    if (bombBtn) {
-                                        bombBtn.className = 'mine-cell btn btn-outline-danger';
-                                        setCellImage(bombBtn, bombSrc, 'Bombe');
-                                        bombBtn.disabled = true;
-                                    }
-                                });
+                        if (ev.shiftKey) {
+                            const row = Math.floor(index / GRID_COLS);
+                            for (let c = 0; c < GRID_COLS; c++) {
+                                indices.push(row * GRID_COLS + c);
                             }
-
-                            setResult('BOOM 💥 Tu as perdu la mise.');
-                            setStatus('Partie terminée (mine trouvée).');
-                            setGameState('lost');
-                            refreshHeaderBalanceLive();
-
-                            // 🔹 maj stats session : perte = -mise, aucun payout
-                            if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
-                                window.SymfsinoSessionHistory.update(-baseBetAmount, baseBetAmount, 0);
-                            }
-
-                            const allCells = gridEl.querySelectorAll('.mine-cell');
-                            allCells.forEach((cell) => { cell.disabled = true; });
-
-                        } else {
-                            revealedCells.add(index);
-                            btn.className = 'mine-cell btn btn-outline-success';
-                            setCellImage(btn, emeraldSrc, 'Émeraude');
-
-                            currentMultiplier = data.multiplier || currentMultiplier;
-                            updateMultiplierDisplay();
-
-                            if (data.auto_cashed) {
-                                // Auto-cashout : toutes les émeraudes sont découvertes
-                                const payout = Number(data.payout || 0);
-                                resultEl.innerHTML =
-                                    'Tu as découvert toutes les émeraudes ! Tu encaisses ' +
-                                    '<span class="balance balance-inline">' + payout + '</span>';
-
-                                setStatus('Partie terminée, toutes les émeraudes ont été trouvées.');
-                                setGameState('cashed_out');
-                                refreshHeaderBalanceLive();
-
-                                // 🔹 maj stats session : net = payout - mise
-                                if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
-                                    const deltaNet = payout - baseBetAmount;
-                                    window.SymfsinoSessionHistory.update(deltaNet, baseBetAmount, payout);
-                                }
-
-                                const allCells = gridEl.querySelectorAll('.mine-cell');
-                                allCells.forEach((cellEl) => { cellEl.disabled = true; });
-                            } else {
-                                updatePotentialWinDisplay();
-                                setStatus('Tu peux continuer à cliquer ou encaisser.');
+                        } else if (ev.altKey) {
+                            const col = index % GRID_COLS;
+                            for (let r = 0; r < GRID_SIZE / GRID_COLS; r++) {
+                                indices.push(r * GRID_COLS + col);
                             }
                         }
-                    } catch (e) {
-                        setResult(e.message || 'Erreur pendant la révélation.');
-                        setStatus('Erreur.');
-                        btn.disabled = false;
-                        btn.className = 'mine-cell btn btn-outline-secondary';
-                        clearCellContent(btn);
+
+                        indices = [...new Set(indices)].filter((i) => !revealedCells.has(i));
+
+                        for (const idx of indices) {
+                            const res = await revealCell(idx);
+                            if (res && res.stop) {
+                                break;
+                            }
+                            if (currentState !== 'in_progress') {
+                                break;
+                            }
+                        }
+                    } else {
+                        await revealCell(index);
                     }
                 }
 
@@ -516,7 +637,6 @@
                         setGameState('cashed_out');
                         refreshHeaderBalanceLive();
 
-                        // 🔹 maj stats session : net = payout - mise
                         if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
                             const deltaNet = payout - baseBetAmount;
                             window.SymfsinoSessionHistory.update(deltaNet, baseBetAmount, payout);
@@ -531,6 +651,37 @@
                     }
                 }
 
+                // Gestion des touches Shift / Alt pour l'aperçu
+                document.addEventListener('keydown', (e) => {
+                    const beforeShift = shiftDown;
+                    const beforeAlt   = altDown;
+
+                    if (e.key === 'Shift') {
+                        shiftDown = true;
+                    } else if (e.key === 'Alt') {
+                        altDown = true;
+                    }
+
+                    if (beforeShift !== shiftDown || beforeAlt !== altDown) {
+                        updatePreview();
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    const beforeShift = shiftDown;
+                    const beforeAlt   = altDown;
+
+                    if (e.key === 'Shift') {
+                        shiftDown = false;
+                    } else if (e.key === 'Alt') {
+                        altDown = false;
+                    }
+
+                    if (beforeShift !== shiftDown || beforeAlt !== altDown) {
+                        updatePreview();
+                    }
+                });
+
                 // Init
                 buildGridIfNeeded();
                 resetGridVisual();
@@ -543,7 +694,12 @@
                 cashoutBtn.addEventListener('click', handleCashout);
             }
 
-            document.addEventListener('DOMContentLoaded', initMinesGame);
+            // Init robuste : DOM déjà prêt ou Turbo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initMinesGame);
+            } else {
+                initMinesGame();
+            }
             document.addEventListener('turbo:load', initMinesGame);
         })();
     </script>
