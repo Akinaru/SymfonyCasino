@@ -4,83 +4,161 @@
 {% block title %}🎰 Symfsino - Profil{% endblock %}
 
 {% block profile_content %}
+    <style>
+        .profile-stat-card {
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, .06);
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 55%),
+                linear-gradient(145deg, rgba(10, 10, 24, 0.95), rgba(5, 5, 18, 0.98));
+            padding: 0.9rem 1rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition:
+                transform .18s ease,
+                box-shadow .18s ease,
+                border-color .18s ease,
+                background .18s ease;
+        }
+
+        .profile-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.9rem 1.6rem rgba(0, 0, 0, 0.85);
+            border-color: rgba(255, 255, 255, 0.16);
+            background:
+                radial-gradient(circle at top, rgba(255, 255, 255, 0.09), transparent 55%),
+                linear-gradient(145deg, rgba(16, 16, 40, 0.98), rgba(6, 6, 22, 1));
+        }
+
+        .profile-stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .profile-stat-sub {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .profile-stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            background-color: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.75);
+        }
+    </style>
+
     <div class="py-4 text-white text-white-scope">
         <h1 class="h4 mb-3">Mes statistiques</h1>
 
         <div class="row g-3 mb-4">
+
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Pseudo</div>
-                        <div class="fs-5 ">{{ app.user.pseudo ?? '—' }}</div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Pseudo</div>
+                    <div class="profile-stat-value">{{ app.user.pseudo ?? '—' }}</div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Wager total</div>
-                        <div class="fs-5 ">{{ app.user.wagger|default(0) }}</div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Wager total</div>
+                    <div class="profile-stat-value">
+                        <span class="balance">
+                            {{ app.user.wagger|default(0)|number_format(0, ',', ' ') }}
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Nombre de paris</div>
-                        <div class="fs-5 ">{{ stats.betsCount|default(0) }}</div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Nombre de paris</div>
+                    <div class="profile-stat-value">
+                        {{ stats.betsCount|default(0) }}
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Taux de victoire</div>
-                        <div class="fs-5  {{ (stats.winRate|default(0)) >= 50 ? 'text-success' : 'text-warning' }}">
-                            {{ stats.winRate|default(0)|number_format(1, ',', ' ') }}%
-                        </div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Taux de victoire</div>
+                    <div class="profile-stat-value {{ (stats.winRate|default(0)) >= 50 ? 'text-success' : 'text-warning' }}">
+                        {{ stats.winRate|default(0)|number_format(1, ',', ' ') }}%
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Mise moyenne</div>
-                        <div class="fs-5 ">{{ stats.avgBet|default(0)|number_format(0, ',', ' ') }}</div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Mise moyenne</div>
+                    <div class="profile-stat-value">
+                        <span class="balance">
+                            {{ stats.avgBet|default(0)|number_format(0, ',', ' ') }}
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Plus gros gain</div>
-                        <div class="fs-5  text-success">
+                <div class="profile-stat-card">
+                    <div class="profile-stat-label">Plus gros gain</div>
+                    <div class="profile-stat-value text-success">
+                        <span class="balance">
                             {% if stats.biggestWin|default(0) > 0 %}+{% endif %}
                             {{ stats.biggestWin|default(0)|number_format(0, ',', ' ') }}
-                        </div>
-                    </div></div>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Jeu favori</div>
-                        <div class="">
-                            {% set _fav = stats.favoriteGameKey|default(null) %}
-                            {{ _fav ? (namesByKey[_fav]|default(_fav)) : '—' }}
-                        </div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="profile-stat-label mb-0">Jeu favori</div>
+                        <span class="profile-stat-pill">
+                            Favori
+                        </span>
+                    </div>
+                    <div class="profile-stat-value">
+                        {% set _fav = stats.favoriteGameKey|default(null) %}
+                        {{ _fav ? (namesByKey[_fav]|default(_fav)) : '—' }}
+                    </div>
+                </div>
             </div>
 
             <div class="col-6 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Dernier jeu</div>
-                        <div class="">
-                            {% set _last = stats.lastGameKey|default(null) %}
-                            {{ _last ? (namesByKey[_last]|default(_last)) : '—' }}
-                        </div>
-                    </div></div>
+                <div class="profile-stat-card">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="profile-stat-label mb-0">Dernier jeu</div>
+                        <span class="profile-stat-pill">
+                            Dernière session
+                        </span>
+                    </div>
+                    <div class="profile-stat-value">
+                        {% set _last = stats.lastGameKey|default(null) %}
+                        {{ _last ? (namesByKey[_last]|default(_last)) : '—' }}
+                    </div>
+                </div>
             </div>
 
-            <div class="col-12 col-lg-3">
-                <div class="card border-secondary h-100"><div class="card-body">
-                        <div class="small mb-1">Niveau VIP</div>
-                        <div class="fs-5 ">VIP {{ stats.vipLevel|default(1) }}</div>
-                    </div></div>
-            </div>
         </div>
 
         <h1 class="h4 mb-3">Mes informations</h1>

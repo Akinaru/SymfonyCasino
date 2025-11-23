@@ -95,6 +95,7 @@ class ProfileController extends AbstractController
             return $this->redirectToRoute('app_profile_index');
         }
 
+        // Transactions -> stats montants
         $txs = $transactions->findBy(['utilisateur' => $user], ['cree_le' => 'DESC']);
 
         $bets = 0;
@@ -116,13 +117,47 @@ class ProfileController extends AbstractController
             }
         }
 
+        // Jeu favori (par nombre de parties, puis par mise totale)
+        $favoriteGameKey = null;
+        $favoriteRow = $em->createQueryBuilder()
+            ->select('p.game_key AS gameKey, COUNT(p.id) AS betCount, SUM(p.mise) AS totalMise')
+            ->from(Partie::class, 'p')
+            ->where('p.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->groupBy('p.game_key')
+            ->orderBy('betCount', 'DESC')
+            ->addOrderBy('totalMise', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($favoriteRow) {
+            $favoriteGameKey = $favoriteRow['gameKey'] ?? null;
+        }
+
+        // Dernier jeu (dernière partie jouée)
+        $lastGameKey = null;
+        $lastPartie = $em->createQueryBuilder()
+            ->select('p')
+            ->from(Partie::class, 'p')
+            ->where('p.utilisateur = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.debut_le', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($lastPartie instanceof Partie) {
+            $lastGameKey = $lastPartie->getGameKey();
+        }
+
         $stats = [
             'betsCount'       => $bets,
             'winRate'         => $bets > 0 ? ($wins / $bets) * 100 : 0,
             'avgBet'          => $bets > 0 ? ($sumBets / $bets) : 0,
             'biggestWin'      => $biggestWin,
-            'favoriteGameKey' => null,
-            'lastGameKey'     => null,
+            'favoriteGameKey' => $favoriteGameKey,
+            'lastGameKey'     => $lastGameKey,
             'vipLevel'        => 1,
         ];
 
@@ -132,8 +167,8 @@ class ProfileController extends AbstractController
         }
 
         return $this->render('profile/index.html.twig', [
-            'form' => $form->createView(),
-            'stats' => $stats,
+            'form'       => $form->createView(),
+            'stats'      => $stats,
             'namesByKey' => $namesByKey,
         ]);
     }
@@ -183,5 +218,4 @@ class ProfileController extends AbstractController
             'recordDice'  => $recordDice,
         ]);
     }
-
 }
