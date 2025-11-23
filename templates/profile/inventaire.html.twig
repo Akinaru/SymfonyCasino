@@ -1,0 +1,107 @@
+{% extends 'profile/base_profil.html.twig' %}
+
+{% block title %}🎰 Symfsino · Inventaire{% endblock %}
+
+{% block profile_content %}
+    <style>
+        .inventory-header {
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .inventory-item {
+            background-color: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 0.9rem;
+            transition:
+                transform .15s ease,
+                box-shadow .15s ease,
+                border-color .15s ease,
+                background-color .15s ease;
+        }
+
+        .inventory-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, .85);
+            border-color: rgba(255, 255, 255, 0.18);
+            background-color: rgba(0, 0, 0, 0.75);
+        }
+
+        .inventory-item-img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 0.75rem;
+            object-fit: cover;
+            image-rendering: pixelated;
+        }
+
+        .inventory-item-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .inventory-item-type {
+            font-size: 0.8rem;
+        }
+
+        .inventory-status-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+        }
+    </style>
+
+    <div class="mb-4 inventory-header d-flex justify-content-between align-items-center pb-3 mt-3">
+        <h1 class="h4 text-light mb-0">Inventaire</h1>
+        {% if app.user %}
+            <div class="d-flex align-items-center gap-2 text-white-50 small">
+                <span>Balance</span>
+                <span class="balance">
+                    {{ app.user.balance }}
+                </span>
+            </div>
+        {% else %}
+            <span class="text-white-50 small">Connectez-vous pour voir votre inventaire</span>
+        {% endif %}
+    </div>
+
+    {% if items is empty %}
+        <div class="text-center text-white-50 py-5">
+            Inventaire vide.
+        </div>
+    {% else %}
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-3">
+            {% for it in items %}
+                <div class="col">
+                    <div class="inventory-item h-100 d-flex flex-column p-3">
+                        <img
+                            src="{{ asset(it.imagePath) }}"
+                            alt="{{ it.name }}"
+                            class="inventory-item-img mb-3"
+                        >
+
+                        <div class="inventory-item-title text-light mb-1">
+                            {{ it.name }}
+                        </div>
+                        <div class="inventory-item-type text-white-50 mb-3">
+                            {{ it.typeLabel }}
+                        </div>
+
+                        <div class="mt-auto d-flex justify-content-between align-items-end">
+                            <div>
+                                <div class="inventory-status-label text-white-50 mb-1">
+                                    Statut
+                                </div>
+                                <span class="badge text-bg-info small">
+                                    Achete
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+

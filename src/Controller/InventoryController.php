@@ -17,7 +17,7 @@ class InventoryController extends AbstractController
         /** @var \App\Entity\Utilisateur $user */
         $user = $this->getUser();
 
-        return $this->render('inventory/index.html.twig', [
+        return $this->render('profile/inventaire.html.twig', [
             'items' => $repo->findByOwner($user),
         ]);
     }

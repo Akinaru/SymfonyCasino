@@ -36,11 +36,11 @@ enum ItemType: string
     {
         // Place ces fichiers dans public/img/items/
         return match ($this) {
-            self::POUDRE_BLANCHE     => 'img/items/sucre.webp',         // sucre Minecraft
-            self::BONBON_ENERGISANT  => 'img/items/golden_apple.png',  // golden apple
-            self::HERBE_SUSPECTE     => 'img/items/herb.png',
-            self::CHAMPIGNON_LUISANT => 'img/items/glow_mushroom.png',
-            self::SIROPE_NOCTURNE    => 'img/items/dark_syrup.png',
+            self::POUDRE_BLANCHE     => 'img/items/sucre.png',         // sucre Minecraft
+            self::BONBON_ENERGISANT  => 'img/items/bonbon.png',  // golden apple
+            self::HERBE_SUSPECTE     => 'img/items/herbe.png',
+            self::CHAMPIGNON_LUISANT => 'img/items/champi.png',
+            self::SIROPE_NOCTURNE    => 'img/items/sirop.png',
         };
     }
 }

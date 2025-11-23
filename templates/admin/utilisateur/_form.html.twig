@@ -17,6 +17,8 @@
 {% set avatarPreviewId = ns ~ '-avatar-preview' %}
 
 {{ form_start(form, formOptions) }}
+
+{{ form_errors(form) }}
     {{ form_row(form.email) }}
     {{ form_row(form.pseudo) }}
 
