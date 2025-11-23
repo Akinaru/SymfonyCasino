@@ -1,0 +1,688 @@
+{% extends 'game/base_game.html.twig' %}
+
+{% block game_title %}🗼 Symfsino - Tower{% endblock %}
+
+{% block game_styles %}
+    <style>
+        .card.game-card .card-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card.game-card .playfield-area {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tower-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+
+            flex: 1 1 auto;
+            align-self: center;
+            height: 100%;
+            max-height: 100%;
+
+            width: 100%;
+            max-width: 80%;
+            margin: 0 auto;
+
+            grid-auto-rows: 1fr;
+        }
+
+        .tower-cell {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            color: #f8f9fa;
+            font-size: 0.85rem;
+            transition:
+                transform .12s ease,
+                box-shadow .12s ease,
+                background-color .12s ease,
+                border-color .12s ease,
+                opacity .12s ease,
+                filter .12s ease;
+        }
+
+        .tower-cell-inner {
+            width: 30%;
+            max-width: 30%;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tower-cell:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1.1rem rgba(0,0,0,0.85);
+            border-color: rgba(88, 184, 255, 0.6);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tower-cell:disabled {
+            cursor: default;
+        }
+
+        .tower-cell-safe {
+            border-color: rgba(0, 200, 120, 0.9);
+            background: radial-gradient(circle at 30% 0%, rgba(0,255,180,0.22), transparent 60%);
+            opacity: 1;
+            filter: none;
+        }
+
+        .tower-cell-bomb {
+            border-color: rgba(255, 80, 80, 0.9);
+            background: radial-gradient(circle at 30% 0%, rgba(255,80,80,0.22), transparent 60%);
+            opacity: 1;
+            filter: none;
+        }
+
+        .tower-cell-locked {
+            background: rgba(0,0,0,0.9);
+            border-color: rgba(255,255,255,0.05);
+            opacity: 0.3 !important;
+            filter: grayscale(1) brightness(0.4);
+        }
+
+        .tower-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+{% endblock %}
+
+{% block game_sidebar %}
+    <div class="card info-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Tour d’émeraudes</span>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
+        </div>
+        <div class="card-body form-compact">
+            <div class="mb-3">
+                <div class="typo-eyebrow">Balance</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow">Description</div>
+                <p class="mb-0 typo-helper">{{ descriptionInGame }}</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="betInput" class="form-label">Montant du pari</label>
+                <input id="betInput" type="number" class="form-control"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000000) }}"
+                       value="{{ minBet|default(1) }}">
+                <div class="form-text text-secondary">Jouez de manière responsable.</div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button id="startBtn" class="btn btn-primary">Démarrer une tour</button>
+                <button id="cashoutBtn" class="btn btn-primary" disabled>Encaisser</button>
+            </div>
+
+            <hr class="border-secondary">
+
+            <div class="mt-2">
+                <small id="towerStatus" class="text-white-50">Aucune partie Tower en cours.</small><br>
+                <small id="towerMultiplier" class="text-white-50">Multiplicateur actuel : x1.00</small><br>
+                <small id="towerCurrentWin" class="text-white-50">Gain potentiel : 0</small>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_playfield %}
+    <div class="card game-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Zone de jeu</span>
+            <small class="typo-helper">3 colonnes · {{ maxRows }} étages</small>
+        </div>
+
+        <div class="card-body">
+            <div class="playfield-area d-flex flex-column align-items-center gap-3">
+                <div class="status-row mb-2">
+                    <div id="result" class="typo-kpi text-center">En attente…</div>
+                </div>
+
+                <div id="tower-grid"
+                     class="tower-grid"
+                     data-emerald="{{ asset('img/mines/emerald.png') }}"
+                     data-bomb="{{ asset('img/mines/bombs.png') }}"
+                     data-placeholder="{{ asset('img/tower/placeholder.png') }}"
+                     data-rows="{{ maxRows }}"
+                     data-cols="{{ cols }}">
+                    {% for row in (maxRows - 1)..0 %}
+                        {% for col in 0..(cols - 1) %}
+                            <button
+                                type="button"
+                                class="tower-cell tower-cell-locked btn btn-outline-secondary"
+                                data-row="{{ row }}"
+                                data-col="{{ col }}"
+                                disabled
+                            >
+                                <div class="tower-cell-inner">
+                                    <img
+                                        class="tower-icon"
+                                        src="{{ asset('img/tower/placeholder.png') }}"
+                                        alt=""
+                                    >
+                                </div>
+                            </button>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block more_content %}
+    {% include 'components/historique.html.twig' %}
+
+    <div class="info-card card text-light mb-3" id="tower-last-games-panel">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Dernières parties Tower</span>
+        </div>
+        <div class="card-body">
+            <table class="table table-dark table-sm mb-0 align-middle">
+                <thead>
+                <tr>
+                    <th style="width:48px;">Avatar</th>
+                    <th>Joueur</th>
+                    <th style="width:110px;">Étage atteint</th>
+                    <th style="min-width:100px;">Date / heure</th>
+                    <th class="text-start" style="width:100px;">Mise</th>
+                    <th class="text-end" style="width:100px;">Résultat</th>
+                </tr>
+                </thead>
+                <tbody id="tower-last-games-list">
+                {% for game in lastGames %}
+                    <tr>
+                        <td>
+                            <img src="{{ game.avatar_url }}"
+                                 alt="Avatar"
+                                 class="rounded"
+                                 style="width:40px;height:40px;image-rendering:pixelated;">
+                        </td>
+                        <td class="small">
+                            {{ game.username }}
+                        </td>
+                        <td class="small">
+                            {% if game.height > 0 %}
+                                {{ game.height }}/{{ maxRows }}
+                            {% else %}
+                                —
+                            {% endif %}
+                            {% if game.cashed_out %}
+                                <span class="badge bg-success ms-1">Cashout</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {% if game.debut_le is defined and game.debut_le %}
+                                {{ game.debut_le|date('d/m/Y H:i') }}
+                            {% endif %}
+                        </td>
+                        <td class="small text-start">
+                            <span class="balance">{{ game.mise }}</span>
+                        </td>
+                        <td class="small text-end">
+                            {% set net = game.resultat_net %}
+                            {% if net > 0 %}
+                                <span class="text-success balance justify-content-end">+{{ net }}</span>
+                            {% elseif net < 0 %}
+                                <span class="text-danger balance justify-content-end">{{ net }}</span>
+                            {% else %}
+                                <span class="balance justify-content-end">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Table des multiplicateurs Tower</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle mb-2">
+                    <thead>
+                    <tr>
+                        <th>Étages validés</th>
+                        <th>Multiplicateur</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for level, mult in multipliers %}
+                        <tr>
+                            <td>{{ level }}</td>
+                            <td>×{{ mult|number_format(2, ',', ' ') }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="mb-0 small text-white-50">
+                Plus tu montes, plus le multiplicateur augmente. Une seule case sûre par étage, deux bombes (donc ~1/3 de chance à chaque niveau).
+            </p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_scripts %}
+    <script type="module">
+        (function () {
+            let wired = false;
+
+            function refreshHeaderBalanceLive() {
+                const containers = document.querySelectorAll('[id="header-balance-live"]');
+                if (!containers.length) return;
+
+                containers.forEach((container) => {
+                    const btn = container.querySelector('[data-live-action-param="refresh"]');
+                    if (!btn) return;
+                    btn.click();
+                });
+            }
+
+            function initTowerGame() {
+                if (wired) return;
+
+                const gridEl       = document.getElementById('tower-grid');
+                const resultEl     = document.getElementById('result');
+                const betInput     = document.getElementById('betInput');
+                const startBtn     = document.getElementById('startBtn');
+                const cashoutBtn   = document.getElementById('cashoutBtn');
+                const statusEl     = document.getElementById('towerStatus');
+                const multiplierEl = document.getElementById('towerMultiplier');
+                const currentWinEl = document.getElementById('towerCurrentWin');
+
+                if (!gridEl || !resultEl || !betInput || !startBtn || !cashoutBtn || !statusEl || !multiplierEl || !currentWinEl) {
+                    return;
+                }
+
+                wired = true;
+
+                const emeraldSrc     = gridEl.dataset.emerald || '';
+                const bombSrc        = gridEl.dataset.bomb || '';
+                const placeholderSrc = gridEl.dataset.placeholder || '';
+                const rows           = parseInt(gridEl.dataset.rows || '9', 10) || 9;
+                const cols           = parseInt(gridEl.dataset.cols || '3', 10) || 3;
+
+                const startEndpoint   = "{{ path('app_game_tower_start') }}";
+                const revealEndpoint  = "{{ path('app_game_tower_reveal') }}";
+                const cashoutEndpoint = "{{ path('app_game_tower_cashout') }}";
+                const statusEndpoint  = "{{ path('app_game_tower_status') }}";
+                const csrf            = "{{ csrf_token('tower_play') }}";
+
+                let state = {
+                    gameId: null,
+                    bet: 0,
+                    currentRow: 0,
+                    maxRows: rows,
+                    inProgress: false,
+                    finished: false,
+                    currentMultiplier: 1.0,
+                };
+
+                function setStatus(text) {
+                    statusEl.textContent = text;
+                }
+
+                function setResult(text) {
+                    if (!text || !text.trim()) return;
+                    resultEl.textContent = text;
+                }
+
+                function updateMultiplierDisplay() {
+                    state.currentMultiplier = state.currentMultiplier || 1.0;
+                    multiplierEl.textContent = 'Multiplicateur actuel : x' + state.currentMultiplier.toFixed(2);
+                }
+
+                function updatePotentialWinDisplay() {
+                    const potential = Math.floor((state.bet || 0) * state.currentMultiplier);
+                    currentWinEl.innerHTML =
+                        'Gain potentiel : <span class="balance balance-inline">' + potential + '</span>';
+
+                    if (state.inProgress && state.bet > 0) {
+                        resultEl.innerHTML =
+                            'x' + state.currentMultiplier.toFixed(2) +
+                            ' → Gain potentiel : ' +
+                            '<span class="balance balance-inline">' + potential + '</span>';
+                    }
+                }
+
+                function getCellImg(btn) {
+                    return btn.querySelector('img.tower-icon');
+                }
+
+                function setCellImage(btn, src, alt) {
+                    const img = getCellImg(btn);
+                    if (!img) return;
+                    img.src = src;
+                    img.alt = alt;
+                }
+
+                function resetGridVisual() {
+                    const cells = gridEl.querySelectorAll('.tower-cell');
+                    cells.forEach((cell) => {
+                        cell.className = 'tower-cell tower-cell-locked btn btn-outline-secondary';
+                        setCellImage(cell, placeholderSrc, '');
+                        cell.disabled = true;
+                    });
+                }
+
+                function enableRow(rowIdx) {
+                    const cells = gridEl.querySelectorAll('.tower-cell');
+                    cells.forEach((cell) => {
+                        const r = parseInt(cell.dataset.row || '0', 10) || 0;
+
+                        if (r < rowIdx) {
+                            cell.disabled = true;
+                            cell.classList.remove('tower-cell-locked');
+                        } else if (r === rowIdx) {
+                            cell.disabled = false;
+                            cell.classList.remove('tower-cell-locked');
+                        } else {
+                            cell.disabled = true;
+                            cell.classList.add('tower-cell-locked');
+                        }
+                    });
+                }
+
+                function disableAllCells() {
+                    const cells = gridEl.querySelectorAll('.tower-cell');
+                    cells.forEach((cell) => {
+                        cell.disabled = true;
+                    });
+                }
+
+                function setGameStateIdle() {
+                    state.inProgress = false;
+                    state.finished   = false;
+                    state.gameId     = null;
+                    state.currentRow = 0;
+                    state.currentMultiplier = 1.0;
+                    state.bet = 0;
+
+                    startBtn.disabled   = false;
+                    cashoutBtn.disabled = true;
+                    betInput.disabled   = false;
+
+                    resetGridVisual();
+                    updateMultiplierDisplay();
+                    updatePotentialWinDisplay();
+                    setStatus('Aucune partie Tower en cours.');
+                    setResult('En attente…');
+                }
+
+                function setGameStateInProgress() {
+                    state.inProgress = true;
+                    state.finished   = false;
+                    startBtn.disabled   = true;
+                    cashoutBtn.disabled = false;
+                    betInput.disabled   = true;
+                }
+
+                function setGameStateFinished() {
+                    state.inProgress = false;
+                    state.finished   = true;
+                    startBtn.disabled   = false;
+                    cashoutBtn.disabled = true;
+                    betInput.disabled   = false;
+                    disableAllCells();
+                }
+
+                async function apiPost(url, payload) {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && typeof data.error === 'string' && data.error.trim() !== '')
+                            ? data.error
+                            : 'Erreur (' + res.status + ')';
+                        throw new Error(msg);
+                    }
+                    return data;
+                }
+
+                async function apiGet(url) {
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data) {
+                        throw new Error('Erreur (' + res.status + ')');
+                    }
+                    return data;
+                }
+
+                async function handleStart(ev) {
+                    if (ev) ev.preventDefault();
+                    if (state.inProgress && !state.finished) {
+                        return;
+                    }
+
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    state.bet = amount;
+
+                    setResult('Préparation de la tour…');
+                    setStatus('Initialisation…');
+                    state.currentMultiplier = 1.0;
+                    updateMultiplierDisplay();
+                    updatePotentialWinDisplay();
+                    resetGridVisual();
+
+                    try {
+                        const data = await apiPost(startEndpoint, {
+                            amount,
+                            _token: csrf,
+                        });
+
+                        state.gameId        = data.game_id || null;
+                        state.currentRow    = 0;
+                        state.currentMultiplier = data.multiplier || 1.0;
+                        state.maxRows       = rows;
+
+                        setGameStateInProgress();
+                        updateMultiplierDisplay();
+                        updatePotentialWinDisplay();
+
+                        setStatus('Choisis un bloc en bas.');
+                        setResult('Partie en cours…');
+                        enableRow(state.currentRow);
+                        refreshHeaderBalanceLive();
+                    } catch (e) {
+                        setResult(e.message || 'Erreur au démarrage de la partie');
+                        setStatus('Erreur.');
+                        setGameStateIdle();
+                    }
+                }
+
+                async function handleCellClick(ev) {
+                    const btn = ev.currentTarget;
+                    if (!btn || !state.inProgress || state.finished) return;
+
+                    const row = parseInt(btn.dataset.row || '0', 10) || 0;
+                    const col = parseInt(btn.dataset.col || '0', 10) || 0;
+
+                    if (row !== state.currentRow) {
+                        return;
+                    }
+
+                    btn.disabled = true;
+                    setStatus('Révélation de l’étage ' + (row + 1) + '…');
+
+                    try {
+                        const data = await apiPost(revealEndpoint, {
+                            row,
+                            col,
+                            _token: csrf,
+                        });
+
+                        if (data.exploded) {
+                            btn.classList.add('tower-cell-bomb');
+                            btn.classList.remove('tower-cell-locked');
+                            setCellImage(btn, bombSrc, 'Bombe');
+
+                            // ✅ Texte modifié ici (suppression de "Mise perdue.")
+                            setResult('BOOM 💥 Tu as touché une bombe.');
+                            setStatus('Partie terminée (bombe trouvée).');
+                            state.currentMultiplier = data.multiplier || state.currentMultiplier;
+                            updateMultiplierDisplay();
+                            setGameStateFinished();
+                            refreshHeaderBalanceLive();
+
+                            if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                const net = data.net ?? (0 - state.bet);
+                                window.SymfsinoSessionHistory.update(net, state.bet, 0);
+                            }
+                        } else if (data.auto_cashed) {
+                            btn.classList.add('tower-cell-safe');
+                            btn.classList.remove('tower-cell-locked');
+                            setCellImage(btn, emeraldSrc, 'Émeraude');
+
+                            state.currentMultiplier = data.multiplier || state.currentMultiplier;
+                            updateMultiplierDisplay();
+
+                            const payout = data.payout ?? 0;
+                            const net    = data.net ?? (payout - state.bet);
+
+                            resultEl.innerHTML =
+                                'Tu as atteint le sommet ! Tu encaisses ' +
+                                '<span class="balance balance-inline">' + payout + '</span>';
+
+                            setStatus('Partie terminée, gains crédités.');
+                            setGameStateFinished();
+                            refreshHeaderBalanceLive();
+
+                            if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                window.SymfsinoSessionHistory.update(net, state.bet, payout);
+                            }
+                        } else {
+                            btn.classList.add('tower-cell-safe');
+                            btn.classList.remove('tower-cell-locked');
+                            setCellImage(btn, emeraldSrc, 'Émeraude');
+
+                            state.currentRow        = data.next_row ?? (state.currentRow + 1);
+                            state.currentMultiplier = data.multiplier || state.currentMultiplier;
+                            updateMultiplierDisplay();
+                            updatePotentialWinDisplay();
+
+                            enableRow(state.currentRow);
+                        }
+                    } catch (e) {
+                        setResult(e.message || 'Erreur pendant la révélation.');
+                        setStatus('Erreur.');
+                        btn.disabled = false;
+                    }
+                }
+
+                async function handleCashout(ev) {
+                    if (ev) ev.preventDefault();
+                    if (!state.inProgress || state.finished) {
+                        return;
+                    }
+
+                    setStatus('Encaissement en cours…');
+
+                    try {
+                        const data = await apiPost(cashoutEndpoint, {
+                            _token: csrf,
+                        });
+
+                        state.currentMultiplier = data.multiplier || state.currentMultiplier;
+                        updateMultiplierDisplay();
+
+                        const payout = data.payout ?? 0;
+                        const net    = data.net ?? (payout - state.bet);
+
+                        resultEl.innerHTML =
+                            'Tu encaisses ' +
+                            '<span class="balance balance-inline">' + payout + '</span>';
+
+                        setStatus('Partie terminée, gains crédités.');
+                        setGameStateFinished();
+                        refreshHeaderBalanceLive();
+
+                        if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                            window.SymfsinoSessionHistory.update(net, state.bet, payout);
+                        }
+                    } catch (e) {
+                        setResult(e.message || 'Erreur à l’encaissement.');
+                        setStatus('Erreur.');
+                    }
+                }
+
+                async function loadStatus() {
+                    try {
+                        const data = await apiGet(statusEndpoint);
+
+                        if (!data.ok || !data.in_progress) {
+                            setGameStateIdle();
+                            return;
+                        }
+
+                        state.bet              = data.bet || 0;
+                        state.currentRow       = data.current_row || 0;
+                        state.maxRows          = data.max_rows || rows;
+                        state.currentMultiplier = data.multiplier || 1.0;
+                        state.gameId           = data.game_id || null;
+
+                        setGameStateInProgress();
+                        updateMultiplierDisplay();
+                        updatePotentialWinDisplay();
+
+                        setStatus('Partie Tower en cours. Reprends à l’étage ' + (state.currentRow + 1) + '.');
+                        setResult('Partie en cours…');
+                        resetGridVisual();
+                        enableRow(state.currentRow);
+                    } catch (e) {
+                        setGameStateIdle();
+                    }
+                }
+
+                resetGridVisual();
+                setGameStateIdle();
+
+                startBtn.addEventListener('click', handleStart);
+                cashoutBtn.addEventListener('click', handleCashout);
+
+                const cells = gridEl.querySelectorAll('.tower-cell');
+                cells.forEach((cell) => {
+                    cell.addEventListener('click', handleCellClick);
+                });
+
+                loadStatus();
+            }
+
+            document.addEventListener('DOMContentLoaded', initTowerGame);
+            document.addEventListener('turbo:load', initTowerGame);
+        })();
+    </script>
+{% endblock %}
