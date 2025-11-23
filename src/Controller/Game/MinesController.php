@@ -236,7 +236,8 @@ class MinesController extends AbstractController
     #[Route('/reveal', name: 'reveal', methods: ['POST'])]
     public function reveal(
         Request $request,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        TransactionManager $txm
     ): JsonResponse {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
@@ -325,8 +326,9 @@ class MinesController extends AbstractController
             ]);
         }
 
-        $revealed       = array_values(array_unique([...$revealed, $cell]));
-        $revealedCount  = count($revealed);
+        // ➜ case safe
+        $revealed      = array_values(array_unique([...$revealed, $cell]));
+        $revealedCount = count($revealed);
 
         if ($mines === null) {
             return $this->json(['ok' => false, 'error' => 'Configuration de partie invalide.'], 500);
@@ -341,6 +343,64 @@ class MinesController extends AbstractController
         $meta['revealed']           = $revealed;
         $meta['current_multiplier'] = $multiplier;
 
+        // ➜ si toutes les cases safe sont révélées, on auto-cashout
+        $allSafeRevealed = $revealedCount >= (MinesGame::GRID_SIZE - $mines);
+
+        if ($allSafeRevealed) {
+            $amount = $partie->getMise();
+
+            $result = $em->wrapInTransaction(function () use (
+                $em,
+                $txm,
+                $user,
+                $partie,
+                $meta,
+                $mines,
+                $revealedCount,
+                $amount,
+                $now,
+                $multiplier
+            ) {
+                $payout = (int) floor($amount * $multiplier);
+
+                $meta['state']            = 'cashed_out';
+                $meta['final_multiplier'] = $multiplier;
+
+                $partie->setGain($payout);
+                $partie->setResultatNet($payout - $amount);
+                $partie->setIssue(IssueType::GAGNE);
+                $partie->setFinLe($now);
+                $partie->setMetaJson(json_encode($meta, JSON_UNESCAPED_UNICODE));
+
+                $txm->credit($user, $payout, 'mines', $partie, $now);
+
+                $em->flush();
+
+                // Partie gagnée : on notifie avec mines + revealedCount
+                $this->minesLastGameNotifier->notifyPartie($partie, $mines, $revealedCount);
+
+                return [
+                    'payout'  => $payout,
+                    'net'     => $payout - $amount,
+                    'balance' => $user->getBalance(),
+                ];
+            });
+
+            return $this->json([
+                'ok'          => true,
+                'exploded'    => false,
+                'cell'        => $cell,
+                'revealed'    => $revealed,
+                'mines'       => $mines,
+                'multiplier'  => $multiplier,
+                'balance'     => $result['balance'],
+                'auto_cashed' => true,
+                'payout'      => $result['payout'],
+                'net'         => $result['net'],
+            ]);
+        }
+
+        // Sinon, partie toujours en cours
         $partie->setMetaJson(json_encode($meta, JSON_UNESCAPED_UNICODE));
         $em->flush();
 
@@ -352,6 +412,7 @@ class MinesController extends AbstractController
             'mines'       => $mines,
             'multiplier'  => $multiplier,
             'balance'     => $user->getBalance(),
+            'auto_cashed' => false,
         ]);
     }
 

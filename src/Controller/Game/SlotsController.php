@@ -18,14 +18,15 @@ class SlotsController extends AbstractController
 {
     /** @var array<string,array{name:string,index:int,rarity:string,mult:int}> */
     private const SLOT_META = [
-        'slot1' => ['name' => 'Émeraude', 'index' => 1, 'rarity' => 'Très rare',   'mult' => 20],
-        'slot2' => ['name' => 'Diamant',  'index' => 2, 'rarity' => 'Rare',        'mult' => 12],
-        'slot3' => ['name' => 'Redstone', 'index' => 3, 'rarity' => 'Peu fréquent','mult' =>  9],
+        'slot1' => ['name' => 'Émeraude', 'index' => 1, 'rarity' => 'Très rare',    'mult' => 20],
+        'slot2' => ['name' => 'Diamant',  'index' => 2, 'rarity' => 'Rare',         'mult' => 12],
+        'slot3' => ['name' => 'Redstone', 'index' => 3, 'rarity' => 'Peu fréquent', 'mult' => 9],
         'slot4' => ['name' => 'Or',       'index' => 4, 'rarity' => 'Intermédiaire','mult' => 6],
-        'slot5' => ['name' => 'Lapis',    'index' => 5, 'rarity' => 'Intermédiaire','mult' => 4],
-        'slot6' => ['name' => 'Fer',      'index' => 6, 'rarity' => 'Commun',      'mult' =>  3],
-        'slot7' => ['name' => 'Charbon',  'index' => 7, 'rarity' => 'Commun',      'mult' =>  2],
-        'slot8' => ['name' => 'Bâton',    'index' => 8, 'rarity' => 'Très commun', 'mult' =>  1],
+        // 🔼 Buff des symboles moyens : un peu plus de payout, même fréquence
+        'slot5' => ['name' => 'Lapis',    'index' => 5, 'rarity' => 'Intermédiaire','mult' => 5], // au lieu de 4
+        'slot6' => ['name' => 'Fer',      'index' => 6, 'rarity' => 'Commun',       'mult' => 4], // au lieu de 3
+        'slot7' => ['name' => 'Charbon',  'index' => 7, 'rarity' => 'Commun',       'mult' => 3], // au lieu de 2
+        'slot8' => ['name' => 'Bâton',    'index' => 8, 'rarity' => 'Très commun',  'mult' => 1],
     ];
 
     /** @var array<string,int> */
@@ -311,7 +312,6 @@ class SlotsController extends AbstractController
 
             $em->flush();
 
-            // 🔔 Envoi Mercure pour la nouvelle partie
             $this->slotLastGameNotifier->notifyPartie($partie);
 
             return [

@@ -187,56 +187,56 @@
                     <tr>
                         <td><img src="{{ asset('img/slots/slot1.png') }}" width="36" height="36" alt="Emeraude"></td>
                         <td>Emeraude</td>
-                        <td class="">×20</td>
+                        <td>×20</td>
                         <td>{{ percents['slot1']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-danger">Très rare</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot2.png') }}" width="36" height="36" alt="Diamant"></td>
                         <td>Diamant</td>
-                        <td class="">×12</td>
+                        <td>×12</td>
                         <td>{{ percents['slot2']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-warning">Rare</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot3.png') }}" width="36" height="36" alt="Redstone"></td>
                         <td>Redstone</td>
-                        <td class="">×9</td>
+                        <td>×9</td>
                         <td>{{ percents['slot3']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-warning">Peu frequent</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot4.png') }}" width="36" height="36" alt="Or"></td>
                         <td>Or</td>
-                        <td class="">×6</td>
+                        <td>×6</td>
                         <td>{{ percents['slot4']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-info">Intermediaire</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt="Lapis"></td>
                         <td>Lapis</td>
-                        <td class="">×4</td>
+                        <td>×5</td> {# au lieu de 4 #}
                         <td>{{ percents['slot5']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-info">Intermediaire</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt="Fer"></td>
                         <td>Fer</td>
-                        <td class="">×3</td>
+                        <td>×4</td> {# au lieu de 3 #}
                         <td>{{ percents['slot6']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt="Charbon"></td>
                         <td>Charbon</td>
-                        <td class="">×2</td>
+                        <td>×3</td> {# au lieu de 2 #}
                         <td>{{ percents['slot7']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot8.png') }}" width="36" height="36" alt="Bâton"></td>
                         <td>Bâton</td>
-                        <td class="">×1</td>
+                        <td>×1</td>
                         <td>{{ percents['slot8']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-success">Très commun</span></td>
                     </tr>
@@ -250,6 +250,7 @@
             </ul>
         </div>
     </div>
+
 {% endblock %}
 
 {% block game_scripts %}

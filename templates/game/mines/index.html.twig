@@ -453,9 +453,23 @@
 
                             currentMultiplier = data.multiplier || currentMultiplier;
                             updateMultiplierDisplay();
-                            updatePotentialWinDisplay();
 
-                            setStatus('Tu peux continuer à cliquer ou encaisser.');
+                            if (data.auto_cashed) {
+                                // Auto-cashout : toutes les émeraudes sont découvertes
+                                resultEl.innerHTML =
+                                    'Tu as découvert toutes les émeraudes ! Tu encaisses ' +
+                                    '<span class="balance balance-inline">' + (data.payout ?? 0) + '</span>';
+
+                                setStatus('Partie terminée, toutes les émeraudes ont été trouvées.');
+                                setGameState('cashed_out');
+                                refreshHeaderBalanceLive();
+
+                                const allCells = gridEl.querySelectorAll('.mine-cell');
+                                allCells.forEach((cellEl) => { cellEl.disabled = true; });
+                            } else {
+                                updatePotentialWinDisplay();
+                                setStatus('Tu peux continuer à cliquer ou encaisser.');
+                            }
                         }
                     } catch (e) {
                         setResult(e.message || 'Erreur pendant la révélation.');
