@@ -1,8 +1,4 @@
-# README — Plateforme de jeux (Symfony)
-
-## Tutoriel
-_Un tutoriel pas-à-pas arrive bientôt._  
-Il couvrira : installation locale, configuration `.env`, création BDD, lancement du serveur et premiers écrans.
+# Casino en ligne en symfony sur le thème de Minecraft
 
 ## Objectifs d’apprentissage
 - Maîtriser les différents environnements (local, staging, prod)
@@ -27,13 +23,19 @@ Il couvrira : installation locale, configuration `.env`, création BDD, lancemen
 - [x] Temps réel avec Mercure : chat en direct, action en direct (envoie de monnaie).
 - [x] Statistiques & profil enrichi : historique de parties, meilleurs scores
 
-## Liens utiles
+## Architecture de la base de données
 
-- https://github.com/nebulimity/MoreLikeMinecraft/blob/main/default/default_glass.png
+![Schéma Mercure](public/Symfsino.png)
+
+## Déploiement
+
+Le site a été déployé sur https://casino.gallotta.fr avec docker.
 
 ## Informations
 
-- Exemple de json utilisé pour générer les images de chaque jeu
+### Génération des images
+
+Ce json a été utilisé avec l'outil de génération d'image pour permettre de créer toutes les images du site. Le format json permet de garder une cohérence entre les images et de pouvoir en créer des nouvelles en gardant la direction artistique.
 
 ```
 {
@@ -114,3 +116,54 @@ Il couvrira : installation locale, configuration `.env`, création BDD, lancemen
    }
 }
 ```
+
+## Mercure
+
+Le casino utilise Symfony Mercure pour pousser en direct certaines infos vers le front (dernières parties, etc.), sans WebSocket custom ni polling.
+
+### Principe général
+
+- Le serveur publie un message JSON sur un topic Mercure (ex. https://casino.gallotta.fr/mercure/last-games) via un HubInterface.
+- Le hub Mercure diffuse ce message à tous les navigateurs abonnés à ce topic.
+- Le front ouvre une connexion EventSource via un petit helper MercureBus et :
+  - s’abonne à un ou plusieurs topics,
+  - écoute les messages par type (ex. partie.created),
+  - met à jour le DOM (tableau des dernières parties, etc.).
+
+### Liste des fonctionnalités qui utilisent mercure
+
+- Le chat de discussion en direct
+- L'affichage des dernières parties
+- Les tips (le receveur d'un tips reçoit une alerte sur sont écran avec le nom de l'envoyeur et le montant du tips) (un message est également envoyé dans le chat pour notifier tous les utilisateurs)
+
+## Système de registre des jeux
+
+Le cœur du casino repose sur deux briques simples : GameInterface et GameRegistry.
+Ensemble, elles permettent d’ajouter de nouveaux jeux sans toucher au reste du code applicatif.
+
+- GameInterface — contrat commun à tous les jeux
+
+GameInterface définit le contrat que tout jeu doit respecter pour être reconnu par l’application.
+Chaque jeu (Dice, Slots, Mines, Tower, etc.) est une classe qui l’implémente.
+
+Concrètement, un jeu doit fournir :
+
+- Une identité technique
+    - une clé unique (ex. dice, slots, mines) pour lier les parties en base (Partie.game_key) au jeu concerné ;
+    - un nom lisible (ex. “🎲 Dice”) utilisé dans l’interface.
+
+  - Sa présence dans l’UI
+    - une URL (route du jeu) pour générer les liens et boutons “Jouer” ;
+    - une image (cover) pour les vignettes sur la page d’accueil.
+
+  - Sa description
+    - une courte description “catalogue” pour présenter le jeu dans les listes ;
+    - une description “in game” plus détaillée, affichée dans le panneau d’informations du jeu.
+
+  - Ses limites de mise
+    - une mise minimale et maximale, utilisées à la fois :
+      - pour afficher les bornes dans l’UI,
+      - et pour les validations côté serveur.
+      
+Grâce à ce contrat, tous les jeux exposent la même interface : le front, les contrôleurs et les vues peuvent manipuler un “jeu” sans savoir s’il s’agit de Dice, Slots ou d’un futur jeu ajouté plus tard.
+
