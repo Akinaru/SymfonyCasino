@@ -1,5 +1,7 @@
 # Casino en ligne en symfony sur le thème de Minecraft
 
+![Schéma Mercure](public/banner.png)
+
 ## Objectifs d’apprentissage
 - Maîtriser les différents environnements (local, staging, prod)
 - Créer des entités avec leurs propriétées et éxecuter des migrations
