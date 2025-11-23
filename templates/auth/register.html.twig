@@ -26,6 +26,10 @@
             {{ form_row(registrationForm.email) }}
         </div>
 
+        <div class="mb-3">
+            {{ form_row(registrationForm.plainPassword) }}
+        </div>
+
         {# Champ avatar + aperçu live #}
         <div class="mb-3">
             <div class="mb-3">
@@ -46,12 +50,8 @@
             {{ form_errors(registrationForm.avatar) }}
         </div>
 
-        <div class="mb-3">
-            {{ form_row(registrationForm.plainPassword) }}
-        </div>
 
         <button class="btn btn-primary w-100">S'inscrire</button>
-        <button disabled class="mt-3 btn btn-primary w-100">S'inscrire</button>
         {{ form_end(registrationForm) }}
 
         <p class="mt-3">
