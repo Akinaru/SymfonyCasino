@@ -1,0 +1,261 @@
+{# templates/components/historique.html.twig #}
+<div class="info-card card text-light mb-3" id="session-stats-card">
+    <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+        <span class="typo-title">Statistiques de session</span>
+        <button id="session-reset-btn" class="btn btn-sm btn-primary">
+            Réinitialiser
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-4">
+                <div class="typo-eyebrow mb-1">Résultat session</div>
+                <div class="typo-kpi mb-0" id="session-net-wrapper">
+                    <span id="session-net-value" class="balance">0</span>
+                </div>
+                <small class="text-white-50">Somme de tous les gains / pertes depuis l’ouverture de la page.</small>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="typo-eyebrow mb-1">Total misé</div>
+                <div class="fw-semibold">
+                    <span id="session-total-bets" class="balance">0</span>
+                </div>
+                <div class="typo-eyebrow mb-1 mt-2">Total encaissé</div>
+                <div class="fw-semibold">
+                    <span id="session-total-payouts" class="balance">0</span>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="typo-eyebrow mb-1">Courbe de session</div>
+                <svg id="session-net-chart"
+                     viewBox="0 0 100 40"
+                     preserveAspectRatio="none"
+                     class="w-100"
+                     style="height:60px;">
+                    <g id="session-net-chart-lines"></g>
+                </svg>
+                <small class="text-white-50 d-block mt-2" id="session-rounds-label">
+                    Chaque point représente une partie jouée.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    (function () {
+        const SESSION_KEY = 'symfsino_session_stats_v1';
+
+        // Evite double init si le composant est inclus plusieurs fois
+        if (window.SymfsinoSessionHistory && window.SymfsinoSessionHistory._initialized) {
+            return;
+        }
+
+        function getSessionStats() {
+            try {
+                const raw = localStorage.getItem(SESSION_KEY);
+                if (!raw) {
+                    // Point de départ à 0 pour que le premier jeu crée déjà une vraie ligne
+                    return {
+                        net: 0,
+                        totalBets: 0,
+                        totalPayouts: 0,
+                        rounds: 0,
+                        history: [0],
+                    };
+                }
+                const parsed = JSON.parse(raw);
+
+                let history = [];
+                if (Array.isArray(parsed.history) && parsed.history.length > 0) {
+                    history = parsed.history
+                        .map((v) => Number(v))
+                        .filter((v) => Number.isFinite(v));
+                } else {
+                    history = [0];
+                }
+
+                return {
+                    net: Number(parsed.net) || 0,
+                    totalBets: Number(parsed.totalBets) || 0,
+                    totalPayouts: Number(parsed.totalPayouts) || 0,
+                    rounds: Number(parsed.rounds) || 0,
+                    history,
+                };
+            } catch (e) {
+                return {
+                    net: 0,
+                    totalBets: 0,
+                    totalPayouts: 0,
+                    rounds: 0,
+                    history: [0],
+                };
+            }
+        }
+
+        function saveSessionStats(stats) {
+            try {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(stats));
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function renderSessionChart(history, rounds) {
+            const svg   = document.getElementById('session-net-chart');
+            const group = document.getElementById('session-net-chart-lines');
+            const label = document.getElementById('session-rounds-label');
+
+            if (!svg || !group || !label) return;
+
+            // Clear anciens segments
+            while (group.firstChild) {
+                group.removeChild(group.firstChild);
+            }
+
+            if (!history || history.length < 2) {
+                label.textContent = 'Pas encore assez de parties pour afficher une courbe.';
+                return;
+            }
+
+            const min  = Math.min(...history);
+            const max  = Math.max(...history);
+            const span = max - min || 1;
+
+            const width  = 100;
+            const height = 40;
+            const n      = history.length;
+            const stepX  = n > 1 ? width / (n - 1) : 0;
+
+            for (let i = 1; i < n; i++) {
+                const prev = history[i - 1];
+                const curr = history[i];
+
+                const x1 = stepX * (i - 1);
+                const x2 = stepX * i;
+
+                const norm1 = (prev - min) / span;
+                const norm2 = (curr - min) / span;
+
+                const y1 = height - norm1 * height;
+                const y2 = height - norm2 * height;
+
+                const delta = curr - prev;
+                const color = delta >= 0 ? '#28a745' : '#dc3545';
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1.toFixed(2));
+                line.setAttribute('y1', y1.toFixed(2));
+                line.setAttribute('x2', x2.toFixed(2));
+                line.setAttribute('y2', y2.toFixed(2));
+                line.setAttribute('stroke', color);
+                line.setAttribute('stroke-width', '1.8');
+                line.setAttribute('fill', 'none');
+
+                group.appendChild(line);
+            }
+
+            // On compte les parties réelles = nombre de segments
+            const segments = history.length - 1;
+            label.textContent = 'Segments : ' + segments + ' partie(s) jouée(s).';
+        }
+
+        function renderSessionStats() {
+            const netEl      = document.getElementById('session-net-value');
+            const betsEl     = document.getElementById('session-total-bets');
+            const payoutsEl  = document.getElementById('session-total-payouts');
+            const netWrapper = document.getElementById('session-net-wrapper');
+
+            if (!netEl || !betsEl || !payoutsEl || !netWrapper) {
+                return;
+            }
+
+            const stats = getSessionStats();
+            const net   = stats.net || 0;
+
+            netEl.textContent = net > 0 ? '+' + net : String(net);
+            netEl.classList.remove('text-success', 'text-danger');
+
+            if (net > 0) {
+                netEl.classList.add('text-success');
+            } else if (net < 0) {
+                netEl.classList.add('text-danger');
+            }
+
+            betsEl.textContent    = String(stats.totalBets || 0);
+            payoutsEl.textContent = String(stats.totalPayouts || 0);
+
+            renderSessionChart(stats.history || [], stats.rounds || 0);
+        }
+
+        function resetSessionStats() {
+            const stats = {
+                net: 0,
+                totalBets: 0,
+                totalPayouts: 0,
+                rounds: 0,
+                history: [0], // point de départ
+            };
+            saveSessionStats(stats);
+            renderSessionStats();
+        }
+
+        /**
+         * @param {number} deltaNet variation de la bankroll (gain - mise) pour la partie
+         * @param {number} bet      mise initiale
+         * @param {number} payout   montant encaissé (0 si perte)
+         */
+        function updateSessionStats(deltaNet, bet, payout) {
+            if (!Number.isFinite(deltaNet) || !Number.isFinite(bet) || !Number.isFinite(payout)) {
+                return;
+            }
+            const stats = getSessionStats();
+            stats.net          += deltaNet;
+            stats.totalBets    += bet;
+            stats.totalPayouts += payout;
+            stats.rounds       += 1;
+
+            if (!Array.isArray(stats.history) || !stats.history.length) {
+                stats.history = [0];
+            }
+            stats.history.push(stats.net);
+            if (stats.history.length > 100) {
+                stats.history = stats.history.slice(-100);
+            }
+
+            saveSessionStats(stats);
+            renderSessionStats();
+        }
+
+        function initSessionStatsUI() {
+            const card = document.getElementById('session-stats-card');
+            if (!card) return;
+
+            const resetBtn = document.getElementById('session-reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function (ev) {
+                    ev.preventDefault();
+                    resetSessionStats();
+                });
+            }
+
+            renderSessionStats();
+        }
+
+        function onDomReady() {
+            // Initialise seulement si le bloc est présent dans la page
+            initSessionStatsUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', onDomReady);
+        document.addEventListener('turbo:load', onDomReady);
+
+        // API globale pour les jeux (Mines, Slots, etc.)
+        window.SymfsinoSessionHistory = {
+            _initialized: true,
+            update: updateSessionStats,
+            reset: resetSessionStats,
+            render: renderSessionStats,
+        };
+    })();
+</script>

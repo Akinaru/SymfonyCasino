@@ -110,6 +110,9 @@
 {% endblock %}
 
 {% block more_content %}
+    {# 🔹 Composant générique d'historique de session (tous jeux confondus) #}
+    {% include 'components/historique.html.twig' %}
+
     <div class="info-card card text-light mb-3">
         <div class="card-header border-secondary">
             <span class="typo-title">Dernières parties Mines</span>
@@ -211,9 +214,6 @@
             </p>
         </div>
     </div>
-
-
-
 {% endblock %}
 
 {% block game_scripts %}
@@ -443,6 +443,11 @@
                             setGameState('lost');
                             refreshHeaderBalanceLive();
 
+                            // 🔹 maj stats session : perte = -mise, aucun payout
+                            if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                window.SymfsinoSessionHistory.update(-baseBetAmount, baseBetAmount, 0);
+                            }
+
                             const allCells = gridEl.querySelectorAll('.mine-cell');
                             allCells.forEach((cell) => { cell.disabled = true; });
 
@@ -456,13 +461,20 @@
 
                             if (data.auto_cashed) {
                                 // Auto-cashout : toutes les émeraudes sont découvertes
+                                const payout = Number(data.payout || 0);
                                 resultEl.innerHTML =
                                     'Tu as découvert toutes les émeraudes ! Tu encaisses ' +
-                                    '<span class="balance balance-inline">' + (data.payout ?? 0) + '</span>';
+                                    '<span class="balance balance-inline">' + payout + '</span>';
 
                                 setStatus('Partie terminée, toutes les émeraudes ont été trouvées.');
                                 setGameState('cashed_out');
                                 refreshHeaderBalanceLive();
+
+                                // 🔹 maj stats session : net = payout - mise
+                                if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                                    const deltaNet = payout - baseBetAmount;
+                                    window.SymfsinoSessionHistory.update(deltaNet, baseBetAmount, payout);
+                                }
 
                                 const allCells = gridEl.querySelectorAll('.mine-cell');
                                 allCells.forEach((cellEl) => { cellEl.disabled = true; });
@@ -495,12 +507,20 @@
                         currentMultiplier = data.multiplier || currentMultiplier;
                         updateMultiplierDisplay();
 
-                        // 👉 ici : plus de (net x) + span.balance
-                        resultEl.innerHTML = 'Tu encaisses <span class="balance balance-inline">' + data.payout + '</span>';
+                        const payout = Number(data.payout || 0);
+
+                        resultEl.innerHTML =
+                            'Tu encaisses <span class="balance balance-inline">' + payout + '</span>';
 
                         setStatus('Partie terminée, gains crédités.');
                         setGameState('cashed_out');
                         refreshHeaderBalanceLive();
+
+                        // 🔹 maj stats session : net = payout - mise
+                        if (baseBetAmount > 0 && window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                            const deltaNet = payout - baseBetAmount;
+                            window.SymfsinoSessionHistory.update(deltaNet, baseBetAmount, payout);
+                        }
 
                         const allCells = gridEl.querySelectorAll('.mine-cell');
                         allCells.forEach((cell) => { cell.disabled = true; });
@@ -528,4 +548,3 @@
         })();
     </script>
 {% endblock %}
-

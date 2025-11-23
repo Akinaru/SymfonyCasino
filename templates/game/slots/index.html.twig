@@ -86,6 +86,9 @@
 {% endblock %}
 
 {% block more_content %}
+    {# 🔹 Historique de session global (tous jeux confondus) #}
+    {% include 'components/historique.html.twig' %}
+
     <div class="info-card card text-light mb-3">
         <div id="last-games-panel"
              data-slot1="{{ asset('img/slots/slot1.png') }}"
@@ -101,7 +104,6 @@
                 <span class="typo-title">Dernières parties</span>
             </div>
 
-            {# 🔹 card-body sans p-2 #}
             <div class="card-body">
                 <table class="table table-dark table-sm mb-0 align-middle">
                     <thead>
@@ -215,21 +217,21 @@
                     <tr>
                         <td><img src="{{ asset('img/slots/slot5.png') }}" width="36" height="36" alt="Lapis"></td>
                         <td>Lapis</td>
-                        <td>×5</td> {# au lieu de 4 #}
+                        <td>×5</td>
                         <td>{{ percents['slot5']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-info">Intermediaire</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot6.png') }}" width="36" height="36" alt="Fer"></td>
                         <td>Fer</td>
-                        <td>×4</td> {# au lieu de 3 #}
+                        <td>×4</td>
                         <td>{{ percents['slot6']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
                     <tr>
                         <td><img src="{{ asset('img/slots/slot7.png') }}" width="36" height="36" alt="Charbon"></td>
                         <td>Charbon</td>
-                        <td>×3</td> {# au lieu de 2 #}
+                        <td>×3</td>
                         <td>{{ percents['slot7']|number_format(2, ',', ' ') }}%</td>
                         <td><span class="badge text-bg-secondary">Commun</span></td>
                     </tr>
@@ -483,10 +485,18 @@
 
                     renderWins(winLinesEl, data.wins || []);
                     refreshHeaderBalanceLive();
-                    const isWin = (data.payout || 0) > 0;
+
+                    const payout = Number(data.payout || 0);
+                    const net    = Number.isFinite(Number(data.net)) ? Number(data.net) : (payout - amount);
+                    const isWin  = payout > 0;
+
+                    // 🔹 Mise à jour des stats de session (tous jeux confondus)
+                    if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                        window.SymfsinoSessionHistory.update(net, amount, payout);
+                    }
 
                     requestAnimationFrame(()=>{
-                        resultEl.textContent = isWin ? `Gagne +${data.payout}` : `Perdu -${amount}`;
+                        resultEl.textContent = isWin ? `Gagne +${payout}` : `Perdu -${amount}`;
                         s0.triggerBounce(); s1.triggerBounce(); s2.triggerBounce();
                     });
                 }
@@ -540,6 +550,4 @@
             document.addEventListener('turbo:load', init);
         })();
     </script>
-
-
 {% endblock %}

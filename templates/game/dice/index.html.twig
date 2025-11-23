@@ -84,6 +84,9 @@
 {% endblock %}
 
 {% block more_content %}
+    {# 🔹 Historique de session global (tous jeux confondus) #}
+    {% include 'components/historique.html.twig' %}
+
     <div class="info-card card text-light mb-3">
         <div class="card-header border-secondary">
             <span class="typo-title">Dernières parties Dice</span>
@@ -211,40 +214,6 @@
         </div>
     </div>
 
-    <div class="info-card card text-light mb-3">
-        <div class="card-header border-secondary">
-            <span class="typo-title">Règles & Conseils</span>
-        </div>
-        <div class="card-body">
-            <ul class="mb-2">
-                <li>Mises min./max. : <strong>{{ minBet|default(1) }}</strong> / <strong>{{ maxBet|default(1000000) }}</strong>.</li>
-                <li>Résultats déterminés côté serveur — l’animation est un <em>feedback visuel</em>.</li>
-                <li>Bonus/Promotions soumis à conditions (ex. wagering).</li>
-            </ul>
-            <p class="mb-0 typo-helper">
-                Jouez de manière responsable. Fixez-vous des limites et faites des pauses régulières.
-            </p>
-        </div>
-    </div>
-
-    <div class="info-card card text-light">
-        <div class="card-header border-secondary">
-            <span class="typo-title">Informations Légales</span>
-        </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-12 col-md-6">
-                    <h6 class="mb-1">Conformité</h6>
-                    <p class="mb-0 typo-helper">Mentions légales, licence, régulation, politique KYC/AML, etc.</p>
-                </div>
-                <div class="col-12 col-md-6">
-                    <h6 class="mb-1">Aide & Support</h6>
-                    <p class="mb-1 typo-helper">FAQ, contact support, médiation, limites de dépôt.</p>
-                    <a href="#" class="btn btn-primary btn-sm">Centre d’aide</a>
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block game_scripts %}
@@ -318,7 +287,6 @@
                     });
                 }
 
-
                 async function apiPlay(amount) {
                     const res  = await fetch(endpoint, {
                         method: 'POST',
@@ -340,16 +308,27 @@
                 }
 
                 async function applyResultFromData(data, amount) {
-                    const isWin = (typeof data.win === 'boolean') ? data.win : (Number(data.payout) > 0);
+                    const payout = Number(data.payout || 0);
+                    const isWin  = (typeof data.win === 'boolean') ? data.win : (payout > 0);
 
                     await sleep(450);
                     const side = isWin ? 'face' : 'pile';
                     coinImg.src = side === 'face' ? faceSrc : pileSrc;
                     coinImg.alt = side === 'face' ? 'Face' : 'Pile';
-                    setResult(isWin ? `Tu as gagné ${data.payout}` : `Tu as perdu ${amount}`);
+
+                    if (isWin) {
+                        setResult(`Tu as gagné ${payout}`);
+                    } else {
+                        setResult(`Tu as perdu ${amount}`);
+                    }
 
                     refreshHeaderBalanceLive();
 
+                    // 🔹 Mise à jour des stats de session (tous jeux confondus)
+                    if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                        const deltaNet = payout - amount;
+                        window.SymfsinoSessionHistory.update(deltaNet, amount, payout);
+                    }
                 }
 
                 async function playOnce(amount) {
@@ -423,6 +402,4 @@
             document.addEventListener('turbo:load', initCoinFlip);
         })();
     </script>
-
-
 {% endblock %}
