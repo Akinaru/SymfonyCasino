@@ -180,8 +180,29 @@ class ProfileController extends AbstractController
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        // Fonction interne pour récupérer le meilleur score d’un jeu
-        $getBestRecord = function(string $gameKey) use ($em, $user) {
+        // Helper: construit la structure record pour Slots (avec grid + wins)
+        $buildSlotsRecord = static function (Partie $best): array {
+            $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
+
+            return [
+                'partie' => $best,
+                'grid'   => $meta['grid'] ?? null,
+                'wins'   => $meta['wins'] ?? [],
+            ];
+        };
+
+        // Helper: record générique (on garde juste meta brute si besoin plus tard)
+        $buildGenericRecord = static function (Partie $best): array {
+            $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
+
+            return [
+                'partie' => $best,
+                'meta'   => $meta,
+            ];
+        };
+
+        // Helper : meilleur gain pour un jeu donné
+        $getBestRecordByGain = function (string $gameKey, bool $slotsMeta = false) use ($em, $user, $buildSlotsRecord, $buildGenericRecord) {
             $qb = $em->createQueryBuilder()
                 ->select('p')
                 ->from(Partie::class, 'p')
@@ -200,22 +221,56 @@ class ProfileController extends AbstractController
                 return null;
             }
 
-            $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
-
-            return [
-                'partie' => $best,
-                'grid'   => $meta['grid'] ?? null,
-                'wins'   => $meta['wins'] ?? [],
-            ];
+            return $slotsMeta ? $buildSlotsRecord($best) : $buildGenericRecord($best);
         };
 
-        // Récupération des records
-        $recordSlots = $getBestRecord('slots');
-        $recordDice  = $getBestRecord('dice');
+        // Helper : meilleur multiplicateur (gain / mise) pour un jeu donné
+        $getBestRecordByMultiplier = function (string $gameKey, bool $slotsMeta = false) use ($em, $user, $buildSlotsRecord, $buildGenericRecord) {
+            $qb = $em->createQueryBuilder()
+                ->select('p')
+                ->from(Partie::class, 'p')
+                ->where('p.utilisateur = :user')
+                ->andWhere('p.game_key = :g')
+                ->andWhere('p.gain > 0')
+                ->andWhere('p.mise > 0')
+                ->orderBy('(p.gain * 1.0) / p.mise', 'DESC')
+                ->addOrderBy('p.fin_le', 'DESC')
+                ->setMaxResults(1)
+                ->setParameter('user', $user)
+                ->setParameter('g', $gameKey);
+
+            $best = $qb->getQuery()->getOneOrNullResult();
+
+            if (!$best instanceof Partie) {
+                return null;
+            }
+
+            return $slotsMeta ? $buildSlotsRecord($best) : $buildGenericRecord($best);
+        };
+
+        // Récupération des records demandés
+
+        // Slots : meilleur gain + meilleur multiplicateur
+        $recordSlotsGain = $getBestRecordByGain('slots', true);
+        $recordSlotsMult = $getBestRecordByMultiplier('slots', true);
+
+        // Dice : meilleur gain
+        $recordDiceGain = $getBestRecordByGain('dice', false);
+
+        // Mines : meilleur gain + meilleur multiplicateur
+        $recordMinesGain = $getBestRecordByGain('mines', false);
+        $recordMinesMult = $getBestRecordByMultiplier('mines', false);
+
+        // Roulette : meilleur gain
+        $recordRouletteGain = $getBestRecordByGain('roulette', false);
 
         return $this->render('profile/records.html.twig', [
-            'recordSlots' => $recordSlots,
-            'recordDice'  => $recordDice,
+            'recordSlotsGain'    => $recordSlotsGain,
+            'recordSlotsMult'    => $recordSlotsMult,
+            'recordDiceGain'     => $recordDiceGain,
+            'recordMinesGain'    => $recordMinesGain,
+            'recordMinesMult'    => $recordMinesMult,
+            'recordRouletteGain' => $recordRouletteGain,
         ]);
     }
 }

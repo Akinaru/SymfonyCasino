@@ -1,83 +1,387 @@
+{# templates/profile/records.html.twig #}
 {% extends 'profile/base_profil.html.twig' %}
 
 {% block title %}🎰 Symfsino · Records{% endblock %}
 
 {% block profile_content %}
+    <style>
+        .record-section-card {
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .record-section-card .card-header {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.8));
+        }
+
+        .record-section-title {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+        }
+
+        .record-section-title-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .record-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .25rem .6rem;
+            border-radius: 999px;
+            background: rgba(15,15,20,0.9);
+            border: 1px solid rgba(255,255,255,0.08);
+            font-size: .75rem;
+            color: #d4d4e0;
+        }
+
+        .record-chip-label {
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-size: .68rem;
+            color: #9ca3af;
+        }
+
+        .record-value-main {
+            font-size: 1.35rem;
+            font-weight: 600;
+        }
+
+        .record-value-sub {
+            font-size: .8rem;
+            color: #9ca3af;
+        }
+
+        .record-divider {
+            border-color: rgba(255,255,255,0.06);
+            margin: 0.75rem 0 1rem;
+        }
+
+        .record-tag-mult {
+            background: rgba(76, 42, 226, 0.1);
+            border-color: rgba(76, 42, 226, 0.4);
+            color: #c4b5fd;
+        }
+    </style>
+
     <div class="py-4 text-white text-white-scope">
 
-        <h1 class="h4 mb-4">Mes meilleurs gains</h1>
-
+        <h1 class="h4 mb-4">Mes meilleurs records</h1>
 
         {# ===================== SLOTS ===================== #}
-        <div class="card bg-dark border-secondary mb-4">
+        <div class="card bg-dark border-secondary mb-4 record-section-card">
             <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <span class="text-white">Slots · Meilleur gain</span>
+                <div class="record-section-title">
+                    <div class="record-section-title-icon">
+                        🎰
+                    </div>
+                    <span class="text-white">Slots</span>
+                </div>
 
-                {% if recordSlots %}
-                    <small class="text-white-50">
-                        #{{ recordSlots.partie.id }} ·
-                        {{ recordSlots.partie.finLe ? recordSlots.partie.finLe|date('d/m/Y H:i') : '' }}
-                    </small>
+                {% if recordSlotsGain or recordSlotsMult %}
+                    <small class="text-white-50">Meilleur gain & multiplicateur</small>
                 {% else %}
                     <small class="text-white-50">Aucun gain pour le moment</small>
                 {% endif %}
             </div>
 
-            {% if recordSlots %}
-                {% set record = recordSlots %}
-                {% include 'profile/records/_slots_block.html.twig' with { record: record } %}
+            {% if recordSlotsGain or recordSlotsMult %}
+                <div class="card-body">
+                    <div class="row g-3">
+                        {# --- Colonne : Meilleur gain --- #}
+                        <div class="col-12 col-md-6">
+                            {% if recordSlotsGain %}
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div class="record-chip">
+                                        <span class="record-chip-label">Record</span>
+                                        <span>Meilleur gain</span>
+                                    </div>
+                                    <small class="text-white-50">
+                                        #{{ recordSlotsGain.partie.id }}
+                                        ·
+                                        {{ recordSlotsGain.partie.finLe ? recordSlotsGain.partie.finLe|date('d/m/Y H:i') : '' }}
+                                    </small>
+                                </div>
+
+                                {% set record = recordSlotsGain %}
+                                {% include 'profile/records/_slots_block.html.twig' with { record: record } %}
+                            {% else %}
+                                <div class="text-white-50">Aucun gain enregistré pour le moment.</div>
+                            {% endif %}
+                        </div>
+
+                        {# --- Colonne : Meilleur multiplicateur --- #}
+                        <div class="col-12 col-md-6">
+                            {% if recordSlotsMult %}
+                                {% set gain = recordSlotsMult.partie.gain %}
+                                {% set mise = recordSlotsMult.partie.mise %}
+                                {% set mult = mise > 0 ? (gain / mise) : 0 %}
+
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div class="record-chip record-tag-mult">
+                                        <span class="record-chip-label">Record</span>
+                                        <span>Meilleur multiplicateur</span>
+                                    </div>
+                                    <small class="text-white-50">
+                                        #{{ recordSlotsMult.partie.id }}
+                                        ·
+                                        {{ recordSlotsMult.partie.finLe ? recordSlotsMult.partie.finLe|date('d/m/Y H:i') : '' }}
+                                    </small>
+                                </div>
+
+                                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                    <div>
+                                        <div class="record-value-main text-success">
+                                            +{{ gain|number_format(0, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Gain · mise {{ mise|number_format(0, ',', ' ') }}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="record-value-main text-primary">
+                                            x{{ mult|number_format(2, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Multiplicateur
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% set record = recordSlotsMult %}
+                                {% include 'profile/records/_slots_block.html.twig' with { record: record } %}
+                            {% else %}
+                                <div class="text-white-50">Aucun multiplicateur significatif pour l’instant.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             {% else %}
                 <div class="card-body text-white-50">
-                    Joue quelques parties de Slots pour voir apparaitre ton meilleur gain ici.
+                    Joue quelques parties de Slots pour voir apparaître tes meilleurs records ici.
                 </div>
             {% endif %}
         </div>
-
 
 
         {# ===================== DICE ===================== #}
-        <div class="card bg-dark border-secondary mb-4">
+        <div class="card bg-dark border-secondary mb-4 record-section-card">
             <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                <span class="text-white">Dice · Meilleur gain</span>
+                <div class="record-section-title">
+                    <div class="record-section-title-icon">
+                        🎲
+                    </div>
+                    <span class="text-white">Dice</span>
+                </div>
 
-                {% if recordDice %}
+                {% if recordDiceGain %}
                     <small class="text-white-50">
-                        #{{ recordDice.partie.id }} ·
-                        {{ recordDice.partie.finLe ? recordDice.partie.finLe|date('d/m/Y H:i') : '' }}
+                        #{{ recordDiceGain.partie.id }} ·
+                        {{ recordDiceGain.partie.finLe ? recordDiceGain.partie.finLe|date('d/m/Y H:i') : '' }}
                     </small>
                 {% else %}
                     <small class="text-white-50">Aucun gain pour le moment</small>
                 {% endif %}
             </div>
 
-            {% if recordDice %}
+            {% if recordDiceGain %}
                 <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-1">
+                        <div>
+                            <div class="record-value-main text-success">
+                                +{{ recordDiceGain.partie.gain|number_format(0, ',', ' ') }}
+                            </div>
+                            <div class="record-value-sub">
+                                Meilleur gain Dice
+                            </div>
+                        </div>
 
-                    <div class="d-flex flex-wrap align-items-center gap-3">
-                    <span class="badge text-bg-success">
-                        +{{ recordDice.partie.gain|number_format(0, ',', ' ') }}
-                    </span>
-
-                        <span class="text-white-50 small">
-                        Mise {{ recordDice.partie.mise|number_format(0, ',', ' ') }}
-                    </span>
+                        <div>
+                            <div class="record-value-main text-white-50">
+                                {{ recordDiceGain.partie.mise|number_format(0, ',', ' ') }}
+                            </div>
+                            <div class="record-value-sub">
+                                Mise de départ
+                            </div>
+                        </div>
                     </div>
-
-                    {# On affiche juste le numero tiré + un rendu simple #}
-                    {% set meta = recordDice %}
-                    {% if meta.grid is defined %}
-                    {% else %}
-                        <div class="text-white-50">Aucun detail disponible.</div>
-                    {% endif %}
-
                 </div>
             {% else %}
                 <div class="card-body text-white-50">
-                    Joue quelques parties de Dice pour voir apparaitre ton meilleur gain ici.
+                    Joue quelques parties de Dice pour voir apparaître ton meilleur gain ici.
                 </div>
             {% endif %}
         </div>
 
+
+        {# ===================== MINES ===================== #}
+        <div class="card bg-dark border-secondary mb-4 record-section-card">
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                <div class="record-section-title">
+                    <div class="record-section-title-icon">
+                        💣
+                    </div>
+                    <span class="text-white">Mines</span>
+                </div>
+
+                {% if recordMinesGain or recordMinesMult %}
+                    <small class="text-white-50">Meilleur gain & multiplicateur</small>
+                {% else %}
+                    <small class="text-white-50">Aucun gain pour le moment</small>
+                {% endif %}
+            </div>
+
+            {% if recordMinesGain or recordMinesMult %}
+                <div class="card-body">
+                    <div class="row g-3">
+                        {# --- Meilleur gain Mines --- #}
+                        <div class="col-12 col-md-6">
+                            {% if recordMinesGain %}
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div class="record-chip">
+                                        <span class="record-chip-label">Record</span>
+                                        <span>Meilleur gain</span>
+                                    </div>
+                                    <small class="text-white-50">
+                                        #{{ recordMinesGain.partie.id }} ·
+                                        {{ recordMinesGain.partie.finLe ? recordMinesGain.partie.finLe|date('d/m/Y H:i') : '' }}
+                                    </small>
+                                </div>
+
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div>
+                                        <div class="record-value-main text-success">
+                                            +{{ recordMinesGain.partie.gain|number_format(0, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Gain Mines
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="record-value-main text-white-50">
+                                            {{ recordMinesGain.partie.mise|number_format(0, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Mise de départ
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="text-white-50">
+                                    Pas encore de gain notable sur Mines.
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {# --- Meilleur multiplicateur Mines --- #}
+                        <div class="col-12 col-md-6">
+                            {% if recordMinesMult %}
+                                {% set gain = recordMinesMult.partie.gain %}
+                                {% set mise = recordMinesMult.partie.mise %}
+                                {% set mult = mise > 0 ? (gain / mise) : 0 %}
+
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <div class="record-chip record-tag-mult">
+                                        <span class="record-chip-label">Record</span>
+                                        <span>Meilleur multiplicateur</span>
+                                    </div>
+                                    <small class="text-white-50">
+                                        #{{ recordMinesMult.partie.id }} ·
+                                        {{ recordMinesMult.partie.finLe ? recordMinesMult.partie.finLe|date('d/m/Y H:i') : '' }}
+                                    </small>
+                                </div>
+
+                                <div class="d-flex flex-wrap align-items-center gap-3">
+                                    <div>
+                                        <div class="record-value-main text-success">
+                                            +{{ gain|number_format(0, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Gain
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="record-value-main text-primary">
+                                            x{{ mult|number_format(2, ',', ' ') }}
+                                        </div>
+                                        <div class="record-value-sub">
+                                            Multiplicateur
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="text-white-50">
+                                    Pas encore de gros multiplicateur sur Mines.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card-body text-white-50">
+                    Joue quelques parties de Mines pour voir apparaître tes meilleurs records ici.
+                </div>
+            {% endif %}
+        </div>
+
+
+        {# ===================== ROULETTE ===================== #}
+        <div class="card bg-dark border-secondary mb-4 record-section-card">
+            <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+                <div class="record-section-title">
+                    <div class="record-section-title-icon">
+                        🎡
+                    </div>
+                    <span class="text-white">Roulette</span>
+                </div>
+
+                {% if recordRouletteGain %}
+                    <small class="text-white-50">
+                        #{{ recordRouletteGain.partie.id }} ·
+                        {{ recordRouletteGain.partie.finLe ? recordRouletteGain.partie.finLe|date('d/m/Y H:i') : '' }}
+                    </small>
+                {% else %}
+                    <small class="text-white-50">Aucun gain pour le moment</small>
+                {% endif %}
+            </div>
+
+            {% if recordRouletteGain %}
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-1">
+                        <div>
+                            <div class="record-value-main text-success">
+                                +{{ recordRouletteGain.partie.gain|number_format(0, ',', ' ') }}
+                            </div>
+                            <div class="record-value-sub">
+                                Meilleur gain Roulette
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="record-value-main text-white-50">
+                                {{ recordRouletteGain.partie.mise|number_format(0, ',', ' ') }}
+                            </div>
+                            <div class="record-value-sub">
+                                Mise de départ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card-body text-white-50">
+                    Joue quelques parties de Roulette pour voir apparaître ton meilleur gain ici.
+                </div>
+            {% endif %}
+        </div>
 
     </div>
 {% endblock %}
