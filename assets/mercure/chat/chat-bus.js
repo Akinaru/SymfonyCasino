@@ -6,6 +6,11 @@ export function setupChatMercure() {
     const box = document.getElementById('chat-messages');
     if (!box) return;
 
+    if (window.__chatMercureInitialized) {
+        return;
+    }
+    window.__chatMercureInitialized = true;
+
     mercureBus.addTopic(TOPIC_CHAT);
 
     mercureBus.on('chat.message', (data) => {

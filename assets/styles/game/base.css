@@ -17,7 +17,6 @@
 .game-card {
     background: var(--card-bg);
     border: 1px solid var(--card-bd);
-    min-height: 360px; /* stabilité visuelle */
 }
 
 /* Zone de playground : centre les éléments verticalement/horizontalement */
