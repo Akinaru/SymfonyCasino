@@ -16,19 +16,15 @@ class MarketItem
     #[ORM\Column]
     private ?int $id = null;
 
-    // Type d'item (enum)
     #[ORM\Column(type: Types::STRING, length: 64, enumType: ItemType::class)]
     private ItemType $type;
 
-    // Nom libre saisi par l'admin (peut différer du label enum)
     #[ORM\Column(type: Types::STRING, length: 120)]
     private string $name;
 
-    // Prix demandé pour CETTE annonce (par défaut = defaultPrice() de l'enum)
     #[ORM\Column(type: Types::INTEGER)]
     private int $price;
 
-    // Propriétaire (null => en vente sur le marché)
     #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Utilisateur $owner = null;

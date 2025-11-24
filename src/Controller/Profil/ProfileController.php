@@ -95,7 +95,6 @@ class ProfileController extends AbstractController
             return $this->redirectToRoute('app_profile_index');
         }
 
-        // Transactions -> stats montants
         $txs = $transactions->findBy(['utilisateur' => $user], ['cree_le' => 'DESC']);
 
         $bets = 0;
@@ -117,7 +116,6 @@ class ProfileController extends AbstractController
             }
         }
 
-        // Jeu favori (par nombre de parties, puis par mise totale)
         $favoriteGameKey = null;
         $favoriteRow = $em->createQueryBuilder()
             ->select('p.game_key AS gameKey, COUNT(p.id) AS betCount, SUM(p.mise) AS totalMise')
@@ -135,7 +133,6 @@ class ProfileController extends AbstractController
             $favoriteGameKey = $favoriteRow['gameKey'] ?? null;
         }
 
-        // Dernier jeu (dernière partie jouée)
         $lastGameKey = null;
         $lastPartie = $em->createQueryBuilder()
             ->select('p')
@@ -180,7 +177,6 @@ class ProfileController extends AbstractController
         /** @var Utilisateur $user */
         $user = $this->getUser();
 
-        // Helper: construit la structure record pour Slots (avec grid + wins)
         $buildSlotsRecord = static function (Partie $best): array {
             $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
 
@@ -191,7 +187,6 @@ class ProfileController extends AbstractController
             ];
         };
 
-        // Helper: record générique (on garde juste meta brute si besoin plus tard)
         $buildGenericRecord = static function (Partie $best): array {
             $meta = json_decode($best->getMetaJson() ?? '[]', true) ?: [];
 
@@ -201,7 +196,6 @@ class ProfileController extends AbstractController
             ];
         };
 
-        // Helper : meilleur gain pour un jeu donné
         $getBestRecordByGain = function (string $gameKey, bool $slotsMeta = false) use ($em, $user, $buildSlotsRecord, $buildGenericRecord) {
             $qb = $em->createQueryBuilder()
                 ->select('p')
@@ -224,7 +218,6 @@ class ProfileController extends AbstractController
             return $slotsMeta ? $buildSlotsRecord($best) : $buildGenericRecord($best);
         };
 
-        // Helper : meilleur multiplicateur (gain / mise) pour un jeu donné
         $getBestRecordByMultiplier = function (string $gameKey, bool $slotsMeta = false) use ($em, $user, $buildSlotsRecord, $buildGenericRecord) {
             $qb = $em->createQueryBuilder()
                 ->select('p')
@@ -248,20 +241,14 @@ class ProfileController extends AbstractController
             return $slotsMeta ? $buildSlotsRecord($best) : $buildGenericRecord($best);
         };
 
-        // Récupération des records demandés
-
-        // Slots : meilleur gain + meilleur multiplicateur
         $recordSlotsGain = $getBestRecordByGain('slots', true);
         $recordSlotsMult = $getBestRecordByMultiplier('slots', true);
 
-        // Dice : meilleur gain
         $recordDiceGain = $getBestRecordByGain('dice', false);
 
-        // Mines : meilleur gain + meilleur multiplicateur
         $recordMinesGain = $getBestRecordByGain('mines', false);
         $recordMinesMult = $getBestRecordByMultiplier('mines', false);
 
-        // Roulette : meilleur gain
         $recordRouletteGain = $getBestRecordByGain('roulette', false);
 
         return $this->render('profile/records.html.twig', [

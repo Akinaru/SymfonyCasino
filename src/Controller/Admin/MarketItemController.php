@@ -26,7 +26,6 @@ class MarketItemController extends AbstractController
     #[Route('/new', name: 'new', methods: ['GET','POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
     {
-        // Par défaut, on propose un type quelconque (premier case)
         $initialType = ItemType::cases()[0];
         $marketItem = new MarketItem($initialType);
 
@@ -34,7 +33,6 @@ class MarketItemController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Si l’admin a laissé un prix incohérent, force au min 0
             if ($marketItem->getPrice() < 0) {
                 $marketItem->setPrice(0);
             }

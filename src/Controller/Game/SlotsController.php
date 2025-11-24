@@ -31,7 +31,6 @@ class SlotsController extends AbstractController
 
     /** @var array<string,int> */
     private const WEIGHTS = [
-        // On augmente globalement les chances des symboles rares / moyens
         'slot1' => 3,  // Émeraude (avant 1)
         'slot2' => 4,  // Diamant  (avant 2)
         'slot3' => 6,  // Redstone (avant 3)

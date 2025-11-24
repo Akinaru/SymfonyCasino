@@ -53,11 +53,9 @@ class TipController extends AbstractController
             return new JsonResponse(['error' => 'insufficient_balance'], 400);
         }
 
-        // Màj balances
         $from->setBalance($from->getBalance() - $amount);
         $to->setBalance($to->getBalance() + $amount);
 
-        // Message système dans le chat
         $fromLabel = $from->getPseudo() ?? $from->getEmail();
         $toLabel   = $to->getPseudo() ?? $to->getEmail();
 
@@ -69,15 +67,13 @@ class TipController extends AbstractController
             $toLabel
         ));
         $msg->setSystem(true);
-        $msg->setUser(null); // message système → pas de user
+        $msg->setUser(null);
 
         $this->em->persist($msg);
         $this->em->flush();
 
-        // 1) Notification directe de tip (alerte sender + receiver)
         $this->tipNotifier->notifyTip($from, $to, $amount);
 
-        // 2) Message dans le chat (visible par tous)
         $this->chatNotifier->notify($msg);
 
         return new JsonResponse(['success' => true]);

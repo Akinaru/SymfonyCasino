@@ -34,7 +34,6 @@ class RouletteController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = RouletteGame::getDescriptionInGame();
 
-        // 🔹 Dernières parties globales (tableau en bas de page)
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -80,7 +79,6 @@ class RouletteController extends AbstractController
             ];
         }
 
-        // 🔹 Tes 10 dernières parties Roulette (pour la ligne de cases sous la roue)
         $myLastGames = [];
         if ($currentUser instanceof Utilisateur) {
             $qbMy = $em->getRepository(Partie::class)->createQueryBuilder('p')
@@ -94,7 +92,6 @@ class RouletteController extends AbstractController
             /** @var Partie[] $myParties */
             $myParties = $qbMy->getQuery()->getResult();
 
-            // On veut l’ordre chronologique (plus ancien -> plus récent)
             if (!empty($myParties)) {
                 $myParties = array_reverse($myParties);
             }
@@ -189,18 +186,12 @@ class RouletteController extends AbstractController
         $now = new \DateTimeImmutable();
 
         $result = $em->wrapInTransaction(function () use ($em, $user, $amount, $now, $txm, $betColor) {
-            // Débit
             $txBet = $txm->debit($user, $amount, 'roulette', null, $now);
 
-            // 🔹 Tirage roulette européenne (single-zero : 0–36)
             $number = random_int(0, 36);
 
-            // 🔹 Couleur réelle de la roulette européenne (même logique que le front)
             $resultColor = $this->colorFromNumber($number);
 
-            // 🔹 Payout :
-            // Rouge / Noir : x2 brut (mise * 2) si bonne couleur
-            // Vert (0) : x36 brut si on a misé vert
             $multiplier = 0;
             if ($betColor === 'green') {
                 $multiplier = ($resultColor === 'green') ? 36 : 0;
@@ -210,7 +201,6 @@ class RouletteController extends AbstractController
 
             $payout = $amount * $multiplier;
 
-            // Partie
             $partie = (new Partie())
                 ->setUtilisateur($user)
                 ->setGameKey('roulette')
@@ -259,12 +249,6 @@ class RouletteController extends AbstractController
         return $this->json(['ok' => true, ...$result]);
     }
 
-    /**
-     * Même mapping couleur que sur le front (canvas) :
-     *  - 0  -> vert
-     *  - 1–10 & 19–28 : impairs = rouge, pairs = noir
-     *  - 11–18 & 29–36 : impairs = noir, pairs = rouge
-     */
     private function colorFromNumber(int $number): string
     {
         if ($number === 0) {
@@ -279,7 +263,6 @@ class RouletteController extends AbstractController
             return ($number % 2 === 1) ? 'black' : 'red';
         }
 
-        // fallback de sécurité
         return 'green';
     }
 }

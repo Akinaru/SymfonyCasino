@@ -34,10 +34,9 @@ enum ItemType: string
 
     public function imagePath(): string
     {
-        // Place ces fichiers dans public/img/items/
         return match ($this) {
-            self::POUDRE_BLANCHE     => 'img/items/sucre.png',         // sucre Minecraft
-            self::BONBON_ENERGISANT  => 'img/items/bonbon.png',  // golden apple
+            self::POUDRE_BLANCHE     => 'img/items/sucre.png',
+            self::BONBON_ENERGISANT  => 'img/items/bonbon.png',
             self::HERBE_SUSPECTE     => 'img/items/herbe.png',
             self::CHAMPIGNON_LUISANT => 'img/items/champi.png',
             self::SIROPE_NOCTURNE    => 'img/items/sirop.png',

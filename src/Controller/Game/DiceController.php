@@ -132,14 +132,11 @@ class DiceController extends AbstractController
         $now = new \DateTimeImmutable();
 
         $result = $em->wrapInTransaction(function () use ($em, $user, $amount, $now, $txm) {
-            // Débit
             $txBet = $txm->debit($user, $amount, 'dice', null, $now);
 
-            // Tirage
             $roll   = random_int(1, 6);
             $payout = $roll > 3 ? $amount * 2 : 0;
 
-            // Partie
             $partie = (new Partie())
                 ->setUtilisateur($user)
                 ->setGameKey('dice')
@@ -160,7 +157,6 @@ class DiceController extends AbstractController
 
             $em->flush();
 
-            // Mercure
             $this->diceLastGameNotifier->notifyPartie($partie, $roll);
 
             return [

@@ -16,7 +16,6 @@ class UtilisateurType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        // Édition : email, pseudo, balance (entier), avatar (string)
         $builder
             ->add('email', EmailType::class, [
                 'label' => 'Email',

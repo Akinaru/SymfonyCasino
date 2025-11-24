@@ -1,5 +1,4 @@
 <?php
-// src/Controller/Game/MinesController.php
 namespace App\Controller\Game;
 
 use App\Entity\Partie;
@@ -34,7 +33,6 @@ class MinesController extends AbstractController
         $maxBet = 1000000;
         $descriptionInGame = MinesGame::getDescriptionInGame();
 
-        // Dernières parties
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -75,10 +73,9 @@ class MinesController extends AbstractController
             ];
         }
 
-        // Grille 2D : lignes = nb de diamants révélés, colonnes = nb de mines
         $minMines    = MinesGame::MIN_MINES;
         $maxMines    = MinesGame::MAX_MINES;
-        $maxDiamonds = MinesGame::GRID_SIZE - $minMines; // max de diamants possible (avec le moins de mines)
+        $maxDiamonds = MinesGame::GRID_SIZE - $minMines;
 
         /** @var array<int, array<int, float|null>> $multipliersGrid */
         $multipliersGrid = [];
@@ -87,7 +84,6 @@ class MinesController extends AbstractController
             $row = [];
 
             for ($mines = $minMines; $mines <= $maxMines; $mines++) {
-                // Impossible de révéler plus de diamants que de cases safe
                 if ($revealed > MinesGame::GRID_SIZE - $mines) {
                     $row[$mines] = null;
                     continue;
@@ -311,7 +307,6 @@ class MinesController extends AbstractController
 
             $em->flush();
 
-            // ➜ mines + revealedCount pour le notifier
             $revealedCount = count($meta['revealed']);
             $this->minesLastGameNotifier->notifyPartie($partie, $mines ?? 0, $revealedCount);
 
@@ -326,7 +321,6 @@ class MinesController extends AbstractController
             ]);
         }
 
-        // ➜ case safe
         $revealed      = array_values(array_unique([...$revealed, $cell]));
         $revealedCount = count($revealed);
 
@@ -343,7 +337,6 @@ class MinesController extends AbstractController
         $meta['revealed']           = $revealed;
         $meta['current_multiplier'] = $multiplier;
 
-        // ➜ si toutes les cases safe sont révélées, on auto-cashout
         $allSafeRevealed = $revealedCount >= (MinesGame::GRID_SIZE - $mines);
 
         if ($allSafeRevealed) {
@@ -376,7 +369,6 @@ class MinesController extends AbstractController
 
                 $em->flush();
 
-                // Partie gagnée : on notifie avec mines + revealedCount
                 $this->minesLastGameNotifier->notifyPartie($partie, $mines, $revealedCount);
 
                 return [
@@ -400,7 +392,6 @@ class MinesController extends AbstractController
             ]);
         }
 
-        // Sinon, partie toujours en cours
         $partie->setMetaJson(json_encode($meta, JSON_UNESCAPED_UNICODE));
         $em->flush();
 
@@ -501,7 +492,6 @@ class MinesController extends AbstractController
 
             $em->flush();
 
-            // ➜ Partie gagnée : on notifie avec mines + revealedCount
             $this->minesLastGameNotifier->notifyPartie($partie, $mines, $revealedCount);
 
             return [

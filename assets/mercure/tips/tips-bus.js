@@ -1,12 +1,7 @@
-// assets/mercure/tips/tips-bus.js
 import { mercureBus } from "../mercure-bus.js";
 
 const TOPIC_TIPS = "https://casino.gallotta.fr/mercure/tips";
 
-/**
- * Rafraîchit la balance en cliquant sur le bouton LiveComponent
- * (même logique que dans le jeu Dice).
- */
 function refreshHeaderBalanceLive() {
     const containers = document.querySelectorAll('[id="header-balance-live"]');
     if (!containers.length) return;
@@ -70,7 +65,6 @@ export function setupTipsMercure() {
             alertContainer.insertAdjacentHTML('beforeend', html);
         }
 
-        // Alerte pour l'EXPÉDITEUR
         if (isSender) {
             const prettyAmount = amount !== null
                 ? (amount.toFixed ? amount.toFixed(2) : amount)
@@ -81,8 +75,8 @@ export function setupTipsMercure() {
                     <div class="d-flex align-items-center">
                         ${to.avatar ? `<img src="${to.avatar}" alt="" width="32" height="32" class="rounded-circle me-2 border">` : ''}
                         <div>
-                            Tu as envoyé un tip de <strong>${prettyAmount} €</strong>
-                            à <strong>${to.pseudo || 'un joueur'}</strong> ✅
+                            Tu as envoye un tip de <strong class="balance balance-inline">${prettyAmount}</strong>
+                            a <strong>${to.pseudo || 'un joueur'}</strong> !
                         </div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>

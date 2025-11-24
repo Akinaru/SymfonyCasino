@@ -24,7 +24,6 @@ final class Balance
 
     public function mount(): void
     {
-        // Valeur initiale au premier rendu
         $this->refresh();
     }
 
@@ -38,7 +37,6 @@ final class Balance
             return;
         }
 
-        // Adapte au bon getter dans ton entité
         $this->amount = $user->getBalance();
     }
 }

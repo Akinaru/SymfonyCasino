@@ -24,7 +24,6 @@ class ProfilTransactionController extends AbstractController
         $gameKey = $data['gameKey'] ?? null;
         $types   = $data['types'] ?? [];
 
-        // pagination existante…
         $perPage = 25;
         $page = max(1, (int) $request->query->get('page', 1));
         $offset = ($page - 1) * $perPage;
@@ -33,7 +32,6 @@ class ProfilTransactionController extends AbstractController
         $total = $transactions->countUserTransactions($this->getUser(), $gameKey, $types);
         $lastPage = max(1, (int) ceil($total / $perPage));
 
-        // 👇 map clé→nom pour Twig (simple et efficace)
         $namesByKey = [];
         foreach ($registry->all() as $g) {
             $namesByKey[$g->getKey()] = $g->getName();

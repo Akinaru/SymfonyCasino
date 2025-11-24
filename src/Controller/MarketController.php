@@ -40,7 +40,6 @@ class MarketController extends AbstractController
 
         $em->beginTransaction();
         try {
-            // Verrou pessimiste pour éviter double achat
             $em->lock($item, LockMode::PESSIMISTIC_WRITE);
             $em->refresh($item);
 
@@ -57,7 +56,6 @@ class MarketController extends AbstractController
                 return $this->redirectToRoute('app_market_index');
             }
 
-            // débit + transfert de propriété
             $user->setBalance($user->getBalance() - $item->getPrice());
             $item->setOwner($user);
 

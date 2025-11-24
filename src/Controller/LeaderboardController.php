@@ -16,18 +16,12 @@ class LeaderboardController extends AbstractController
     {
     }
 
-    /**
-     * Redirige /leaderboard vers l’onglet par défaut (wager)
-     */
     #[Route('', name: 'index', methods: ['GET'])]
     public function redirectToDefault(): Response
     {
         return $this->redirectToRoute('app_leaderboard_wager');
     }
 
-    /**
-     * Leaderboard Wager (somme des mises)
-     */
     #[Route('/wager', name: 'wager', methods: ['GET'])]
     public function wager(): Response
     {
@@ -55,10 +49,6 @@ class LeaderboardController extends AbstractController
         ]);
     }
 
-    /**
-     * Leaderboard Balance (solde actuel)
-     * balance stockée en centimes → on divise par 100
-     */
     #[Route('/balance', name: 'balance', methods: ['GET'])]
     public function balance(): Response
     {
@@ -84,12 +74,6 @@ class LeaderboardController extends AbstractController
         ]);
     }
 
-    /**
-     * Transforme les résultats bruts en podium + liste 4..10
-     *
-     * @param array<array{user: Utilisateur, value: numeric}> $raw
-     * @return array{0: array<int, array>, 1: array<int, array>}
-     */
     private function buildPodiumAndRest(array $raw): array
     {
         $rows = [];
@@ -122,10 +106,8 @@ class LeaderboardController extends AbstractController
             ];
         }
 
-        // Podium: toujours les vrais joueurs (1..3 max)
         $podium = \array_slice($rows, 0, 3);
 
-        // Reste: 4..10 + slots vides si besoin
         $rest   = \array_slice($rows, 3);
         $count  = \count($rows);
 
@@ -145,9 +127,6 @@ class LeaderboardController extends AbstractController
         return [$podium, $rest];
     }
 
-    /**
-     * Configuration des onglets du leaderboard
-     */
     private function getTabs(): array
     {
         return [
@@ -163,7 +142,7 @@ class LeaderboardController extends AbstractController
             ],
             [
                 'key'   => 'soon',
-                'route' => null, // pas encore implémenté
+                'route' => null,
                 'label' => 'Bientôt…',
             ],
         ];

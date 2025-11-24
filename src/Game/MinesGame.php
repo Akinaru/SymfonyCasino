@@ -41,8 +41,6 @@ final class MinesGame implements GameInterface
         return "Choisis ta mise et le nombre de mines, trouve des diamants pour augmenter le multiplicateur et encaisse avant d’exploser.";
     }
 
-
-
     public function getImageUrl() : ?string { return '/games/mines.png'; }
 
     public function getMinBet(): ?int

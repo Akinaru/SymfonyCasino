@@ -19,18 +19,7 @@ class TowerController extends AbstractController
 {
     private const ROWS = 9;
     private const COLS = 3;
-
-    /**
-     * Étages “protégés” (index 0,1,2) où les bombes
-     * peuvent être “sauvegardées” (transformées en safe).
-     */
     private const EASY_ROWS = 3;
-
-    /**
-     * Chance (%) de sauver un clic sur une bombe sur les EASY_ROWS.
-     * Exemple : 60 => 60% du temps où tu cliques une bombe au début,
-     * elle est convertie en safe.
-     */
     private const RESCUE_CHANCE_PERCENT = 60;
 
     /** @var array<int,float> */
@@ -170,7 +159,6 @@ class TowerController extends AbstractController
         $session = $request->getSession();
         $key     = $this->getSessionKey($user);
 
-        // On écrase toujours l’éventuelle partie précédente (aucune mise n’est débitée avant perte / cashout).
         $layout = [];
         for ($row = 0; $row < self::ROWS; $row++) {
             $safe = random_int(0, self::COLS - 1);
@@ -257,16 +245,11 @@ class TowerController extends AbstractController
 
         $safeCol = (int) $layout[$row]['safe'];
 
-        // On regarde si le clic est théoriquement une bombe
         $isBombClick = ($col !== $safeCol);
 
-        // 🔧 Filet de sécurité sur les premiers étages :
-        // si c'est une bombe sur les EASY_ROWS, on a RESCUE_CHANCE_PERCENT% de chance
-        // de transformer ce clic en "safe" (on déplace la case safe sur cette colonne).
         if ($isBombClick && $row < self::EASY_ROWS && self::RESCUE_CHANCE_PERCENT > 0) {
             $roll = random_int(1, 100);
             if ($roll <= self::RESCUE_CHANCE_PERCENT) {
-                // On "sauve" le joueur : cette colonne devient la safe officielle pour cet étage
                 $newBombs = [];
                 for ($c = 0; $c < $cols; $c++) {
                     if ($c === $col) {
@@ -286,7 +269,6 @@ class TowerController extends AbstractController
             }
         }
 
-        // 💣 Bombe réelle → perte totale, on enregistre la partie
         if ($isBombClick) {
             $now = new \DateTimeImmutable();
             $heightAtLoss = $height;
@@ -332,7 +314,6 @@ class TowerController extends AbstractController
                 ] + $result);
         }
 
-        // ✅ Case safe (vraie safe ou safe “sauvée”)
         $height++;
         $currentRow = $height;
         $state['height']      = $height;
@@ -340,7 +321,6 @@ class TowerController extends AbstractController
         $state['multiplier']  = $this->computeMultiplier($height);
         $session->set($key, $state);
 
-        // Atteint le sommet → auto-cashout
         if ($height >= $rows) {
             $now  = new \DateTimeImmutable();
             $mult = $this->computeMultiplier($height);
@@ -391,7 +371,6 @@ class TowerController extends AbstractController
                 ] + $result);
         }
 
-        // Sinon, on continue la tour
         return $this->json([
             'ok'          => true,
             'exploded'    => false,
@@ -431,7 +410,6 @@ class TowerController extends AbstractController
         $bet    = (int)($state['bet'] ?? 0);
         $height = (int)($state['height'] ?? 0);
 
-        // Cashout sans avoir avancé → on annule juste la partie sans toucher au solde
         if ($height <= 0 || $bet <= 0) {
             $session->remove($key);
 

@@ -118,19 +118,11 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
 
-    /**
-     * @see UserInterface
-     */
     public function getRoles(): array
     {
         $roles = $this->roles;
@@ -140,9 +132,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
     public function setRoles(array $roles): static
     {
         $this->roles = $roles;
@@ -150,9 +139,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
     public function getPassword(): ?string
     {
         return $this->password;
@@ -165,10 +151,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * Compte le nombre de paris (transactions de type MISE).
-     * @param iterable<Transaction> $transactions
-     */
     public function getBetsCountFrom(iterable $transactions): int
     {
         $c = 0;
@@ -180,10 +162,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $c;
     }
 
-    /**
-     * Taux de victoire (%) = nb(GAIN) / nb(MISE) * 100.
-     * @param iterable<Transaction> $transactions
-     */
     public function getWinRateFrom(iterable $transactions): float
     {
         $bets = 0;
@@ -205,11 +183,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return ($wins / $bets) * 100.0;
     }
 
-    /**
-     * Mise moyenne (en unités de ta colonne "montant", ici euros entiers).
-     * Moyenne des |montant| pour les MISE (les mises sont négatives en base).
-     * @param iterable<Transaction> $transactions
-     */
     public function getAverageBetFrom(iterable $transactions): float
     {
         $sum = 0.0;
@@ -229,10 +202,6 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $sum / $n;
     }
 
-    /**
-     * Plus gros gain (maximum des montants pour type GAIN).
-     * @param iterable<Transaction> $transactions
-     */
     public function getBiggestWinFrom(iterable $transactions): int
     {
         $max = 0;
@@ -247,27 +216,16 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
         return $max;
     }
 
-    /**
-     * Jeu favori (laisse à null pour le moment comme demandé).
-     * @param iterable<Transaction> $transactions
-     */
     public function getFavoriteGameKeyFrom(iterable $transactions): ?string
     {
         return null;
     }
 
-    /**
-     * Dernier jeu (laisse à null pour le moment).
-     * @param iterable<Transaction> $transactions
-     */
     public function getLastGameKeyFrom(iterable $transactions): ?string
     {
         return null;
     }
 
-    /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
-     */
     public function __serialize(): array
     {
         $data = (array) $this;

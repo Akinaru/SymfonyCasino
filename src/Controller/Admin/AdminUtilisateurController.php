@@ -19,14 +19,12 @@ final class AdminUtilisateurController extends AbstractController
     {
         $utilisateurs = $utilisateurRepository->findAll();
 
-        // ➜ Construire un formulaire (FormView) par utilisateur pour la modale d'édition
         $forms = [];
         foreach ($utilisateurs as $u) {
             $forms[$u->getId()] = $this->createForm(
                 UtilisateurType::class,
                 $u,
                 [
-                    // Le submit de la modale renverra sur ta route d'édition
                     'action' => $this->generateUrl('app_admin_utilisateur_edit', ['id' => $u->getId()]),
                     'method' => 'POST',
                 ]
@@ -35,7 +33,7 @@ final class AdminUtilisateurController extends AbstractController
 
         return $this->render('admin/utilisateur/index.html.twig', [
             'utilisateurs' => $utilisateurs,
-            'forms' => $forms, // <-- indispensable pour le Twig
+            'forms' => $forms,
         ]);
     }
 
