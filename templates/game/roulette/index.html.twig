@@ -1,0 +1,810 @@
+{% extends 'game/base_game.html.twig' %}
+
+{% block game_title %}🎡 Symfsino - Roulette{% endblock %}
+
+{% block game_styles %}
+    <style>
+        /* --- Boutons de choix couleur (simplifiés) --- */
+        .roulette-choice-btn {
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #cccccc;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.45rem 0.7rem;
+            background-color: #191919;
+            transition:
+                background-color .15s ease,
+                color .15s ease,
+                border-color .15s ease,
+                opacity .15s ease,
+                transform .15s ease,
+                box-shadow .15s ease;
+            opacity: .8;
+        }
+
+        .roulette-choice-btn.is-selected {
+            opacity: 1;
+            transform: translateY(-1px) scale(1.03);
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
+            color: #ffffff;
+        }
+
+        /* 👉 seule la couleur du bouton sélectionné est colorée */
+        .roulette-choice-btn.roulette-choice-red.is-selected {
+            background-color: #c62828;
+        }
+
+        .roulette-choice-btn.roulette-choice-black.is-selected {
+            background-color: #111111;
+        }
+
+        .roulette-choice-btn.roulette-choice-green.is-selected {
+            background-color: #2e7d32;
+        }
+
+        .roulette-choice-btn:hover {
+            opacity: 1;
+        }
+
+        /* --- Zone roue (canvas, style simple) --- */
+        .roulette-wheel-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;   /* grande roulette */
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+        }
+
+        .roulette-wheel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid rgba(255,255,255,0.12);
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.9),
+                0 18px 36px rgba(0,0,0,0.9);
+            background-color: #111111;
+            display: block;
+        }
+
+        .roulette-wheel-pointer {
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(180deg); /* inversion 180° de la flèche */
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid #f1c40f;
+            filter: drop-shadow(0 0 6px rgba(0,0,0,0.8));
+            z-index: 5;
+        }
+
+        .roulette-wheel-glow {
+            position: absolute;
+            inset: -10%;
+            border-radius: 50%;
+            pointer-events: none;
+            background: none;
+        }
+
+        .roulette-result-info {
+            margin-top: 1rem;
+        }
+
+        .roulette-result-label {
+            font-size: 0.95rem;
+            color: #cfd2ff;
+        }
+
+        .roulette-result-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+    </style>
+{% endblock %}
+
+{# Sidebar : mise + choix de couleur + auto-spin #}
+{% block game_sidebar %}
+    <div class="card info-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Roulette Couleur</span>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
+        </div>
+        <div class="card-body form-compact">
+            <div class="mb-3">
+                <div class="typo-eyebrow">Balance</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow">Description</div>
+                <p class="mb-0 typo-helper">{{ descriptionInGame }}</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="betInput" class="form-label">Montant du pari</label>
+                <input id="betInput"
+                       type="number"
+                       class="form-control"
+                       min="{{ minBet|default(1) }}"
+                       max="{{ maxBet|default(1000000) }}"
+                       value="{{ minBet|default(1) }}">
+                <div class="form-text text-secondary">Jouez de manière responsable.</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow mb-2">Choix de couleur</div>
+                <div class="btn-group w-100" role="group" aria-label="Choix de couleur">
+                    <button type="button"
+                            class="btn roulette-choice-btn roulette-choice-red"
+                            data-roulette-choice="red">
+                        Rouge
+                    </button>
+                    <button type="button"
+                            class="btn roulette-choice-btn roulette-choice-black"
+                            data-roulette-choice="black">
+                        Noir
+                    </button>
+                    <button type="button"
+                            class="btn roulette-choice-btn roulette-choice-green"
+                            data-roulette-choice="green">
+                        Vert (0)
+                    </button>
+                </div>
+                <div class="form-text text-secondary mt-1">
+                    Rouge / Noir : x2 · Vert : x36
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+                <button id="playBtn" class="btn btn-primary">Lancer la roue</button>
+            </div>
+
+            <hr class="border-secondary">
+
+            <div class="mb-2">
+                <div class="typo-eyebrow">Auto-spin</div>
+            </div>
+            <div class="row g-2 align-items-end mb-2">
+                <div class="col-6">
+                    <label for="autoCount" class="form-label mb-1">Nombre de tirages</label>
+                    <input id="autoCount" type="number" class="form-control" min="1" value="10">
+                </div>
+                <div class="col-6 d-grid">
+                    <button id="autoStartBtn" class="btn btn-primary">Démarrer</button>
+                </div>
+            </div>
+            <div class="d-grid">
+                <button id="autoStopBtn" class="btn btn-primary" disabled>Stop</button>
+            </div>
+            <div class="mt-2">
+                <small id="autoStatus" class="text-white-50">Auto : inactif</small>
+            </div>
+
+            <small id="errorMessage" class="text-danger d-block mt-2" style="min-height:1.2em;"></small>
+        </div>
+    </div>
+{% endblock %}
+
+{# Zone centrale de jeu : roue en canvas #}
+{% block game_playfield %}
+    <div class="card game-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Zone de jeu</span>
+        </div>
+
+        <div class="card-body">
+            <div class="playfield-area">
+                <div class="d-flex flex-column align-items-center gap-3">
+                    <div class="status-row">
+                        <div id="result" class="typo-kpi">En attente…</div>
+                    </div>
+
+                    <div class="mt-3 w-100 d-flex justify-content-center">
+                        <div class="roulette-wheel-wrapper">
+                            <div class="roulette-wheel-glow"></div>
+                            <canvas id="rouletteCanvas" class="roulette-wheel"></canvas>
+                            <div class="roulette-wheel-pointer"></div>
+                        </div>
+                    </div>
+
+                    <div class="roulette-result-info text-center">
+                        <div id="resultNumber"
+                             class="roulette-result-number text-white-50">
+                            —
+                        </div>
+                        <div id="resultBadge"
+                             class="roulette-result-label">
+                            Choisis une couleur et lance la roue
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{# Contenu bas de page : historique & infos #}
+{% block more_content %}
+    {% include 'components/historique.html.twig' %}
+
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">Dernières parties Roulette</span>
+        </div>
+        <div class="card-body">
+            <div id="roulette-last-games-panel">
+                <table class="table table-dark table-sm mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th style="width:48px;">Avatar</th>
+                        <th>Joueur</th>
+                        <th style="min-width:120px;">Tirage</th>
+                        <th style="min-width:100px;">Date / heure</th>
+                        <th class="text-start" style="width:120px;">Mise</th>
+                        <th class="text-start" style="width:80px;">Résultat</th>
+                    </tr>
+                    </thead>
+                    <tbody id="roulette-last-games-list">
+                    {% for game in lastGames %}
+                        {% set net = game.resultat_net %}
+                        {% set color = game.result_color %}
+                        {% set badgeClass = 'bg-secondary' %}
+                        {% set colorLabel = '?' %}
+                        {% if color == 'red' %}
+                            {% set badgeClass = 'bg-danger' %}
+                            {% set colorLabel = 'Rouge' %}
+                        {% elseif color == 'black' %}
+                            {% set badgeClass = 'bg-dark' %}
+                            {% set colorLabel = 'Noir' %}
+                        {% elseif color == 'green' %}
+                            {% set badgeClass = 'bg-success' %}
+                            {% set colorLabel = 'Vert' %}
+                        {% endif %}
+                        <tr>
+                            <td>
+                                <img src="{{ game.avatar_url }}"
+                                     alt="Avatar"
+                                     class="rounded"
+                                     style="width:40px;height:40px;image-rendering:pixelated;">
+                            </td>
+                            <td class="small">
+                                {{ game.username }}
+                            </td>
+                            <td class="small">
+                                <span class="badge {{ badgeClass }}">{{ colorLabel }}</span>
+                                <span class="ms-1">
+                                    {% if game.number is not null %}
+                                        {{ game.number }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="small">
+                                {% if game.debut_le is defined and game.debut_le %}
+                                    {{ game.debut_le|date('d/m/Y H:i') }}
+                                {% endif %}
+                            </td>
+                            <td class="small text-start">
+                                <span class="balance">{{ game.mise }}</span>
+                            </td>
+                            <td class="small text-end">
+                                {% if net > 0 %}
+                                    <span class="text-success balance justify-content-end">+{{ net }}</span>
+                                {% else %}
+                                    <span class="balance justify-content-end">0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card card text-light mb-3">
+        <div class="card-header border-secondary">
+            <span class="typo-title">À propos de la Roulette</span>
+        </div>
+        <div class="card-body">
+            <p class="mb-2 typo-helper">
+                Roulette européenne : 37 numéros (0 à 36).
+                La roue respecte une séquence réelle de roulette, avec 0 vert et des cases rouges/noires intercalées.
+                Le tirage (numéro + couleur) est calculé côté serveur avant l’animation.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped align-middle payout-table mb-0">
+                    <thead>
+                    <tr>
+                        <th>Pari</th>
+                        <th>Paiement</th>
+                        <th>Notes</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td><span class="badge bg-danger me-2">Rouge</span> / <span class="badge bg-dark">Noir</span></td>
+                        <td>x2 la mise</td>
+                        <td>Rouge/Noir selon la répartition classique de la roulette.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-success">Vert (0)</span></td>
+                        <td>x36 la mise</td>
+                        <td>Numéro 0 uniquement.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_scripts %}
+    <script type="module">
+        (function () {
+            let wired = false;
+            let autoState = { active: false, total: 0, remaining: 0, stopFlag: false };
+
+            function initRoulette() {
+                if (wired) return;
+
+                const playBtn       = document.getElementById('playBtn');
+                const betInput      = document.getElementById('betInput');
+                const resultEl      = document.getElementById('result');
+                const resultBadge   = document.getElementById('resultBadge');
+                const resultNumber  = document.getElementById('resultNumber');
+                const balanceEl     = document.getElementById('balanceDisplay');
+                const errorEl       = document.getElementById('errorMessage');
+                const choiceButtons = document.querySelectorAll('[data-roulette-choice]');
+                const canvas        = document.getElementById('rouletteCanvas');
+                const wrapper       = document.querySelector('.roulette-wheel-wrapper');
+
+                const autoCount  = document.getElementById('autoCount');
+                const autoStart  = document.getElementById('autoStartBtn');
+                const autoStop   = document.getElementById('autoStopBtn');
+                const autoStatus = document.getElementById('autoStatus');
+
+                if (!playBtn || !betInput || !resultEl || !resultBadge || !resultNumber
+                    || !balanceEl || !errorEl || !choiceButtons.length
+                    || !canvas || !wrapper || !autoCount || !autoStart || !autoStop || !autoStatus) {
+                    return;
+                }
+
+                wired = true;
+
+                const endpoint      = "{{ path('app_game_roulette_play') }}";
+                const csrf          = "{{ csrf_token('roulette_play') }}";
+                const SPIN_DURATION = 2400;
+
+                // Séquence de roulette européenne (single-zero)
+                const WHEEL_NUMBERS = [
+                    0, 32, 15, 19, 4, 21, 2, 25, 17,
+                    34, 6, 27, 13, 36, 11, 30, 8, 23,
+                    10, 5, 24, 16, 33, 1, 20, 14, 31,
+                    9, 22, 18, 29, 7, 28, 12, 35, 3, 26
+                ];
+                const SEGMENT_COUNT = WHEEL_NUMBERS.length;
+                const SEGMENT_ANGLE_DEG = 360 / SEGMENT_COUNT;
+                const SEGMENT_ANGLE_RAD = (2 * Math.PI) / SEGMENT_COUNT;
+
+                let currentChoice = 'red';
+                let currentAngleDeg = 0;     // rotation cumulée de la roue
+                let animationFrameId = null;
+
+                const dpr = window.devicePixelRatio || 1;
+                let ctx = canvas.getContext('2d');
+                let canvasSize = 0;
+
+                function colorFromNumber(n) {
+                    if (n === 0) return 'green';
+                    if ((n >= 1 && n <= 10) || (n >= 19 && n <= 28)) {
+                        return (n % 2 === 1) ? 'red' : 'black';
+                    }
+                    if ((n >= 11 && n <= 18) || (n >= 29 && n <= 36)) {
+                        return (n % 2 === 1) ? 'black' : 'red';
+                    }
+                    return 'green';
+                }
+
+                function normalizeAngle(angle) {
+                    let a = angle % 360;
+                    if (a < 0) a += 360;
+                    return a;
+                }
+
+                function setupCanvasSize() {
+                    if (!ctx) return;
+
+                    const rect = wrapper.getBoundingClientRect();
+                    const size = Math.min(rect.width, rect.height || rect.width) || 260;
+
+                    canvasSize = size;
+                    canvas.width = size * dpr;
+                    canvas.height = size * dpr;
+
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    drawWheel(currentAngleDeg);
+                }
+
+                function drawWheel(angleDeg) {
+                    if (!ctx || !canvasSize) return;
+
+                    const size = canvasSize;
+                    const radius = size / 2 - 6;
+                    const cx = size / 2;
+                    const cy = size / 2;
+
+                    ctx.clearRect(0, 0, size, size);
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+                    ctx.rotate(angleDeg * Math.PI / 180);
+
+                    for (let i = 0; i < SEGMENT_COUNT; i++) {
+                        const n = WHEEL_NUMBERS[i];
+                        const start = i * SEGMENT_ANGLE_RAD;
+                        const end = (i + 1) * SEGMENT_ANGLE_RAD;
+
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(0, 0, radius, start, end, false);
+
+                        const color = colorFromNumber(n);
+                        if (color === 'red') {
+                            ctx.fillStyle = '#c62828';
+                        } else if (color === 'black') {
+                            ctx.fillStyle = '#111111';
+                        } else {
+                            ctx.fillStyle = '#2e7d32';
+                        }
+
+                        ctx.fill();
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = '#f5f5f5';
+                    ctx.font = 'bold 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    const textRadius = radius * 0.78;
+
+                    for (let i = 0; i < SEGMENT_COUNT; i++) {
+                        const n = WHEEL_NUMBERS[i];
+                        const angle = (i + 0.5) * SEGMENT_ANGLE_RAD;
+                        const x = Math.cos(angle) * textRadius;
+                        const y = Math.sin(angle) * textRadius;
+
+                        ctx.save();
+                        ctx.translate(x, y);
+                        ctx.rotate(angle + Math.PI / 2);
+                        ctx.fillText(String(n), 0, 0);
+                        ctx.restore();
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius * 0.32, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#222222';
+                    ctx.fill();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.restore();
+                }
+
+                function updateChoiceUI() {
+                    choiceButtons.forEach((btn) => {
+                        const value = btn.getAttribute('data-roulette-choice');
+                        const active = value === currentChoice;
+                        btn.classList.toggle('is-selected', active);
+                        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    });
+                }
+
+                choiceButtons.forEach((btn) => {
+                    btn.addEventListener('click', (ev) => {
+                        ev.preventDefault();
+                        if (autoState.active) return;
+                        const value = btn.getAttribute('data-roulette-choice');
+                        if (!value) return;
+                        currentChoice = value;
+                        updateChoiceUI();
+                    });
+                });
+
+                updateChoiceUI();
+                setupCanvasSize();
+                window.addEventListener('resize', setupCanvasSize);
+
+                function setBtnDisabled(disabled) {
+                    playBtn.disabled = !!disabled;
+                    playBtn.classList.toggle('disabled', !!disabled);
+                    playBtn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                }
+
+                function setAutoControls(active) {
+                    autoState.active = active;
+                    autoStop.disabled = !active;
+                    autoStart.disabled = !!active;
+                    betInput.disabled = !!active;
+                    setBtnDisabled(active);
+                    choiceButtons.forEach((btn) => {
+                        btn.disabled = !!active;
+                    });
+                }
+
+                function setError(msg) {
+                    errorEl.textContent = msg || '';
+                }
+
+                function setStatus(text) {
+                    autoStatus.textContent = text || '';
+                }
+
+                function setResult(text) {
+                    if (text && text.trim() !== '') {
+                        resultEl.textContent = text;
+                    }
+                }
+
+                function labelColor(color) {
+                    if (color === 'red') return 'Rouge';
+                    if (color === 'black') return 'Noir';
+                    if (color === 'green') return 'Vert';
+                    return '?';
+                }
+
+                function badgeClassFromColor(color) {
+                    if (color === 'red') return 'text-danger';
+                    if (color === 'black') return 'text-light';
+                    if (color === 'green') return 'text-success';
+                    return 'text-secondary';
+                }
+
+                function refreshHeaderBalanceLive() {
+                    const containers = document.querySelectorAll('[id="header-balance-live"]');
+                    if (!containers.length) return;
+
+                    containers.forEach((container) => {
+                        const btn = container.querySelector('[data-live-action-param="refresh"]');
+                        if (!btn) return;
+                        btn.click();
+                    });
+                }
+
+                function sleep(ms) {
+                    return new Promise((resolve) => setTimeout(resolve, ms));
+                }
+
+                async function apiPlay(amount, choice) {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount, choice, _token: csrf })
+                    });
+
+                    const data = await res.json().catch(() => null);
+
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg =
+                            data && typeof data.error === 'string' && data.error.trim() !== ''
+                                ? data.error
+                                : `Erreur (${res.status})`;
+                        throw new Error(msg);
+                    }
+
+                    return data;
+                }
+
+                /**
+                 * Anime la roue vers le numéro `num` (0–36) en tenant compte de la rotation actuelle.
+                 */
+                function spinWheelToNumber(num) {
+                    if (!Number.isFinite(num)) {
+                        return;
+                    }
+
+                    const index = WHEEL_NUMBERS.indexOf(num);
+                    if (index === -1) {
+                        return;
+                    }
+
+                    if (animationFrameId !== null) {
+                        cancelAnimationFrame(animationFrameId);
+                        animationFrameId = null;
+                    }
+
+                    const pointerAngleDeg = -90; // pointeur en haut
+                    const centerAngleDeg = (index + 0.5) * SEGMENT_ANGLE_DEG;
+
+                    const targetAngleDeg = pointerAngleDeg - centerAngleDeg;
+
+                    const normCurrent = normalizeAngle(currentAngleDeg);
+                    const deltaToTarget = targetAngleDeg - normCurrent;
+
+                    const baseTurns = 4 + Math.floor(Math.random() * 3); // 4–6 tours complets
+                    const extraTurns = baseTurns * 360;
+
+                    const startAngle = currentAngleDeg;
+                    const deltaAngle = extraTurns + deltaToTarget;
+
+                    const duration = SPIN_DURATION;
+                    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+                    let startTime = null;
+
+                    function step(timestamp) {
+                        if (startTime === null) {
+                            startTime = timestamp;
+                        }
+                        const elapsed = timestamp - startTime;
+                        let t = elapsed / duration;
+                        if (t > 1) t = 1;
+
+                        const eased = easeOutCubic(t);
+                        currentAngleDeg = startAngle + deltaAngle * eased;
+
+                        drawWheel(currentAngleDeg);
+
+                        if (t < 1) {
+                            animationFrameId = requestAnimationFrame(step);
+                        } else {
+                            animationFrameId = null;
+                        }
+                    }
+
+                    animationFrameId = requestAnimationFrame(step);
+                }
+
+                /**
+                 * Un tour complet (appel API + animation + affichage résultat).
+                 * Utilisé par le manuel ET par l'auto-spin.
+                 */
+                async function runSingleRound(amount) {
+                    setError('');
+                    setResult('Tirage en cours…');
+                    resultNumber.textContent = '—';
+                    resultBadge.textContent = 'La roue tourne…';
+                    resultBadge.className = 'roulette-result-label text-secondary';
+
+                    const data = await apiPlay(amount, currentChoice);
+
+                    const numberFromBack = typeof data.number === 'number' ? data.number : null;
+                    let resultColor      = data.result_color || data.resultColor || null;
+                    const payout         = Number(data.payout || 0);
+
+                    if (Number.isFinite(numberFromBack)) {
+                        resultColor = colorFromNumber(numberFromBack);
+                        spinWheelToNumber(numberFromBack);
+                    }
+
+                    await sleep(SPIN_DURATION);
+
+                    const label      = labelColor(resultColor);
+                    const badgeClass = badgeClassFromColor(resultColor);
+
+                    resultNumber.textContent = Number.isFinite(numberFromBack) ? String(numberFromBack) : '—';
+                    resultBadge.textContent = label ? `Résultat : ${label}` : 'Résultat';
+                    resultBadge.className = `roulette-result-label ${badgeClass}`;
+
+                    if (payout > 0) {
+                        setResult(`Tu as gagné ${payout}`);
+                    } else {
+                        setResult(`Tu as perdu ${amount}`);
+                    }
+
+                    refreshHeaderBalanceLive();
+
+                    if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                        const deltaNet = payout - amount;
+                        window.SymfsinoSessionHistory.update(deltaNet, amount, payout);
+                    }
+                }
+
+                async function handleManualPlay(ev) {
+                    if (ev) ev.preventDefault();
+                    if (autoState.active) return;
+
+                    setError('');
+
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    if (amount <= 0) {
+                        setError('Montant invalide.');
+                        return;
+                    }
+
+                    setBtnDisabled(true);
+                    try {
+                        await runSingleRound(amount);
+                    } catch (e) {
+                        setError(e.message || 'Erreur inconnue');
+                        setResult('En attente…');
+                        resultNumber.textContent = '—';
+                        resultBadge.textContent = 'Choisis une couleur et lance la roue';
+                        resultBadge.className = 'roulette-result-label';
+                    } finally {
+                        setBtnDisabled(false);
+                    }
+                }
+
+                async function runAuto() {
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    if (amount <= 0) {
+                        setError('Montant invalide pour l’auto-spin.');
+                        setAutoControls(false);
+                        setStatus('Auto : inactif');
+                        return;
+                    }
+
+                    autoState.stopFlag = false;
+                    setAutoControls(true);
+
+                    while (autoState.remaining > 0 && !autoState.stopFlag) {
+                        const idx = autoState.total - autoState.remaining + 1;
+                        setStatus(`Auto : tirage ${idx} / ${autoState.total}`);
+
+                        try {
+                            await runSingleRound(amount);
+                        } catch (e) {
+                            setError(e.message || 'Erreur durant l’auto-spin');
+                            setResult('En attente…');
+                            resultNumber.textContent = '—';
+                            resultBadge.textContent = 'Choisis une couleur et lance la roue';
+                            resultBadge.className = 'roulette-result-label';
+                            break;
+                        }
+
+                        autoState.remaining--;
+
+                        if (autoState.remaining > 0 && !autoState.stopFlag) {
+                            await sleep(500);
+                        }
+                    }
+
+                    if (autoState.stopFlag) {
+                        setStatus('Auto : interrompu');
+                    } else {
+                        setStatus('Auto : terminé');
+                    }
+
+                    setAutoControls(false);
+                }
+
+                function onAutoStart(ev) {
+                    if (ev) ev.preventDefault();
+                    if (autoState.active) return;
+
+                    const n = Math.max(1, parseInt(autoCount.value, 10) || 0);
+                    autoState.total = n;
+                    autoState.remaining = n;
+                    setStatus(`Auto : prêt (${n} tirages)`);
+                    runAuto();
+                }
+
+                function onAutoStop(ev) {
+                    if (ev) ev.preventDefault();
+                    if (!autoState.active) return;
+                    autoState.stopFlag = true;
+                    setStatus('Auto : arrêt demandé…');
+                }
+
+                playBtn.addEventListener('click', handleManualPlay);
+                autoStart.addEventListener('click', onAutoStart);
+                autoStop.addEventListener('click', onAutoStop);
+            }
+
+            document.addEventListener('DOMContentLoaded', initRoulette);
+            document.addEventListener('turbo:load', initRoulette);
+        })();
+    </script>
+{% endblock %}

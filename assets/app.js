@@ -7,6 +7,7 @@ import './mercure/games/slots-lastgames.js';
 import './mercure/games/dice-lastgames.js';
 import './mercure/games/mines-lastgames.js';
 import './mercure/games/tower-lastgames.js';
+import './mercure/games/roulette-lastgames.js';
 import './mercure/chat/chat-bus.js'
 import './mercure/tips/tips-bus.js'
 
