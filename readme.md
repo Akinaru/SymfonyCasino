@@ -32,6 +32,9 @@
 ## Déploiement
 
 Le site a été déployé sur https://casino.gallotta.fr avec docker.
+Compte admin:
+    - user: `admin@symfony.fr`
+    - pass: `admin123`
 
 ## Informations
 
