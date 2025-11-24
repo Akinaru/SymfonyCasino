@@ -50,7 +50,7 @@
         .roulette-wheel-wrapper {
             position: relative;
             width: 100%;
-            max-width: 600px;   /* grande roulette */
+            max-width: 600px;
             aspect-ratio: 1 / 1;
             margin: 0 auto;
         }
@@ -72,7 +72,7 @@
             position: absolute;
             top: -6px;
             left: 50%;
-            transform: translateX(-50%) rotate(180deg); /* inversion 180° de la flèche */
+            transform: translateX(-50%) rotate(180deg);
             width: 0;
             height: 0;
             border-left: 10px solid transparent;
@@ -102,6 +102,33 @@
         .roulette-result-number {
             font-size: 1.2rem;
             font-weight: 700;
+        }
+
+        /* --- Historique perso (10 dernières parties) --- */
+        .roulette-history-wrapper {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .roulette-history-strip {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.4rem;
+            justify-content: center;
+        }
+
+        .roulette-history-item {
+            width: 32px;
+            height: 32px;
+            border-radius: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #f5f5f5;
+            background-color: #222222;
+            border: 1px solid rgba(255,255,255,0.18);
         }
     </style>
 {% endblock %}
@@ -191,7 +218,7 @@
     </div>
 {% endblock %}
 
-{# Zone centrale de jeu : roue en canvas #}
+{# Zone centrale de jeu : roue en canvas + historique perso #}
 {% block game_playfield %}
     <div class="card game-card text-light h-100">
         <div class="card-header border-secondary d-flex justify-content-between align-items-center">
@@ -223,13 +250,42 @@
                             Choisis une couleur et lance la roue
                         </div>
                     </div>
+
+                    {# 🔹 Historique perso : tes 10 derniers tirages #}
+                    <div class="roulette-history-wrapper text-center">
+                        <div class="typo-eyebrow mb-1">Tes 10 derniers tirages</div>
+                        <div id="roulette-history-strip" class="roulette-history-strip">
+                            {% for game in myLastGames %}
+                                {% set color = game.result_color %}
+                                {% set bg = '#222222' %}
+                                {% if color == 'red' %}
+                                    {% set bg = '#c62828' %}
+                                {% elseif color == 'black' %}
+                                    {% set bg = '#111111' %}
+                                {% elseif color == 'green' %}
+                                    {% set bg = '#2e7d32' %}
+                                {% endif %}
+                                <div class="roulette-history-item"
+                                     style="background-color: {{ bg }};"
+                                     data-color="{{ color|default('') }}"
+                                     data-number="{{ game.number is not null ? game.number : '' }}">
+                                    {% if game.number is not null %}
+                                        {{ game.number }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
 {% endblock %}
 
-{# Contenu bas de page : historique & infos #}
+{# Contenu bas de page : historique global & infos #}
 {% block more_content %}
     {% include 'components/historique.html.twig' %}
 
@@ -371,9 +427,12 @@
                 const autoStop   = document.getElementById('autoStopBtn');
                 const autoStatus = document.getElementById('autoStatus');
 
+                const historyStrip = document.getElementById('roulette-history-strip');
+
                 if (!playBtn || !betInput || !resultEl || !resultBadge || !resultNumber
                     || !balanceEl || !errorEl || !choiceButtons.length
-                    || !canvas || !wrapper || !autoCount || !autoStart || !autoStop || !autoStatus) {
+                    || !canvas || !wrapper || !autoCount || !autoStart || !autoStop || !autoStatus
+                    || !historyStrip) {
                     return;
                 }
 
@@ -395,7 +454,7 @@
                 const SEGMENT_ANGLE_RAD = (2 * Math.PI) / SEGMENT_COUNT;
 
                 let currentChoice = 'red';
-                let currentAngleDeg = 0;     // rotation cumulée de la roue
+                let currentAngleDeg = 0;
                 let animationFrameId = null;
 
                 const dpr = window.devicePixelRatio || 1;
@@ -606,9 +665,29 @@
                     return data;
                 }
 
-                /**
-                 * Anime la roue vers le numéro `num` (0–36) en tenant compte de la rotation actuelle.
-                 */
+                function appendPersonalHistory(number, color) {
+                    if (!historyStrip || !Number.isFinite(number)) return;
+
+                    const div = document.createElement('div');
+                    div.className = 'roulette-history-item';
+                    div.dataset.color = color || '';
+                    div.dataset.number = String(number);
+
+                    let bg = '#222222';
+                    if (color === 'red') bg = '#c62828';
+                    else if (color === 'black') bg = '#111111';
+                    else if (color === 'green') bg = '#2e7d32';
+                    div.style.backgroundColor = bg;
+
+                    div.textContent = String(number);
+
+                    historyStrip.appendChild(div);
+
+                    while (historyStrip.children.length > 10) {
+                        historyStrip.removeChild(historyStrip.firstElementChild);
+                    }
+                }
+
                 function spinWheelToNumber(num) {
                     if (!Number.isFinite(num)) {
                         return;
@@ -624,7 +703,7 @@
                         animationFrameId = null;
                     }
 
-                    const pointerAngleDeg = -90; // pointeur en haut
+                    const pointerAngleDeg = -90;
                     const centerAngleDeg = (index + 0.5) * SEGMENT_ANGLE_DEG;
 
                     const targetAngleDeg = pointerAngleDeg - centerAngleDeg;
@@ -632,7 +711,7 @@
                     const normCurrent = normalizeAngle(currentAngleDeg);
                     const deltaToTarget = targetAngleDeg - normCurrent;
 
-                    const baseTurns = 4 + Math.floor(Math.random() * 3); // 4–6 tours complets
+                    const baseTurns = 4 + Math.floor(Math.random() * 3);
                     const extraTurns = baseTurns * 360;
 
                     const startAngle = currentAngleDeg;
@@ -666,10 +745,6 @@
                     animationFrameId = requestAnimationFrame(step);
                 }
 
-                /**
-                 * Un tour complet (appel API + animation + affichage résultat).
-                 * Utilisé par le manuel ET par l'auto-spin.
-                 */
                 async function runSingleRound(amount) {
                     setError('');
                     setResult('Tirage en cours…');
@@ -701,6 +776,11 @@
                         setResult(`Tu as gagné ${payout}`);
                     } else {
                         setResult(`Tu as perdu ${amount}`);
+                    }
+
+                    // 🔹 MAJ historique perso
+                    if (Number.isFinite(numberFromBack)) {
+                        appendPersonalHistory(numberFromBack, resultColor);
                     }
 
                     refreshHeaderBalanceLive();

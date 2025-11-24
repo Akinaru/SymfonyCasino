@@ -27,11 +27,14 @@ class RouletteController extends AbstractController
     public function index(EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        /** @var Utilisateur $currentUser */
+        $currentUser = $this->getUser();
 
         $minBet = 1;
         $maxBet = 1000000;
         $descriptionInGame = RouletteGame::getDescriptionInGame();
 
+        // 🔹 Dernières parties globales (tableau en bas de page)
         $qb = $em->getRepository(Partie::class)->createQueryBuilder('p')
             ->addSelect('u')
             ->join('p.utilisateur', 'u')
@@ -77,11 +80,50 @@ class RouletteController extends AbstractController
             ];
         }
 
+        // 🔹 Tes 10 dernières parties Roulette (pour la ligne de cases sous la roue)
+        $myLastGames = [];
+        if ($currentUser instanceof Utilisateur) {
+            $qbMy = $em->getRepository(Partie::class)->createQueryBuilder('p')
+                ->where('p.utilisateur = :user')
+                ->andWhere('p.game_key = :game')
+                ->setParameter('user', $currentUser)
+                ->setParameter('game', 'roulette')
+                ->orderBy('p.debut_le', 'DESC')
+                ->setMaxResults(10);
+
+            /** @var Partie[] $myParties */
+            $myParties = $qbMy->getQuery()->getResult();
+
+            // On veut l’ordre chronologique (plus ancien -> plus récent)
+            if (!empty($myParties)) {
+                $myParties = array_reverse($myParties);
+            }
+
+            foreach ($myParties as $partie) {
+                if (!$partie instanceof Partie) {
+                    continue;
+                }
+
+                $meta = json_decode($partie->getMetaJson() ?? '{}', true) ?: [];
+
+                $number      = $meta['number']       ?? null;
+                $resultColor = $meta['result_color'] ?? null;
+
+                $myLastGames[] = [
+                    'id'           => $partie->getId(),
+                    'number'       => $number,
+                    'result_color' => $resultColor,
+                    'debut_le'     => $partie->getDebutLe(),
+                ];
+            }
+        }
+
         return $this->render('game/roulette/index.html.twig', [
             'minBet'            => $minBet,
             'maxBet'            => $maxBet,
             'descriptionInGame' => $descriptionInGame,
             'lastGames'         => $lastGames,
+            'myLastGames'       => $myLastGames,
         ]);
     }
 
@@ -150,21 +192,15 @@ class RouletteController extends AbstractController
             // Débit
             $txBet = $txm->debit($user, $amount, 'roulette', null, $now);
 
-            // 🔹 Tirage roulette européenne simplifiée (37 cases)
-            // 0 -> vert ; 1–18 -> rouge ; 19–36 -> noir
+            // 🔹 Tirage roulette européenne (single-zero : 0–36)
             $number = random_int(0, 36);
 
-            if ($number === 0) {
-                $resultColor = 'green';
-            } elseif ($number <= 18) {
-                $resultColor = 'red';
-            } else {
-                $resultColor = 'black';
-            }
+            // 🔹 Couleur réelle de la roulette européenne (même logique que le front)
+            $resultColor = $this->colorFromNumber($number);
 
-            // 🔹 Payout avec vraies stats :
-            // Rouge / Noir : x2 brut (mise + gain)
-            // Vert (0) : x36 brut
+            // 🔹 Payout :
+            // Rouge / Noir : x2 brut (mise * 2) si bonne couleur
+            // Vert (0) : x36 brut si on a misé vert
             $multiplier = 0;
             if ($betColor === 'green') {
                 $multiplier = ($resultColor === 'green') ? 36 : 0;
@@ -221,5 +257,29 @@ class RouletteController extends AbstractController
         });
 
         return $this->json(['ok' => true, ...$result]);
+    }
+
+    /**
+     * Même mapping couleur que sur le front (canvas) :
+     *  - 0  -> vert
+     *  - 1–10 & 19–28 : impairs = rouge, pairs = noir
+     *  - 11–18 & 29–36 : impairs = noir, pairs = rouge
+     */
+    private function colorFromNumber(int $number): string
+    {
+        if ($number === 0) {
+            return 'green';
+        }
+
+        if (($number >= 1 && $number <= 10) || ($number >= 19 && $number <= 28)) {
+            return ($number % 2 === 1) ? 'red' : 'black';
+        }
+
+        if (($number >= 11 && $number <= 18) || ($number >= 29 && $number <= 36)) {
+            return ($number % 2 === 1) ? 'black' : 'red';
+        }
+
+        // fallback de sécurité
+        return 'green';
     }
 }
