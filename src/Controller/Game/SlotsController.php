@@ -31,14 +31,15 @@ class SlotsController extends AbstractController
 
     /** @var array<string,int> */
     private const WEIGHTS = [
-        'slot1' => 1,
-        'slot2' => 2,
-        'slot3' => 3,
-        'slot4' => 5,
-        'slot5' => 8,
-        'slot6' => 12,
-        'slot7' => 18,
-        'slot8' => 28,
+        // On augmente globalement les chances des symboles rares / moyens
+        'slot1' => 3,  // Émeraude (avant 1)
+        'slot2' => 4,  // Diamant  (avant 2)
+        'slot3' => 6,  // Redstone (avant 3)
+        'slot4' => 8,  // Or       (avant 5)
+        'slot5' => 10, // Lapis    (avant 8)
+        'slot6' => 12, // Fer      (avant 12)
+        'slot7' => 14, // Charbon  (avant 18)
+        'slot8' => 20, // Bâton    (avant 28)
     ];
 
     public function __construct(
