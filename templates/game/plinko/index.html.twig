@@ -1,0 +1,655 @@
+{% extends 'game/base_game.html.twig' %}
+
+{% block game_title %}📎 Symfsino - Plinko{% endblock %}
+
+{% block game_styles %}
+    <style>
+        html {
+            font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        body {
+            background-color: #14151f;
+        }
+
+        button {
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        button:hover {
+            opacity: 1;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .plinko-playfield-root {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 0.5fr 1fr 1fr 1fr 0.5fr;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1.5em;
+            gap: 1em;
+        }
+
+        .controls .drop-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .controls .drop {
+            position: relative;
+            display: inline-flex;
+        }
+
+        /* On laisse la zone "bouton" visuelle mais sans interactivité */
+        .controls .drop button {
+            flex-shrink: 0;
+            border: none;
+            border-radius: 10px;
+            padding: 1em 1em 1em 1em;
+            background: lime;
+            width: 7em;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .controls .drop input[type="checkbox"] {
+            display: none;
+        }
+
+        .controls .drop input[type="checkbox"]:not(:checked) + label .checked {
+            visibility: hidden;
+        }
+
+        .controls .drop label[for="checkbox"] {
+            position: absolute;
+            left: calc(100%);
+            height: 100%;
+            cursor: default;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 10px 10px 0;
+            padding: 0 0.5em;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .controls .drop label[for="checkbox"] .box {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.2em;
+            width: 0.8em;
+            height: 0.8em;
+        }
+
+        .controls .drop label[for="checkbox"] .box::after {
+            font-size: 0.6em;
+            vertical-align: middle;
+            position: absolute;
+            left: calc(100% + 0.4em);
+            color: #fff;
+            content: "auto";
+        }
+
+        .controls .drop label[for="checkbox"] .box svg {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #balls,
+        #multiplier {
+            position: relative;
+            font-weight: 900;
+            font-size: 2.2em;
+            margin-right: auto;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        #balls::before,
+        #multiplier::before {
+            content: "-";
+            position: absolute;
+            bottom: 100%;
+            font-size: 0.3em;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #balls::before {
+            content: "Balls";
+        }
+
+        #multiplier {
+            text-align: right;
+        }
+
+        #multiplier::before {
+            content: "Drop";
+            right: 0;
+        }
+
+        .canvas-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-container canvas {
+            display: block;
+            margin: auto;
+            max-width: 620px;
+            width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+            box-shadow:
+                0 0 0 1px rgba(15, 23, 42, 0.9),
+                0 24px 40px rgba(0, 0, 0, 0.85);
+        }
+
+        .notes {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .notes .note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 27px;
+            aspect-ratio: 30 / 26;
+            border-radius: 5px;
+            background-color: gray;
+            flex-shrink: 0;
+            border-bottom: solid 4px yellow;
+            text-align: center;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .notes .note[data-pressed="true"] {
+            animation: press 0.5s;
+        }
+
+        @keyframes press {
+            0% {
+                border-bottom-width: 4px;
+            }
+            50% {
+                border-bottom-width: 0;
+            }
+            100% {
+                border-bottom-width: 4px;
+            }
+        }
+
+        .notes .note:nth-child(1),
+        .notes .note:nth-child(17) {
+            background-color: #0f3;
+            border-color: #0a0;
+        }
+
+        .notes .note:nth-child(2),
+        .notes .note:nth-child(16) {
+            background-color: #1f3;
+            border-color: #0a0;
+        }
+
+        .notes .note:nth-child(3),
+        .notes .note:nth-child(15) {
+            background-color: #3f2;
+            border-color: #0a0;
+        }
+
+        .notes .note:nth-child(4),
+        .notes .note:nth-child(14) {
+            background-color: #4f2;
+            border-color: #0a0;
+        }
+
+        .notes .note:nth-child(5),
+        .notes .note:nth-child(13) {
+            background-color: #6f2;
+            border-color: #0a0;
+        }
+
+        .notes .note:nth-child(6),
+        .notes .note:nth-child(12) {
+            background-color: #7f1;
+            border-color: #3a0;
+        }
+
+        .notes .note:nth-child(7),
+        .notes .note:nth-child(11) {
+            background-color: #9f1;
+            border-color: #4a0;
+        }
+
+        .notes .note:nth-child(8),
+        .notes .note:nth-child(10) {
+            background-color: #af0;
+            border-color: #6a0;
+        }
+
+        .notes .note:nth-child(9) {
+            background-color: #cf0;
+            border-color: #7a0;
+        }
+    </style>
+{% endblock %}
+
+{% block game_sidebar %}
+    <div class="card info-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Plinko</span>
+            <small class="typo-helper">Min {{ minBet|default(1) }} · Max {{ maxBet|default(1000000) }}</small>
+        </div>
+        <div class="card-body form-compact">
+            <div class="mb-3">
+                <div class="typo-eyebrow">Balance</div>
+                <div id="balanceDisplay" class="typo-kpi balance justify-content-start">
+                    {{ component('Balance', { attributes: { id: 'header-balance-live' } }) }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="typo-eyebrow">Description</div>
+                <p class="mb-0 typo-helper">{{ descriptionInGame }}</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="betInput" class="form-label">Montant du pari</label>
+                <input id="betInput" type="number" class="form-control"
+                       min="{{ minBet|default(1) }}" max="{{ maxBet|default(1000000) }}"
+                       value="{{ minBet|default(1) }}">
+                <div class="form-text text-secondary">Chaque clic lance une bille (aucun délai imposé).</div>
+            </div>
+
+            <div class="d-grid gap-2 mb-2">
+                <button id="playBtn" class="btn btn-primary">
+                    Lancer une bille
+                </button>
+            </div>
+
+            <div class="mt-2 small text-white-50">
+                Le résultat est déterminé serveur, l’animation n’est que visuelle.
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block game_playfield %}
+    <div class="card game-card text-light h-100">
+        <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <span class="typo-title mb-0">Plateau Plinko</span>
+        </div>
+
+        <div class="card-body">
+            <div class="plinko-playfield-root">
+                <div class="controls">
+                    <div></div>
+                    <div>
+                        <div id="balls">-</div>
+                    </div>
+                    <div class="drop-container">
+                        <div class="drop">
+                            {# Visuel seulement, pas de JS sur ce bouton #}
+                            <button id="drop-button" type="button">Drop</button>
+                            <input id="checkbox" type="checkbox" />
+                            <label for="checkbox">
+                                <div class="box">
+                                    <svg class="checked" xmlns="http://www.w3.org/2000/svg" width="8px" height="8px" viewBox="0 0 24 24">
+                                        <path fill="#ffffff" d="M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z" />
+                                    </svg>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <div id="multiplier">-</div>
+                    </div>
+                    <div></div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="canvas" width="620" height="534"></canvas>
+                </div>
+
+                <div class="notes">
+                    {% for m in multipliers %}
+                        <div type="button" class="note" id="note-{{ loop.index0 }}">{{ m }}x</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block more_content %}
+    {# Tu pourras remettre ton historique / à propos ici si tu veux #}
+{% endblock %}
+
+{% block game_scripts %}
+    <script type="module">
+        (function () {
+            let wired = false;
+
+            function initPlinko() {
+                if (wired) return;
+                wired = true;
+
+                const playBtn   = document.getElementById('playBtn');
+                const betInput  = document.getElementById('betInput');
+                const resultEl  = document.getElementById('result') || document.getElementById('plinko-result');
+                const canvas    = document.getElementById('canvas');
+                const ballsEl   = document.getElementById('balls');
+                const multEl    = document.getElementById('multiplier');
+
+                if (!playBtn || !betInput || !canvas || !ballsEl || !multEl) {
+                    return;
+                }
+
+                const endpoint = "{{ path('app_game_plinko_play') }}";
+                const csrf     = "{{ csrf_token('plinko_play') }}";
+
+                const rows        = {{ rows|default(16) }};
+                const multipliers = {{ multipliers|json_encode|raw }};
+
+                const width  = 620;
+                const height = 534;
+                canvas.width  = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+
+                let dropsCount = 0;
+
+                function setResult(text) {
+                    if (!resultEl) return;
+                    if (text && text.trim() !== '') {
+                        resultEl.textContent = text;
+                    }
+                }
+
+                function refreshHeaderBalanceLive() {
+                    const containers = document.querySelectorAll('[id="header-balance-live"]');
+                    if (!containers.length) return;
+                    containers.forEach((container) => {
+                        const btn = container.querySelector('[data-live-action-param="refresh"]');
+                        if (!btn) return;
+                        btn.click();
+                    });
+                }
+
+                async function apiPlay(amount) {
+                    const res  = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ amount, _token: csrf })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || data.ok === false) {
+                        const msg = (data && typeof data.error === 'string' && data.error.trim() !== '') ? data.error : `Erreur (${res.status})`;
+                        throw new Error(msg);
+                    }
+                    return data;
+                }
+
+                // --- Géométrie des "clous" (pins) visuels ---
+                const GAP = 32;
+                const PEG_RAD = 4;
+                const pins = [];
+
+                for (let r = 0; r < rows; r++) {
+                    const pegsInRow = r + 3;
+                    for (let c = 0; c < pegsInRow; c++) {
+                        const x = width / 2 + (c - (pegsInRow - 1) / 2) * GAP;
+                        const y = GAP + r * GAP;
+                        pins.push({ x, y });
+                    }
+                }
+
+                const BALL_RADIUS = 7;
+                const balls = [];
+
+                function pressNote(index) {
+                    const el = document.getElementById(`note-${index}`);
+                    if (!el) return;
+                    if (el.dataset.pressed === 'true') return;
+                    el.dataset.pressed = 'true';
+                    setTimeout(() => {
+                        el.dataset.pressed = 'false';
+                    }, 500);
+                }
+
+                function onBallSettled(ball) {
+                    const amount     = ball.amount;
+                    const payout     = ball.payout;
+                    const multiplier = ball.multiplier;
+                    const idx        = ball.slotIndex;
+
+                    const multTxt = (typeof multiplier === 'number')
+                        ? multiplier.toFixed(2)
+                        : String(multiplier ?? '-');
+
+                    if (payout > amount) {
+                        setResult(`Tu as gagné ${payout} (${multTxt}x)`);
+                    } else if (payout > 0) {
+                        setResult(`Tu récupères ${payout} (${multTxt}x)`);
+                    } else {
+                        setResult(`Tu as perdu ${amount}`);
+                    }
+
+                    multEl.textContent = multTxt === '-' ? '-' : multTxt + 'x';
+
+                    refreshHeaderBalanceLive();
+
+                    if (typeof idx === 'number') {
+                        pressNote(idx);
+                    }
+
+                    if (window.SymfsinoSessionHistory && typeof window.SymfsinoSessionHistory.update === 'function') {
+                        const deltaNet = payout - amount;
+                        window.SymfsinoSessionHistory.update(deltaNet, amount, payout);
+                    }
+                }
+
+                function createBallPath(slotIndex) {
+                    const slotCount = multipliers.length || (rows + 1);
+                    let idx = typeof slotIndex === 'number' ? slotIndex : Math.floor(Math.random() * slotCount);
+                    idx = Math.max(0, Math.min(slotCount - 1, idx));
+
+                    const slotWidth = width / slotCount;
+                    const targetX   = (idx + 0.5) * slotWidth;
+                    const topY      = 20;
+                    const bottomY   = height - 40;
+                    const usableH   = bottomY - topY;
+
+                    const segments = [];
+                    let currentX = width / 2;
+
+                    for (let i = 0; i <= rows; i++) {
+                        const t = i / rows;
+                        const y = topY + usableH * t;
+
+                        const remaining = rows - i + 1;
+                        const bias = (targetX - currentX) / remaining;
+                        const randomDx = (Math.random() - 0.5) * GAP * 0.6;
+
+                        let nextX = currentX + bias + randomDx;
+                        const minX = slotWidth * 0.5;
+                        const maxX = width - slotWidth * 0.5;
+                        if (nextX < minX) nextX = minX;
+                        if (nextX > maxX) nextX = maxX;
+
+                        segments.push({ x: nextX, y });
+                        currentX = nextX;
+                    }
+
+                    return { path: segments, slotIndex: idx };
+                }
+
+                function spawnBall(slotIndex, amount, multiplier, payout) {
+                    const { path, slotIndex: idx } = createBallPath(slotIndex);
+
+                    balls.push({
+                        path,
+                        progress: 0,
+                        amount,
+                        payout,
+                        multiplier,
+                        slotIndex: idx,
+                        settled: false,
+                        lifeAfterSettle: 1.5
+                    });
+                }
+
+                let lastTime = performance.now();
+
+                function drawLoop() {
+                    const now = performance.now();
+                    const dt  = (now - lastTime) / 1000;
+                    lastTime  = now;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Fond
+                    const bgGradient = ctx.createRadialGradient(
+                        width / 2, 80, 30,
+                        width / 2, height / 2, height / 1.2
+                    );
+                    bgGradient.addColorStop(0, '#1f2937');
+                    bgGradient.addColorStop(0.4, '#020617');
+                    bgGradient.addColorStop(1, '#000000');
+                    ctx.fillStyle = bgGradient;
+                    ctx.fillRect(0, 0, width, height);
+
+                    // "Clous"
+                    ctx.fillStyle = '#ffffff';
+                    pins.forEach((p) => {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, PEG_RAD, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // Slots visuels
+                    const slotCount = multipliers.length || (rows + 1);
+                    const slotWidth = width / slotCount;
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < slotCount; i++) {
+                        const x = i * slotWidth;
+                        const y = height - 30;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x, height);
+                        ctx.stroke();
+                    }
+
+                    // Billes
+                    const speed = 1.4; // vitesse d’animation
+                    for (let i = balls.length - 1; i >= 0; i--) {
+                        const ball = balls[i];
+
+                        if (!ball.settled) {
+                            ball.progress += dt * speed;
+                            if (ball.progress >= 1) {
+                                ball.progress = 1;
+                                ball.settled = true;
+                                onBallSettled(ball);
+                            }
+                        } else {
+                            ball.lifeAfterSettle -= dt;
+                            if (ball.lifeAfterSettle <= 0) {
+                                balls.splice(i, 1);
+                                continue;
+                            }
+                        }
+
+                        const path = ball.path;
+                        const posCount = path.length;
+                        if (!posCount) continue;
+
+                        const t = ball.progress;
+                        const scaled = t * (posCount - 1);
+                        const idx0 = Math.floor(scaled);
+                        const idx1 = Math.min(posCount - 1, idx0 + 1);
+                        const alpha = scaled - idx0;
+
+                        const p0 = path[idx0];
+                        const p1 = path[idx1];
+
+                        const x = p0.x + (p1.x - p0.x) * alpha;
+                        const y = p0.y + (p1.y - p0.y) * alpha;
+
+                        ctx.beginPath();
+                        ctx.arc(x, y, BALL_RADIUS, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(251, 191, 36, 0.95)';
+                        ctx.fill();
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#f97316';
+                        ctx.stroke();
+                    }
+
+                    requestAnimationFrame(drawLoop);
+                }
+
+                requestAnimationFrame(drawLoop);
+
+                async function handlePlay(ev) {
+                    if (ev) ev.preventDefault();
+
+                    const amount = parseInt(betInput.value, 10) || 0;
+                    if (amount <= 0) {
+                        setResult('Montant invalide.');
+                        return;
+                    }
+
+                    try {
+                        const data = await apiPlay(amount);
+
+                        const slotIndex = (typeof data.position === 'number')
+                            ? data.position
+                            : null;
+
+                        const multiplier = (typeof data.multiplier === 'number')
+                            ? data.multiplier
+                            : (slotIndex !== null ? multipliers[slotIndex] ?? 0 : 0);
+
+                        const payout = Number(data.payout || 0);
+
+                        dropsCount += 1;
+                        ballsEl.textContent = String(dropsCount);
+
+                        spawnBall(slotIndex, amount, multiplier, payout);
+                    } catch (e) {
+                        setResult(e.message || 'Erreur inconnue');
+                    }
+                }
+
+                playBtn.addEventListener('click', handlePlay);
+            }
+
+            document.addEventListener('DOMContentLoaded', initPlinko);
+            document.addEventListener('turbo:load', initPlinko);
+        })();
+    </script>
+{% endblock %}
